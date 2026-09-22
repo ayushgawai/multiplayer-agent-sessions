@@ -26,17 +26,34 @@ A shared live session where several humans and several agents work in one worksp
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-uvicorn session_service.app.main:app --app-dir session-service --reload --port 8000
-# in another shell
-uvicorn serving.serve:app --reload --port 8001
+
+# session service (OpenAPI: session-service/openapi.json)
+cd session-service && uvicorn app.main:app --reload --port 8000
+
+# model serving stubs
+cd serving && uvicorn serve:app --reload --port 8001
 ```
 
 Health checks: `GET http://localhost:8000/healthz` and `GET http://localhost:8001/healthz`.
 
-Full stack (when Compose services are wired):
+Regenerate OpenAPI after schema changes:
 
 ```bash
-docker compose -f infra/docker-compose.yml up
+cd session-service && PYTHONPATH=. python scripts/export_openapi.py
+```
+
+Full stack:
+
+```bash
+docker compose -f infra/docker-compose.yml up --build
+```
+
+## Tests
+
+```bash
+cd session-service && pytest -q
+cd serving && pytest -q
+PYTHONPATH=. python models/common/check_checkpointing.py
 ```
 
 ## Layout
