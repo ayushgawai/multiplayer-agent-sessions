@@ -1,0 +1,27 @@
+task: m1_catchup
+candidate_id: m1-b
+label: "Qwen3-1.7B Instruct + LoRA (matrix size match for Qwen3.5 1.7B handle)"
+mode: lora
+model:
+  repo: Qwen/Qwen3-1.7B
+  revision: "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+split: data/splits/m1_v1/
+train:
+  epochs: 3
+  max_seq_len: 4096
+  effective_batch_size: 16
+  lr: 2.0e-4
+  warmup_ratio: 0.06
+  save_steps: 200
+  checkpoint_uri: "file://./checkpoints/m1-b/"
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules: [q_proj, v_proj]
+prompt_file: null
+metrics: [rouge_l, bertscore_f1, latency_p50, latency_p95, peak_vram]
+primary_metric: rouge_l
+ablation:
+  context_events: [0, 5, 20]
+failure_codes: [missed_blocker, hallucinated_progress, dropped_query_focus]

@@ -1,0 +1,26 @@
+# M1 catch-up summarizer candidates share these train knobs.
+# Per-candidate differences are only model repo/revision and mode.
+
+task: m1_catchup
+candidate_id: m1-a
+label: "ModernBERT-base extractive selector + fixed template"
+mode: finetune
+model:
+  repo: answerdotai/ModernBERT-base
+  revision: "8949b909ec900327062f0ebf497f51aef5e6f0c8"
+split: data/splits/m1_v1/
+train:
+  epochs: 3
+  max_seq_len: 4096
+  effective_batch_size: 16
+  lr: 2.0e-5
+  warmup_ratio: 0.06
+  save_steps: 200
+  checkpoint_uri: "file://./checkpoints/m1-a/"
+lora: null
+prompt_file: null
+metrics: [rouge_l, bertscore_f1, latency_p50, latency_p95, peak_vram]
+primary_metric: rouge_l
+ablation:
+  context_events: [0, 5, 20]
+failure_codes: [missed_blocker, hallucinated_progress, dropped_query_focus]
