@@ -1,0 +1,764 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Multiplayer Agent Sessions \u2014 Session Service",
+    "description": "Event log, join, rollback, and stream surface for Team 4.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/v1/sessions": {
+      "post": {
+        "summary": "Create Session",
+        "operationId": "create_session_v1_sessions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSessionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sessions/{session_id}/join": {
+      "post": {
+        "summary": "Join Session",
+        "operationId": "join_session_v1_sessions__session_id__join_post",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinSessionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JoinSessionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sessions/{session_id}/events": {
+      "get": {
+        "summary": "List Events",
+        "operationId": "list_events_v1_sessions__session_id__events_get",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Since"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventsPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Append Event",
+        "operationId": "append_event_v1_sessions__session_id__events_post",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionEventCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppendEventResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sessions/{session_id}/rollback": {
+      "post": {
+        "summary": "Rollback",
+        "operationId": "rollback_v1_sessions__session_id__rollback_post",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RollbackRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RollbackResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/healthz": {
+      "get": {
+        "summary": "Healthz",
+        "operationId": "healthz_healthz_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Actor": {
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/ActorKind"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "role": {
+            "$ref": "#/components/schemas/ParticipantRole"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kind",
+          "id",
+          "display_name",
+          "role"
+        ],
+        "title": "Actor"
+      },
+      "ActorKind": {
+        "type": "string",
+        "enum": [
+          "human",
+          "agent",
+          "system"
+        ],
+        "title": "ActorKind"
+      },
+      "AppendEventResponse": {
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "title": "Event Id"
+          },
+          "seq": {
+            "type": "integer",
+            "title": "Seq"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "event_id",
+          "seq"
+        ],
+        "title": "AppendEventResponse"
+      },
+      "Causality": {
+        "properties": {
+          "parent_event": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Event"
+          },
+          "root_instruction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Root Instruction"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "Causality"
+      },
+      "CreateSessionRequest": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "scenario_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "title": "CreateSessionRequest"
+      },
+      "CreateSessionResponse": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "title": "Session Id"
+          },
+          "join_code": {
+            "type": "string",
+            "title": "Join Code"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "session_id",
+          "join_code"
+        ],
+        "title": "CreateSessionResponse"
+      },
+      "EventType": {
+        "type": "string",
+        "enum": [
+          "doc_update",
+          "instruction",
+          "agent_step",
+          "tool_call",
+          "tool_result",
+          "interrupt",
+          "handoff",
+          "rollback",
+          "join",
+          "leave",
+          "arbitration",
+          "rejected"
+        ],
+        "title": "EventType"
+      },
+      "EventsPage": {
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/SessionEvent"
+            },
+            "type": "array",
+            "title": "Events"
+          },
+          "next_seq": {
+            "type": "integer",
+            "title": "Next Seq"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "events",
+          "next_seq"
+        ],
+        "title": "EventsPage"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "const": true,
+            "title": "Ok",
+            "default": true
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "version"
+        ],
+        "title": "HealthResponse"
+      },
+      "JoinSessionRequest": {
+        "properties": {
+          "join_code": {
+            "type": "string",
+            "title": "Join Code"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "role": {
+            "$ref": "#/components/schemas/ParticipantRole"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "join_code",
+          "display_name",
+          "role"
+        ],
+        "title": "JoinSessionRequest"
+      },
+      "JoinSessionResponse": {
+        "properties": {
+          "participant_id": {
+            "type": "string",
+            "title": "Participant Id"
+          },
+          "snapshot": {
+            "type": "object",
+            "title": "Snapshot"
+          },
+          "catchup_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catchup Summary"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "participant_id",
+          "snapshot"
+        ],
+        "title": "JoinSessionResponse"
+      },
+      "Labels": {
+        "properties": {
+          "serves_participant": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Serves Participant"
+          },
+          "conflict_group": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conflict Group"
+          },
+          "conflict_resolution": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conflict Resolution"
+          },
+          "mast_failure": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mast Failure"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "Labels",
+        "description": "Annotation fields. Null in production; written by annotators."
+      },
+      "ParticipantRole": {
+        "type": "string",
+        "enum": [
+          "author",
+          "reviewer",
+          "observer"
+        ],
+        "title": "ParticipantRole"
+      },
+      "RollbackRequest": {
+        "properties": {
+          "to_seq": {
+            "type": "integer",
+            "title": "To Seq"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "to_seq"
+        ],
+        "title": "RollbackRequest"
+      },
+      "RollbackResponse": {
+        "properties": {
+          "snapshot": {
+            "type": "object",
+            "title": "Snapshot"
+          },
+          "rolled_back_events": {
+            "items": {
+              "$ref": "#/components/schemas/SessionEvent"
+            },
+            "type": "array",
+            "title": "Rolled Back Events"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "snapshot",
+          "rolled_back_events"
+        ],
+        "title": "RollbackResponse"
+      },
+      "SessionEvent": {
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "title": "Event Id"
+          },
+          "session_id": {
+            "type": "string",
+            "title": "Session Id"
+          },
+          "seq": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seq"
+          },
+          "ts": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ts"
+          },
+          "actor": {
+            "$ref": "#/components/schemas/Actor"
+          },
+          "type": {
+            "$ref": "#/components/schemas/EventType"
+          },
+          "payload": {
+            "type": "object",
+            "title": "Payload"
+          },
+          "causality": {
+            "$ref": "#/components/schemas/Causality"
+          },
+          "labels": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Labels"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "event_id",
+          "session_id",
+          "ts",
+          "actor",
+          "type",
+          "payload"
+        ],
+        "title": "SessionEvent",
+        "description": "Append-only event. seq is assigned by the session service on write."
+      },
+      "SessionEventCreate": {
+        "properties": {
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "actor": {
+            "$ref": "#/components/schemas/Actor"
+          },
+          "type": {
+            "$ref": "#/components/schemas/EventType"
+          },
+          "payload": {
+            "type": "object",
+            "title": "Payload"
+          },
+          "causality": {
+            "$ref": "#/components/schemas/Causality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "actor",
+          "type",
+          "payload"
+        ],
+        "title": "SessionEventCreate",
+        "description": "Client write shape: seq is allocated server-side."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
