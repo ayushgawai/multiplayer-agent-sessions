@@ -33,9 +33,11 @@ dist/
 *.pem
 credentials.json
 
-# Model and data downloads (not committed)
-data/mast/
-data/qmsum/
+# Model and data downloads (not committed); keep dir READMEs
+data/mast/**
+!data/mast/README.md
+data/qmsum/**
+!data/qmsum/README.md
 data/sessions/raw/
 checkpoints/
 wandb/
