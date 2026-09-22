@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Build Plan: Multiplayer Agent Sessions, Team 4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#fff;--surface:#f3f6f8;--surface2:#e8eef5;
+  --ink:#14202b;--muted:#5c6f80;--rule:#d6dfe6;--rule2:#9fb1be;
+  --ayush:#1f5fa8;--manav:#a8443a;--naman:#2b7a58;--shriram:#71499b;--pramod:#9a6a00;
+  --ayush-bg:#e9f0f9;--manav-bg:#f9edec;--naman-bg:#e7f2ec;--shriram-bg:#f1ecf7;--pramod-bg:#f8f1e2;
+  --sans:'IBM Plex Sans',system-ui,sans-serif;--serif:'IBM Plex Serif',Georgia,serif;--mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1200px;margin:0 auto;padding:0 28px}
+.masthead{border-bottom:2px solid var(--ink);padding:42px 0 20px}
+.kicker{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin:0 0 10px}
+h1{font-family:var(--serif);font-weight:600;font-size:clamp(28px,4.2vw,44px);line-height:1.08;margin:0 0 12px;letter-spacing:-.015em}
+.dek{font-size:17px;color:var(--muted);max-width:74ch;margin:0}
+.meta{display:flex;flex-wrap:wrap;gap:8px 24px;margin-top:18px;font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+.cols{display:grid;grid-template-columns:216px 1fr;gap:50px;align-items:start;padding:34px 0 90px}
+nav.toc{position:sticky;top:22px;font-size:13.5px}
+nav.toc ol{list-style:none;margin:0;padding:0;counter-reset:s}
+nav.toc li{counter-increment:s;margin:0 0 3px}
+nav.toc a{display:block;padding:3px 0 3px 26px;position:relative;color:var(--muted);text-decoration:none}
+nav.toc a::before{content:counter(s,decimal-leading-zero);position:absolute;left:0;font-family:var(--mono);font-size:11px;color:var(--rule2)}
+nav.toc a:hover{color:var(--ink)}
+main{min-width:0}
+section{padding-top:12px;margin-bottom:54px;scroll-margin-top:18px}
+h2{font-family:var(--serif);font-size:27px;font-weight:600;margin:0 0 4px;letter-spacing:-.01em}
+.h2sub{color:var(--muted);font-size:15px;margin:0 0 20px;max-width:76ch}
+h3{font-size:17.5px;font-weight:600;margin:30px 0 8px}
+h4{font-size:14.5px;font-weight:600;margin:18px 0 6px}
+p{max-width:80ch}
+ul,ol{max-width:80ch;padding-left:20px}
+li{margin-bottom:5px}
+code{font-family:var(--mono);font-size:.885em;background:var(--surface);padding:1px 5px;border-radius:3px}
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px;margin:12px 0 8px}
+.tbl th{text-align:left;font-weight:600;font-size:11.8px;font-family:var(--mono);color:var(--muted);border-bottom:1.5px solid var(--rule2);padding:8px 10px;vertical-align:bottom}
+.tbl td{border-bottom:1px solid var(--rule);padding:9px 10px;vertical-align:top}
+.tbl tr:hover td{background:var(--surface)}
+.tbl code{background:none;padding:0}
+.scroll{overflow-x:auto}
+.own{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:600;padding:1.5px 6px;border-radius:3px;white-space:nowrap}
+.o-a{color:var(--ayush);background:var(--ayush-bg)}.o-m{color:var(--manav);background:var(--manav-bg)}
+.o-n{color:var(--naman);background:var(--naman-bg)}.o-s{color:var(--shriram);background:var(--shriram-bg)}
+.o-p{color:var(--pramod);background:var(--pramod-bg)}
+pre{background:var(--ink);color:#e6edf3;font-family:var(--mono);font-size:12.3px;line-height:1.6;padding:15px 17px;border-radius:5px;overflow-x:auto;margin:12px 0}
+pre .c{color:#8fa6b8}pre .k{color:#8fc7ff}pre .s{color:#a5d6a7}
+figure{margin:20px 0 8px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{font-size:12.5px;color:var(--muted);margin-top:8px;font-family:var(--mono)}
+.spec{border-left:3px solid var(--rule2);background:var(--surface);padding:12px 16px;margin:16px 0;font-size:14.5px}
+.wp{border:1px solid var(--rule);border-top:4px solid var(--c);margin:0 0 22px;background:var(--paper)}
+.wp-head{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:baseline;padding:14px 18px 10px;border-bottom:1px solid var(--rule);background:var(--bg)}
+.wp-head .n{font-weight:700;font-size:18px}
+.wp-head .t{font-family:var(--mono);font-size:12px;color:var(--c)}
+.wp-body{padding:14px 18px 18px}
+.wp-body h4{margin-top:16px}.wp-body h4:first-child{margin-top:0}
+.wp-body ul,.wp-body ol{font-size:14.3px;margin:6px 0}
+.wp-body pre{font-size:11.7px}
+svg text{font-family:var(--sans)}
+.dm{font-family:var(--mono);font-size:10.5px;fill:var(--muted)}
+.dms{font-family:var(--mono);font-size:9.5px;fill:var(--muted)}
+.dt{font-size:13px;font-weight:600;fill:var(--ink)}
+.dw{font-size:10.5px;fill:#fff;font-weight:500;font-family:var(--sans)}
+footer{border-top:2px solid var(--ink);padding:20px 0 60px;font-size:13px;color:var(--muted)}
+@media (max-width:960px){
+  .cols{grid-template-columns:1fr;gap:0}
+  nav.toc{position:static;margin-bottom:34px;border-bottom:1px solid var(--rule);padding-bottom:18px}
+  nav.toc ol{columns:2;column-gap:22px}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="kicker">DATA 298A · Section 21 · Team 4 · Topic 4 · Build specification v2</p>
+    <h1>Multiplayer Agent Sessions</h1>
+    <p class="dek">Build specification. Four tasks, four candidate models per task, one documented winner each, selected through a shared evaluation harness. This document defines the system, the contracts, the candidate matrix, and the per-person build packages. It is written to be handed directly to a coding agent alongside one person's package.</p>
+    <div class="meta">
+      <span>github.com/ayushgawai/multiplayer-agent-sessions</span>
+      <span>linear.app/data-298a-team-4/team/DAT</span>
+      <span>Spec v2 · 19 September 2026</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="cols">
+    <nav class="toc" aria-label="Contents">
+      <ol>
+        <li><a href="#system">System</a></li>
+        <li><a href="#stack">Stack and pins</a></li>
+        <li><a href="#repo">Repository layout</a></li>
+        <li><a href="#contracts">Data contracts</a></li>
+        <li><a href="#api">Service interfaces</a></li>
+        <li><a href="#harness">Evaluation harness</a></li>
+        <li><a href="#matrix">Candidate matrix</a></li>
+        <li><a href="#data">Datasets and splits</a></li>
+        <li><a href="#packages">Build packages</a></li>
+        <li><a href="#collab">Shared responsibilities</a></li>
+        <li><a href="#milestones">Milestones</a></li>
+        <li><a href="#agent">Agent briefing</a></li>
+      </ol>
+    </nav>
+
+    <main>
+
+<!-- 1 -->
+<section id="system">
+  <h2>System</h2>
+  <p class="h2sub">A shared live session in which several humans and several agents work in one workspace with concurrent edits, hand-off, interruption and rollback. Four learned models sit on the platform. One published baseline is reproduced separately.</p>
+
+  <figure>
+    <svg viewBox="0 0 980 470" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="System architecture across five layers">
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#9fb1be"/></marker></defs>
+      <rect x="0" y="8" width="980" height="78" fill="#f9edec" opacity=".55"/>
+      <rect x="0" y="100" width="980" height="78" fill="#e9f0f9" opacity=".55"/>
+      <rect x="0" y="192" width="980" height="78" fill="#f1ecf7" opacity=".55"/>
+      <rect x="0" y="284" width="980" height="86" fill="#f3f6f8"/>
+      <rect x="0" y="384" width="980" height="78" fill="#f8f1e2" opacity=".55"/>
+      <text class="dm" x="8" y="24" font-weight="600">CLIENT · MANAV</text>
+      <text class="dm" x="8" y="116" font-weight="600">SESSION SERVICE · AYUSH</text>
+      <text class="dm" x="8" y="208" font-weight="600">AGENT RUNTIME · SHRIRAM</text>
+      <text class="dm" x="8" y="298" font-weight="600">MODEL SERVING</text>
+      <text class="dm" x="8" y="400" font-weight="600">DATA AND EVALUATION · NAMAN + PRAMOD</text>
+
+      <rect x="150" y="32" width="176" height="44" rx="3" fill="#fff" stroke="#d6dfe6"/><text class="dt" x="162" y="51">Collaborative editor</text><text class="dms" x="162" y="66">React + Yjs binding</text>
+      <rect x="342" y="32" width="176" height="44" rx="3" fill="#fff" stroke="#d6dfe6"/><text class="dt" x="354" y="51">Agent console</text><text class="dms" x="354" y="66">direct, interrupt, hand off</text>
+      <rect x="534" y="32" width="176" height="44" rx="3" fill="#fff" stroke="#d6dfe6"/><text class="dt" x="546" y="51">Conflict tray</text><text class="dms" x="546" y="66">arbitration prompts</text>
+      <rect x="726" y="32" width="176" height="44" rx="3" fill="#fff" stroke="#d6dfe6"/><text class="dt" x="738" y="51">Replay viewer</text><text class="dms" x="738" y="66">rollback to any event</text>
+
+      <rect x="150" y="124" width="176" height="44" rx="3" fill="#fff" stroke="#d6dfe6"/><text class="dt" x="162" y="143">CRDT authority</text><text class="dms" x="162" y="158">y-websocket, doc state</text>
+      <rect x="342" y="124" width="176" height="44" rx="3" fill="#fff" stroke="#d6dfe6"/><text class="dt" x="354" y="143">Event log</text><text class="dms" x="354" y="158">append only, Postgres</text>
+      <rect x="534" y="124" width="176" height="44" rx="3" fill="#fff" stroke="#d6dfe6"/><text class="dt" x="546" y="143">Permissions</text><text class="dms" x="546" y="158">role per participant</text>
+      <rect x="726" y="124" width="176" height="44" rx="3" fill="#fff" stroke="#d6dfe6"/><text class="dt" x="738" y="143">Snapshot and rewind</text><text class="dms" x="738" y="158">event replay to state</text>
+
+      <rect x="150" y="216" width="228" height="44" rx="3" fill="#fff" stroke="#d6dfe6"/><text class="dt" x="162" y="235">LangGraph agent loop</text><text class="dms" x="162" y="250">plan, act, observe</text>
+      <rect x="394" y="216" width="228" height="44" rx="3" fill="#fff" stroke="#d6dfe6"/><text class="dt" x="406" y="235">Tool sandbox</text><text class="dms" x="406" y="250">five tools, timeouts, caps</text>
+      <rect x="638" y="216" width="264" height="44" rx="3" fill="#fff" stroke="#d6dfe6"/><text class="dt" x="650" y="235">OpenTelemetry tracer</text><text class="dms" x="650" y="250">span per step, session id attached</text>
+
+      <rect x="56" y="308" width="204" height="52" rx="3" fill="#fff" stroke="#1f5fa8" stroke-width="1.8"/><text class="dt" x="68" y="327">M1 Catch-up summarizer</text><text class="dms" x="68" y="342">4 candidates · ROUGE, BERTScore</text><text class="dms" x="68" y="355" fill="#1f5fa8">Ayush</text>
+      <rect x="272" y="308" width="204" height="52" rx="3" fill="#fff" stroke="#2b7a58" stroke-width="1.8"/><text class="dt" x="284" y="327">M2 Intent attribution</text><text class="dms" x="284" y="342">4 candidates · macro-F1</text><text class="dms" x="284" y="355" fill="#2b7a58">Naman</text>
+      <rect x="488" y="308" width="204" height="52" rx="3" fill="#fff" stroke="#a8443a" stroke-width="1.8"/><text class="dt" x="500" y="327">M3 Merge arbitration</text><text class="dms" x="500" y="342">4 candidates · macro-F1, escalation</text><text class="dms" x="500" y="355" fill="#a8443a">Manav</text>
+      <rect x="704" y="308" width="204" height="52" rx="3" fill="#fff" stroke="#71499b" stroke-width="1.8"/><text class="dt" x="716" y="327">M4 Decompose and route</text><text class="dms" x="716" y="342">4 candidates · DAG validity, routing</text><text class="dms" x="716" y="355" fill="#71499b">Shriram</text>
+
+      <rect x="150" y="408" width="228" height="42" rx="3" fill="#fff" stroke="#d6dfe6"/><text class="dt" x="162" y="427">MAST-Data + QMSum</text><text class="dms" x="162" y="441">public, obtained</text>
+      <rect x="394" y="408" width="228" height="42" rx="3" fill="#fff" stroke="#d6dfe6"/><text class="dt" x="406" y="427">Session corpus</text><text class="dms" x="406" y="441">recorded, anonymised, annotated</text>
+      <rect x="638" y="408" width="264" height="42" rx="3" fill="#fff" stroke="#9a6a00" stroke-width="1.8"/><text class="dt" x="650" y="427">eval/harness.py + baseline</text><text class="dms" x="650" y="441">20 candidates, 3 seeds each</text>
+
+      <path d="M238 78 L238 122" stroke="#9fb1be" stroke-width="1.4" fill="none" marker-end="url(#ah)"/>
+      <path d="M430 122 L430 80" stroke="#9fb1be" stroke-width="1.4" fill="none" marker-end="url(#ah)"/>
+      <path d="M430 170 L264 214" stroke="#9fb1be" stroke-width="1.4" fill="none" marker-end="url(#ah)"/>
+      <path d="M264 262 L160 306" stroke="#9fb1be" stroke-width="1.4" fill="none" marker-end="url(#ah)"/>
+      <path d="M508 262 L560 306" stroke="#9fb1be" stroke-width="1.4" fill="none" marker-end="url(#ah)"/>
+      <path d="M770 262 L800 306" stroke="#9fb1be" stroke-width="1.4" fill="none" marker-end="url(#ah)"/>
+      <path d="M380 262 L376 306" stroke="#9fb1be" stroke-width="1.4" fill="none" marker-end="url(#ah)"/>
+      <path d="M814 170 L780 214" stroke="#9fb1be" stroke-width="1.4" fill="none" marker-end="url(#ah)"/>
+      <path d="M430 170 L460 406" stroke="#9fb1be" stroke-width="1.4" fill="none" marker-end="url(#ah)"/>
+      <path d="M800 362 L790 406" stroke="#9fb1be" stroke-width="1.4" fill="none" marker-end="url(#ah)"/>
+      <path d="M160 362 L240 406" stroke="#9fb1be" stroke-width="1.4" fill="none" marker-end="url(#ah)"/>
+    </svg>
+    <figcaption>Fig 1. Layer boundaries are network calls or committed file formats. No two owners share process memory.</figcaption>
+  </figure>
+
+  <h3>Capabilities</h3>
+  <div class="scroll">
+  <table class="tbl">
+    <thead><tr><th>Capability</th><th>Definition</th><th>Acceptance test</th></tr></thead>
+    <tbody>
+      <tr><td>Concurrent edit</td><td>Two humans and one agent change the same document simultaneously without lost updates</td><td>Scripted concurrent-edit test: 3 writers, 200 ops, final state converges on all clients</td></tr>
+      <tr><td>Hand-off</td><td>A running agent task transfers to another participant, who receives a generated session summary</td><td>Hand-off produces a <code>handoff</code> event and an M1 summary within 5 s</td></tr>
+      <tr><td>Interruption</td><td>Any participant stops a running agent mid-task and redirects it</td><td>Agent halts within 2 s, session state consistent, <code>interrupt</code> event logged</td></tr>
+      <tr><td>Rollback</td><td>Session rewinds to any prior sequence number</td><td>Replay test: state rebuilt from events alone equals live state</td></tr>
+      <tr><td>Attribution</td><td>Every agent action is attributable to the participant whose instruction caused it</td><td>Every <code>agent_step</code> event carries a non-null <code>causality.root_instruction</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Non-goals</h3>
+  <ul>
+    <li>Production authentication. Sessions use a join code and a display name.</li>
+    <li>New CRDT algorithm. Yjs is used as a library and treated as correct.</li>
+    <li>Mobile app, offline mode, internationalisation.</li>
+    <li>Open-ended agent tool use. Five fixed tools, defined in section 5.</li>
+    <li>Horizontal scaling. One server process, 8 participants per session, 5 concurrent sessions.</li>
+    <li>Full fine-tuning above 4B parameters. LoRA adapters only.</li>
+  </ul>
+</section>
+
+<!-- 2 -->
+<section id="stack">
+  <h2>Stack and pins</h2>
+  <p class="h2sub">Pinned in <code>requirements.txt</code>, locked with <code>pip freeze</code> into <code>requirements.lock.txt</code>. Model weights are pinned by commit revision hash, never by name alone.</p>
+
+  <div class="scroll">
+  <table class="tbl">
+    <thead><tr><th>Layer</th><th>Package</th><th>Pin</th><th>Used by</th></tr></thead>
+    <tbody>
+      <tr><td rowspan="6">Services</td><td>python</td><td>3.11.x</td><td>all Python</td></tr>
+      <tr><td>fastapi</td><td>0.115.*</td><td>session service, serving</td></tr>
+      <tr><td>uvicorn[standard]</td><td>0.32.*</td><td>session service, serving</td></tr>
+      <tr><td>sqlalchemy</td><td>2.0.*</td><td>event log</td></tr>
+      <tr><td>psycopg[binary]</td><td>3.2.*</td><td>event log</td></tr>
+      <tr><td>pydantic</td><td>2.9.*</td><td>all contracts</td></tr>
+      <tr><td rowspan="3">Runtime</td><td>langgraph</td><td>0.2.*</td><td>agent runtime</td></tr>
+      <tr><td>opentelemetry-sdk</td><td>1.27.*</td><td>tracing</td></tr>
+      <tr><td>opentelemetry-exporter-otlp</td><td>1.27.*</td><td>tracing</td></tr>
+      <tr><td rowspan="6">Models</td><td>torch</td><td>2.4.*</td><td>all training</td></tr>
+      <tr><td>transformers</td><td>4.44.*</td><td>all training</td></tr>
+      <tr><td>peft</td><td>0.13.*</td><td>LoRA</td></tr>
+      <tr><td>bitsandbytes</td><td>0.44.*</td><td>QLoRA</td></tr>
+      <tr><td>datasets</td><td>3.0.*</td><td>loading</td></tr>
+      <tr><td>lightgbm</td><td>4.5.*</td><td>M4 router</td></tr>
+      <tr><td rowspan="4">Evaluation</td><td>rouge-score</td><td>0.1.2</td><td>M1</td></tr>
+      <tr><td>bert-score</td><td>0.3.13</td><td>M1</td></tr>
+      <tr><td>scikit-learn</td><td>1.5.*</td><td>M2, M3, M4</td></tr>
+      <tr><td>mlflow</td><td>2.16.*</td><td>run tracking</td></tr>
+      <tr><td rowspan="6">Client</td><td>node</td><td>20 LTS</td><td>client, CRDT server</td></tr>
+      <tr><td>react</td><td>18.3.*</td><td>client</td></tr>
+      <tr><td>vite</td><td>5.4.*</td><td>build</td></tr>
+      <tr><td>typescript</td><td>5.6.*</td><td>client</td></tr>
+      <tr><td>yjs / y-websocket</td><td>13.6.* / 2.0.*</td><td>CRDT</td></tr>
+      <tr><td>@tiptap/react</td><td>2.8.*</td><td>editor</td></tr>
+      <tr><td rowspan="4">Infra</td><td>postgres</td><td>16</td><td>event log</td></tr>
+      <tr><td>redis</td><td>7</td><td>fan-out</td></tr>
+      <tr><td>jaeger</td><td>1.60</td><td>trace viewing</td></tr>
+      <tr><td>docker compose</td><td>v2</td><td>local stack</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Model weights</h3>
+  <div class="scroll">
+  <table class="tbl">
+    <thead><tr><th>Handle</th><th>Approx size</th><th>Mode</th><th>Used in</th></tr></thead>
+    <tbody>
+      <tr><td><code>answerdotai/ModernBERT-base</code></td><td>149M</td><td>full fine-tune</td><td>m1-a, m2-c, m3-b, base-d</td></tr>
+      <tr><td><code>microsoft/deberta-v3-base</code></td><td>184M</td><td>full fine-tune</td><td>m2-b</td></tr>
+      <tr><td>Qwen3.5 1.7B instruct</td><td>1.7B</td><td>LoRA</td><td>m1-b, m2-d</td></tr>
+      <tr><td>Qwen3.5 4B instruct</td><td>4B</td><td>LoRA and prompt</td><td>m1-c, m3-c, m3-d, m4-b, m4-d, base-c</td></tr>
+      <tr><td>Gemma 4 E4B instruct</td><td>~4B effective</td><td>LoRA and prompt</td><td>m1-d, m4-c</td></tr>
+      <tr><td>Hosted frontier reasoning model</td><td>API</td><td>prompt</td><td>base-a</td></tr>
+      <tr><td>Hosted mid-tier model</td><td>API</td><td>prompt</td><td>base-b</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Resolve each handle to a concrete Hugging Face repository id and commit hash before first use, and record both in the candidate config. The config is the source of truth, not this table.</p>
+
+  <h3>Checkpointing</h3>
+  <p>All training writes LoRA adapters or encoder weights under 500 MB. Every training script implements:</p>
+  <ul>
+    <li><code>--save_steps 200</code>, pushing the adapter to remote storage on each save</li>
+    <li><code>--resume_from_checkpoint &lt;remote-uri&gt;</code>, restoring optimizer state and step count</li>
+    <li>Base weights re-downloaded from Hugging Face on every run; nothing large persists on local disk</li>
+  </ul>
+  <p>Implemented once in <code>models/common/checkpointing.py</code> and imported by all five training scripts.</p>
+</section>
+
+<!-- 3 -->
+<section id="repo">
+  <h2>Repository layout</h2>
+  <p class="h2sub">Directory ownership is exclusive. No two people edit the same file. Cross-boundary interaction is a network call or a committed file format.</p>
+
+<pre><span class="c"># github.com/ayushgawai/multiplayer-agent-sessions</span>
+
+client/                      <span class="c">MANAV</span>
+  src/components/            Editor.tsx AgentConsole.tsx ConflictTray.tsx ReplayViewer.tsx
+  src/lib/crdt.ts            Yjs doc, awareness, provider
+  src/lib/api.ts             generated from session-service openapi.json
+  src/mocks/                 mock session service for offline development
+crdt-server/                 <span class="c">MANAV</span> y-websocket authority, Node
+
+session-service/             <span class="c">AYUSH</span>
+  app/schemas.py             SessionEvent and all Pydantic contracts
+  app/routes/                sessions.py events.py participants.py agents.py
+  app/models/                SQLAlchemy tables
+  app/replay.py              event log to state
+  migrations/                alembic
+serving/                     <span class="c">AYUSH</span>
+  serve.py                   uniform predict interface
+  adapters/m1.py m2.py m3.py m4.py
+
+agent-runtime/               <span class="c">SHRIRAM</span>
+  runtime/graph.py           plan, act, observe loop
+  runtime/tools/             web_search.py doc_read.py doc_write.py table_build.py calc.py
+  runtime/tracing.py         OTel spans
+  runtime/interrupt.py       cancellation and resume
+
+models/
+  common/checkpointing.py    <span class="c">AYUSH</span>  shared by all training scripts
+  m1_catchup/                <span class="c">AYUSH</span>   train.py infer.py MODEL_CARD.md
+  m2_intent/                 <span class="c">NAMAN</span>   train.py infer.py MODEL_CARD.md
+  m3_arbitration/            <span class="c">MANAV</span>   train.py infer.py prompt_fewshot.txt MODEL_CARD.md
+  m4_routing/                <span class="c">SHRIRAM</span> planner_prompt.txt router_train.py MODEL_CARD.md
+  baseline_mast/             <span class="c">PRAMOD</span>  run_judge.py judge_prompt.txt MODEL_CARD.md
+
+data/                        <span class="c">NAMAN</span>
+  mast/  qmsum/              downloaded, not committed
+  seed/                      m2_seed.jsonl m3_seed.jsonl m4_seed.jsonl
+  sessions/raw/              exported event logs, JSONL
+  sessions/annotated/        labelled, JSONL, plus AGREEMENT.md
+  splits/                    m1_v1/ m2_v1/ m3_v1/ m4_v1/  frozen and committed
+  scripts/                   download_*.py export_sessions.py anonymise.py make_splits.py stats.py
+tools/annotator/             <span class="c">NAMAN</span> Streamlit labelling app
+
+eval/                        <span class="c">PRAMOD, exclusive</span>
+  harness.py                 single entry point for every candidate
+  compare.py                 emits the per-task comparison table
+  seeding.py                 seeds python, numpy, torch, dataloader
+  metrics/                   rouge.py classification.py latency.py dag.py
+  configs/                   m1-a.yaml ... base-d.yaml   20 files
+  results/                   one JSON per candidate, committed
+
+tests/                       <span class="c">SHRIRAM</span>
+  test_replay.py test_contracts.py test_tools.py test_harness.py test_concurrent_edit.py
+
+docs/
+  build-plan.html            this document
+  protocol.md                <span class="c">PRAMOD</span> frozen metric definitions
+  tables/                    m1_bakeoff.md ... base_bakeoff.md
+  verification/              <span class="c">SHRIRAM</span> independent reproduction sign-offs
+  decisions/                 ADR-001.md, ADR-002.md ...
+  reports/                   <span class="c">NAMAN</span> progress reports, workbooks, final report
+  slides/                    <span class="c">MANAV</span>
+
+infra/docker-compose.yml  Dockerfile.*
+.github/workflows/ci.yml
+requirements.txt  requirements.lock.txt  .python-version  .nvmrc</pre>
+
+  <h3>Conventions</h3>
+  <ul>
+    <li>Branches: <code>&lt;owner&gt;/&lt;linear-id&gt;-&lt;slug&gt;</code>, for example <code>naman/DAT-42-freeze-m2-split</code>.</li>
+    <li><code>main</code> is protected. One approving review, from the owner of any directory the change touches.</li>
+    <li>Commit messages start with the Linear issue id.</li>
+    <li>Any change to a schema, an API route or a metric definition requires an ADR in <code>docs/decisions/</code>.</li>
+    <li>Python: type hints throughout, <code>ruff</code> clean, line length 100.</li>
+    <li>TypeScript: strict mode, no <code>any</code>.</li>
+  </ul>
+</section>
+
+<!-- 4 -->
+<section id="contracts">
+  <h2>Data contracts</h2>
+  <p class="h2sub">Defined once in <code>session-service/app/schemas.py</code> as Pydantic v2 models, exported to <code>openapi.json</code>, and generated into TypeScript for the client. Changing one requires an ADR.</p>
+
+  <h3>SessionEvent</h3>
+  <p>Every action in the system becomes exactly one SessionEvent, appended to Postgres and broadcast over WebSocket. The event log is the audit trail, the input to replay, and the training data for M2, M3 and M4. No state mutation occurs except by appending an event.</p>
+
+<pre>{
+  <span class="k">"event_id"</span>: <span class="s">"evt_01J8X..."</span>,            <span class="c">// ULID, lexicographically sortable</span>
+  <span class="k">"session_id"</span>: <span class="s">"ses_01J8W..."</span>,
+  <span class="k">"seq"</span>: 1043,                              <span class="c">// monotonic integer per session</span>
+  <span class="k">"ts"</span>: <span class="s">"2026-09-19T18:22:04.117Z"</span>,        <span class="c">// server time, UTC, ms precision</span>
+  <span class="k">"actor"</span>: {
+    <span class="k">"kind"</span>: <span class="s">"human"</span>,                       <span class="c">// human | agent | system</span>
+    <span class="k">"id"</span>: <span class="s">"p_3"</span>,
+    <span class="k">"display_name"</span>: <span class="s">"Naman"</span>,               <span class="c">// stripped by anonymise.py before commit</span>
+    <span class="k">"role"</span>: <span class="s">"author"</span>                        <span class="c">// author | reviewer | observer</span>
+  },
+  <span class="k">"type"</span>: <span class="s">"instruction"</span>,
+  <span class="c">// doc_update | instruction | agent_step | tool_call | tool_result</span>
+  <span class="c">// interrupt | handoff | rollback | join | leave | arbitration | rejected</span>
+  <span class="k">"payload"</span>: {                               <span class="c">// shape depends on type, one model each</span>
+    <span class="k">"text"</span>: <span class="s">"pull the Q3 numbers into the table"</span>,
+    <span class="k">"target_agent"</span>: <span class="s">"agent_researcher"</span>,
+    <span class="k">"reply_to_event"</span>: <span class="s">null</span>
+  },
+  <span class="k">"causality"</span>: {
+    <span class="k">"parent_event"</span>: <span class="s">"evt_01J8X..."</span>,
+    <span class="k">"root_instruction"</span>: <span class="s">"evt_01J8V..."</span>      <span class="c">// M2 predicts which participant this serves</span>
+  },
+  <span class="k">"labels"</span>: {                                 <span class="c">// null in production, written by annotators</span>
+    <span class="k">"serves_participant"</span>: <span class="s">"p_1"</span>,             <span class="c">// M2 gold, or "shared"</span>
+    <span class="k">"conflict_group"</span>: <span class="s">"cg_07"</span>,              <span class="c">// M3 gold grouping</span>
+    <span class="k">"conflict_resolution"</span>: <span class="s">"merge_both"</span>,    <span class="c">// M3 gold label</span>
+    <span class="k">"mast_failure"</span>: <span class="s">null</span>                    <span class="c">// MAST taxonomy code, 14 modes</span>
+  }
+}</pre>
+
+  <h3>Derived formats</h3>
+  <div class="scroll">
+  <table class="tbl">
+    <thead><tr><th>Contract</th><th>File</th><th>Produced by</th><th>Consumed by</th><th>Shape</th></tr></thead>
+    <tbody>
+      <tr><td><code>CatchupExample</code></td><td><code>data/splits/m1_v1/*.jsonl</code></td><td>QMSum loader, session exporter</td><td>M1 candidates</td><td><code>{query, context_spans[], reference_summary}</code></td></tr>
+      <tr><td><code>AttributionExample</code></td><td><code>data/splits/m2_v1/*.jsonl</code></td><td>annotator</td><td>M2 candidates</td><td><code>{instruction, event_window[], roster[], gold_actor}</code></td></tr>
+      <tr><td><code>ConflictCase</code></td><td><code>data/splits/m3_v1/*.jsonl</code></td><td>annotator</td><td>M3 candidates</td><td><code>{instr_a, instr_b, actor_a, actor_b, gap_seconds, doc_context, gold_resolution}</code></td></tr>
+      <tr><td><code>RoutingExample</code></td><td><code>data/splits/m4_v1/*.jsonl</code></td><td>Shriram seed + session export</td><td>M4 candidates</td><td><code>{goal, gold_dag, gold_assignment[], tool_availability[]}</code></td></tr>
+      <tr><td><code>TraceSpan</code></td><td>OTLP, exported JSONL</td><td>agent runtime</td><td>eval harness, failure analysis</td><td>OTel span with <code>session_id</code> and <code>event_id</code> attributes</td></tr>
+      <tr><td><code>CandidateResult</code></td><td><code>eval/results/&lt;id&gt;.json</code></td><td>harness</td><td>compare.py, model cards</td><td>section 6</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Anonymisation</h3>
+  <p><code>data/scripts/anonymise.py</code> runs before any session data is committed. It replaces <code>actor.display_name</code> with <code>p_1 .. p_n</code> per session, strips any free-text occurrence of those names from payloads, and rewrites <code>actor.id</code> consistently within the session. Output is written to <code>data/sessions/raw/</code>; the un-anonymised source never enters the repository.</p>
+</section>
+
+<!-- 5 -->
+<section id="api">
+  <h2>Service interfaces</h2>
+  <p class="h2sub">Complete surface. Adding a route requires an ADR.</p>
+
+  <div class="scroll">
+  <table class="tbl">
+    <thead><tr><th>Method</th><th>Path</th><th>Request</th><th>Response</th><th>Owner</th></tr></thead>
+    <tbody>
+      <tr><td><code>POST</code></td><td><code>/v1/sessions</code></td><td><code>{title, scenario_id?}</code></td><td><code>{session_id, join_code}</code></td><td><span class="own o-a">Ayush</span></td></tr>
+      <tr><td><code>POST</code></td><td><code>/v1/sessions/{id}/join</code></td><td><code>{join_code, display_name, role}</code></td><td><code>{participant_id, snapshot, catchup_summary}</code></td><td><span class="own o-a">Ayush</span></td></tr>
+      <tr><td><code>GET</code></td><td><code>/v1/sessions/{id}/events</code></td><td><code>?since={seq}&limit={n}</code></td><td><code>{events[], next_seq}</code></td><td><span class="own o-a">Ayush</span></td></tr>
+      <tr><td><code>POST</code></td><td><code>/v1/sessions/{id}/events</code></td><td><code>SessionEvent</code> without <code>seq</code></td><td><code>{event_id, seq}</code></td><td><span class="own o-a">Ayush</span></td></tr>
+      <tr><td><code>POST</code></td><td><code>/v1/sessions/{id}/rollback</code></td><td><code>{to_seq}</code></td><td><code>{snapshot, rolled_back_events}</code></td><td><span class="own o-a">Ayush</span></td></tr>
+      <tr><td><code>WS</code></td><td><code>/v1/sessions/{id}/stream</code></td><td>subscribe</td><td>SessionEvent stream</td><td><span class="own o-a">Ayush</span></td></tr>
+      <tr><td><code>WS</code></td><td><code>/crdt/{id}</code></td><td>y-websocket protocol</td><td>document sync</td><td><span class="own o-m">Manav</span></td></tr>
+      <tr><td><code>POST</code></td><td><code>/v1/agents/{id}/direct</code></td><td><code>{session_id, instruction, actor_id}</code></td><td><code>{run_id}</code></td><td><span class="own o-s">Shriram</span></td></tr>
+      <tr><td><code>POST</code></td><td><code>/v1/agents/{id}/interrupt</code></td><td><code>{run_id, reason}</code></td><td><code>{halted_at_step, state}</code></td><td><span class="own o-s">Shriram</span></td></tr>
+      <tr><td><code>POST</code></td><td><code>/v1/agents/{id}/handoff</code></td><td><code>{run_id, to_participant}</code></td><td><code>{summary, run_id}</code></td><td><span class="own o-s">Shriram</span></td></tr>
+      <tr><td><code>POST</code></td><td><code>/v1/models/{model_id}/predict</code></td><td><code>{inputs, params}</code></td><td><code>{model_id, version, outputs, latency_ms, seed}</code></td><td><span class="own o-a">Ayush</span></td></tr>
+      <tr><td><code>GET</code></td><td><code>/healthz</code></td><td>none</td><td><code>{ok, version}</code></td><td>each owner</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Uniform model interface</h3>
+  <p>All four winning models and every bake-off candidate are served through one shape, so the harness and the runtime each need a single client.</p>
+<pre><span class="c">POST /v1/models/{model_id}/predict</span>
+{
+  <span class="k">"inputs"</span>: { ... },        <span class="c">// documented in models/&lt;task&gt;/README.md</span>
+  <span class="k">"params"</span>: { <span class="k">"seed"</span>: 13, <span class="k">"max_new_tokens"</span>: 256, <span class="k">"temperature"</span>: 0.0 }
+}
+<span class="c">→ 200</span>
+{
+  <span class="k">"model_id"</span>: <span class="s">"m1"</span>,
+  <span class="k">"version"</span>: <span class="s">"m1-c@a3f91c2"</span>,   <span class="c">// candidate id @ git sha</span>
+  <span class="k">"outputs"</span>: { ... },
+  <span class="k">"latency_ms"</span>: 412,
+  <span class="k">"seed"</span>: 13
+}</pre>
+
+  <h3>Agent tools</h3>
+  <div class="scroll">
+  <table class="tbl">
+    <thead><tr><th>Tool</th><th>Signature</th><th>Timeout</th><th>Cap</th><th>Emits</th></tr></thead>
+    <tbody>
+      <tr><td><code>web_search</code></td><td><code>(query: str) -&gt; list[Result]</code></td><td>10 s</td><td>5 results</td><td><code>tool_call</code>, <code>tool_result</code></td></tr>
+      <tr><td><code>doc_read</code></td><td><code>(range: Span) -&gt; str</code></td><td>2 s</td><td>8,000 chars</td><td><code>tool_call</code>, <code>tool_result</code></td></tr>
+      <tr><td><code>doc_write</code></td><td><code>(range: Span, text: str) -&gt; Ack</code></td><td>2 s</td><td>4,000 chars</td><td><code>tool_call</code>, <code>doc_update</code></td></tr>
+      <tr><td><code>table_build</code></td><td><code>(rows: list[dict]) -&gt; TableId</code></td><td>5 s</td><td>200 rows</td><td><code>tool_call</code>, <code>doc_update</code></td></tr>
+      <tr><td><code>calc</code></td><td><code>(expr: str) -&gt; float</code></td><td>1 s</td><td>no I/O, no imports</td><td><code>tool_call</code>, <code>tool_result</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- 6 -->
+<section id="harness">
+  <h2>Evaluation harness</h2>
+  <p class="h2sub">One entry point for all 20 candidates. Built by <span class="own o-p">Pramod</span> in <code>eval/</code>, which he owns exclusively. No evaluation loop, metric implementation or seeding logic exists anywhere else in the repository.</p>
+
+  <figure>
+    <svg viewBox="0 0 980 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bake-off flow">
+      <defs><marker id="b1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#9fb1be"/></marker></defs>
+      <rect x="10" y="60" width="126" height="56" rx="4" fill="#fff" stroke="#d6dfe6" stroke-width="1.2"/>
+      <text class="dm" x="73" y="82" text-anchor="middle" fill="#14202b">frozen split</text><text class="dms" x="73" y="97" text-anchor="middle">committed before</text><text class="dms" x="73" y="109" text-anchor="middle">any candidate runs</text>
+      <path d="M138 88 L160 88" stroke="#9fb1be" stroke-width="1.3" fill="none" marker-end="url(#b1)"/>
+      <rect x="160" y="18" width="150" height="32" rx="4" fill="#fff" stroke="#9fb1be" stroke-width="1.2"/><text class="dms" x="235" y="38" text-anchor="middle" fill="#14202b">candidate a · seeds 13,29,47</text>
+      <rect x="160" y="58" width="150" height="32" rx="4" fill="#fff" stroke="#9fb1be" stroke-width="1.2"/><text class="dms" x="235" y="78" text-anchor="middle" fill="#14202b">candidate b · seeds 13,29,47</text>
+      <rect x="160" y="98" width="150" height="32" rx="4" fill="#fff" stroke="#9fb1be" stroke-width="1.2"/><text class="dms" x="235" y="118" text-anchor="middle" fill="#14202b">candidate c · seeds 13,29,47</text>
+      <rect x="160" y="138" width="150" height="32" rx="4" fill="#fff" stroke="#9fb1be" stroke-width="1.2"/><text class="dms" x="235" y="158" text-anchor="middle" fill="#14202b">candidate d · seeds 13,29,47</text>
+      <path d="M312 34 L346 80" stroke="#9fb1be" stroke-width="1.3" fill="none" marker-end="url(#b1)"/>
+      <path d="M312 74 L346 88" stroke="#9fb1be" stroke-width="1.3" fill="none" marker-end="url(#b1)"/>
+      <path d="M312 114 L346 96" stroke="#9fb1be" stroke-width="1.3" fill="none" marker-end="url(#b1)"/>
+      <path d="M312 154 L346 104" stroke="#9fb1be" stroke-width="1.3" fill="none" marker-end="url(#b1)"/>
+      <rect x="346" y="60" width="152" height="56" rx="4" fill="#f8f1e2" stroke="#9a6a00" stroke-width="1.6"/>
+      <text class="dm" x="422" y="82" text-anchor="middle" fill="#14202b">eval/harness.py</text><text class="dms" x="422" y="97" text-anchor="middle">identical metrics,</text><text class="dms" x="422" y="109" text-anchor="middle">budget and prompts</text>
+      <path d="M500 88 L522 88" stroke="#9fb1be" stroke-width="1.3" fill="none" marker-end="url(#b1)"/>
+      <rect x="522" y="48" width="172" height="80" rx="4" fill="#fff" stroke="#d6dfe6" stroke-width="1.2"/>
+      <text class="dm" x="608" y="68" text-anchor="middle" fill="#14202b">eval/results/*.json</text>
+      <text class="dms" x="608" y="85" text-anchor="middle">quality · latency p50/p95</text>
+      <text class="dms" x="608" y="98" text-anchor="middle">peak VRAM · cost</text>
+      <text class="dms" x="608" y="116" text-anchor="middle">failure counts · mean ± std</text>
+      <path d="M696 88 L718 88" stroke="#9fb1be" stroke-width="1.3" fill="none" marker-end="url(#b1)"/>
+      <rect x="718" y="48" width="250" height="80" rx="4" fill="#dff0e6" stroke="#2b7a58" stroke-width="1.6"/>
+      <text class="dt" x="843" y="72" text-anchor="middle">eval/compare.py</text>
+      <text class="dms" x="843" y="90" text-anchor="middle">docs/tables/&lt;task&gt;_bakeoff.md</text>
+      <text class="dms" x="843" y="104" text-anchor="middle">tie-break applied, winner marked</text>
+      <text class="dms" x="843" y="118" text-anchor="middle">→ models/&lt;task&gt;/MODEL_CARD.md</text>
+      <text class="dms" x="10" y="186">Tie-break order: within one standard deviation on the primary metric, the cheaper candidate wins. Then latency p95, then peak VRAM, then licence permissiveness.</text>
+      <text class="dms" x="10" y="200">Every candidate runs to completion. A candidate that performs badly is reported, not dropped.</text>
+    </svg>
+    <figcaption>Fig 2. Identical path for all 20 candidates.</figcaption>
+  </figure>
+
+  <h3>Command surface</h3>
+<pre><span class="c"># run one candidate on all three seeds</span>
+python eval/harness.py --task m2 --candidate m2-c --seeds 13,29,47 --split seed
+
+<span class="c"># run every candidate for a task</span>
+python eval/harness.py --task m2 --all --seeds 13,29,47 --split real
+
+<span class="c"># emit the comparison table and mark the winner</span>
+python eval/compare.py --task m2 --split real --out docs/tables/m2_bakeoff.md
+
+<span class="c"># 20-example smoke run, no training, used in CI and before demos</span>
+python eval/harness.py --smoke</pre>
+
+  <h3>Candidate config schema</h3>
+<pre><span class="c"># eval/configs/m2-c.yaml</span>
+task: m2_intent
+candidate_id: m2-c
+label: <span class="s">"ModernBERT-base cross-encoder"</span>
+mode: finetune                  <span class="c"># finetune | lora | prompt | classical</span>
+model:
+  repo: answerdotai/ModernBERT-base
+  revision: <span class="s">"&lt;commit hash&gt;"</span>       <span class="c"># required, never a bare branch name</span>
+split: data/splits/m2_v1/
+train:
+  epochs: 4
+  max_seq_len: 4096
+  effective_batch_size: 32      <span class="c"># identical across candidates, via grad accumulation</span>
+  lr: 2.0e-5
+  warmup_ratio: 0.06
+  save_steps: 200
+  checkpoint_uri: <span class="s">"&lt;remote&gt;/m2-c/"</span>
+lora: null                      <span class="c"># or {r: 16, alpha: 32, dropout: 0.05, target_modules: [...]}</span>
+prompt_file: null               <span class="c"># required when mode is prompt</span>
+metrics: [macro_f1, per_class_f1, confusion, latency_p50, latency_p95, peak_vram]
+primary_metric: macro_f1
+ablation:
+  context_events: [0, 5, 20]
+failure_codes: [confused_adjacent_speakers, missed_shared_class, roster_out_of_range]</pre>
+
+  <h3>Result schema</h3>
+<pre><span class="c"># eval/results/m2-c.json</span>
+{
+  <span class="k">"task"</span>: <span class="s">"m2_intent"</span>,
+  <span class="k">"candidate_id"</span>: <span class="s">"m2-c"</span>,
+  <span class="k">"label"</span>: <span class="s">"ModernBERT-base cross-encoder"</span>,
+  <span class="k">"split"</span>: <span class="s">"real"</span>,                    <span class="c">// seed | real, always present</span>
+  <span class="k">"git_sha"</span>: <span class="s">"a3f91c2"</span>,
+  <span class="k">"model_revision"</span>: <span class="s">"6598a9d"</span>,
+  <span class="k">"seeds"</span>: [13, 29, 47],
+  <span class="k">"metrics"</span>: {
+    <span class="k">"macro_f1"</span>:       { <span class="k">"mean"</span>: 0.781, <span class="k">"std"</span>: 0.014, <span class="k">"per_seed"</span>: [0.77, 0.79, 0.78] },
+    <span class="k">"latency_p50_ms"</span>: { <span class="k">"mean"</span>: 41,    <span class="k">"std"</span>: 3 },
+    <span class="k">"latency_p95_ms"</span>: { <span class="k">"mean"</span>: 88,    <span class="k">"std"</span>: 7 }
+  },
+  <span class="k">"ablation"</span>: { <span class="k">"context_events"</span>: { <span class="k">"0"</span>: 0.61, <span class="k">"5"</span>: 0.72, <span class="k">"20"</span>: 0.78 } },
+  <span class="k">"failures"</span>: { <span class="k">"confused_adjacent_speakers"</span>: 34, <span class="k">"missed_shared_class"</span>: 19 },
+  <span class="k">"hardware"</span>: <span class="s">"1x A100 40GB"</span>,
+  <span class="k">"peak_vram_gb"</span>: 11.2,
+  <span class="k">"wall_clock_min"</span>: 38,
+  <span class="k">"api_cost_usd"</span>: 0.0
+}</pre>
+
+  <h3>Protocol rules the harness enforces</h3>
+  <ol>
+    <li>Split is loaded from <code>split:</code> in the config and is read-only. The harness refuses to run if the split directory has uncommitted changes.</li>
+    <li>Seeds are set through <code>eval/seeding.py</code> for Python, NumPy, PyTorch, CUDA and the dataloader worker init.</li>
+    <li><code>effective_batch_size</code> is held constant within a task by adjusting gradient accumulation to the per-device batch that fits.</li>
+    <li>Prompted candidates read their prompt verbatim from <code>prompt_file</code>. No prompt strings inline in code.</li>
+    <li>Latency is measured over 100 single-example forward passes after 10 warm-up passes, on the hardware named in <code>hardware</code>.</li>
+    <li>Every run records <code>git_sha</code> and <code>model_revision</code>. A result without both is invalid.</li>
+    <li><code>split</code> is always written and always appears in the caption of any generated table.</li>
+  </ol>
+
+  <h3>Model card template</h3>
+<pre><span class="c"># models/&lt;task&gt;/MODEL_CARD.md</span>
+
+## Task
+&lt;one paragraph: inputs, outputs, where it runs in the system&gt;
+
+## Candidates tested
+| id | model | mode | primary metric (mean ± std) | latency p50 | peak VRAM | cost |
+
+## Selection
+Winner: &lt;id&gt;
+Runner-up: &lt;id&gt;
+Margin on primary metric: &lt;x.xx ± y.yy&gt;
+Tie-break applied: &lt;yes/no, which rule&gt;
+
+## Trade-off accepted
+&lt;what the winner is worse at than the runner-up&gt;
+
+## What would reverse this decision
+&lt;concrete: a change in corpus size, latency budget, hardware, or a metric&gt;
+
+## Failure profile of the winner
+| code | count | share of errors | example |
+
+## Reproduction
+Command: python eval/harness.py --task &lt;task&gt; --candidate &lt;id&gt; --seeds 13,29,47 --split &lt;split&gt;
+Result file: eval/results/&lt;id&gt;.json
+Independent verification: docs/verification/&lt;task&gt;.md</pre>
+</section>
+
+<!-- 7 -->
+<section id="matrix">
+  <h2>Candidate matrix</h2>
+  <p class="h2sub">Twenty candidates. Four per task plus four baseline judge arms. Each task includes at least one untrained or non-neural candidate as the floor.</p>
+
+  <h3>M1 · Session-state catch-up summarization <span class="own o-a">Ayush</span></h3>
+  <p>Input: a query plus an event window rendered as a transcript. Output: a summary of what happened, what is in progress, and what is blocked. Primary metric ROUGE-L. Supervised by QMSum, evaluated additionally on the session split.</p>
+  <div class="scroll">
+  <table class="tbl">
+    <thead><tr><th>id</th><th>Candidate</th><th>Mode</th><th>What it isolates</th><th>GPU-h / seed</th></tr></thead>
+    <tbody>
+      <tr><td><code>m1-a</code></td><td>ModernBERT extractive selector + fixed template</td><td>finetune</td><td>Whether generation is needed at all</td><td>~0.5</td></tr>
+      <tr><td><code>m1-b</code></td><td>Qwen3.5-1.7B + LoRA</td><td>lora</td><td>Effect of model size, smaller end</td><td>~1.5</td></tr>
+      <tr><td><code>m1-c</code></td><td>Qwen3.5-4B + LoRA</td><td>lora</td><td>Effect of model size, larger end</td><td>~3</td></tr>
+      <tr><td><code>m1-d</code></td><td>Gemma 4 E4B + LoRA</td><td>lora</td><td>Effect of model family at matched size</td><td>~3</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p><b>Metrics:</b> ROUGE-1, ROUGE-2, ROUGE-L, BERTScore-F1, latency p50 and p95, peak VRAM, output length distribution.<br>
+  <b>Ablation:</b> context window 512, 1024, 2048 tokens.<br>
+  <b>Failure codes:</b> <code>missing_subgoal</code>, <code>wrong_attribution</code>, <code>hallucinated_tool</code>, <code>truncated</code>, <code>generic_output</code>.</p>
+
+  <h3>M2 · Instruction attribution <span class="own o-n">Naman</span></h3>
+  <p>Input: an instruction, the last N events, the participant roster. Output: which participant the instruction serves, or <code>shared</code>. Primary metric macro-F1.</p>
+  <div class="scroll">
+  <table class="tbl">
+    <thead><tr><th>id</th><th>Candidate</th><th>Mode</th><th>What it isolates</th><th>GPU-h / seed</th></tr></thead>
+    <tbody>
+      <tr><td><code>m2-a</code></td><td>TF-IDF + logistic regression</td><td>classical</td><td>Whether a transformer is needed</td><td>0, CPU</td></tr>
+      <tr><td><code>m2-b</code></td><td>DeBERTa-v3-base cross-encoder</td><td>finetune</td><td>Sample efficiency on a small corpus</td><td>~1</td></tr>
+      <tr><td><code>m2-c</code></td><td>ModernBERT-base cross-encoder</td><td>finetune</td><td>Long context without chunking, and speed</td><td>~0.7</td></tr>
+      <tr><td><code>m2-d</code></td><td>Qwen3.5-1.7B + LoRA, classification head</td><td>lora</td><td>Decoder backbone on a discourse task</td><td>~1.5</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p><b>Metrics:</b> macro-F1, per-class F1, confusion matrix, latency p50, parameter count.<br>
+  <b>Ablation:</b> context window of 0, 5 and 20 prior events, run inside the same harness call.<br>
+  <b>Failure codes:</b> <code>confused_adjacent_speakers</code>, <code>missed_shared_class</code>, <code>roster_out_of_range</code>, <code>ignored_context</code>.<br>
+  <b>Note:</b> candidates m2-b and m2-c must receive identical truncation treatment. Where DeBERTa-v3 cannot fit the 20-event window in 512 tokens, the chunking strategy is recorded in the result JSON.</p>
+
+  <h3>M3 · Conflict arbitration <span class="own o-m">Manav</span></h3>
+  <p>Input: two concurrent instructions with actors, roles, time gap and surrounding document state. Output: one of <code>accept_a</code>, <code>accept_b</code>, <code>merge_both</code>, <code>escalate</code>. Primary metric macro-F1.</p>
+  <div class="scroll">
+  <table class="tbl">
+    <thead><tr><th>id</th><th>Candidate</th><th>Mode</th><th>What it isolates</th><th>GPU-h / seed</th></tr></thead>
+    <tbody>
+      <tr><td><code>m3-a</code></td><td>Last-writer-wins rule</td><td>classical</td><td>The bar the system must clear</td><td>0</td></tr>
+      <tr><td><code>m3-b</code></td><td>ModernBERT-base pairwise cross-encoder</td><td>finetune</td><td>Cheapest learned option</td><td>~0.7</td></tr>
+      <tr><td><code>m3-c</code></td><td>Qwen3.5-4B + LoRA, four-way head</td><td>lora</td><td>Whether a generative backbone helps</td><td>~2.5</td></tr>
+      <tr><td><code>m3-d</code></td><td>Few-shot prompted Qwen3.5-4B</td><td>prompt</td><td>Whether training is needed at all</td><td>0, inference</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p><b>Metrics:</b> macro-F1, escalation precision and escalation recall reported separately, harmful-merge rate relative to m3-a, latency p50.<br>
+  <b>Ablation:</b> with and without document context; with and without participant role.<br>
+  <b>Failure codes:</b> <code>under_escalated</code>, <code>over_escalated</code>, <code>wrong_winner</code>, <code>invalid_merge</code>.</p>
+
+  <h3>M4 · Decomposition and routing <span class="own o-s">Shriram</span></h3>
+  <p>Input: a goal statement plus available tools. Output: a subtask DAG in constrained JSON, plus a human-or-agent assignment per node with a confidence score. Primary metric routing accuracy, gated on DAG validity.</p>
+  <div class="scroll">
+  <table class="tbl">
+    <thead><tr><th>id</th><th>Candidate</th><th>Mode</th><th>What it isolates</th><th>GPU-h / seed</th></tr></thead>
+    <tbody>
+      <tr><td><code>m4-a</code></td><td>Fixed decomposition template + all-agent routing</td><td>classical</td><td>Two trivial floors in one</td><td>0</td></tr>
+      <tr><td><code>m4-b</code></td><td>Qwen3.5-4B planner + LightGBM router</td><td>prompt + classical</td><td>Reference configuration</td><td>~0.2, CPU router</td></tr>
+      <tr><td><code>m4-c</code></td><td>Gemma 4 E4B planner + LightGBM router</td><td>prompt + classical</td><td>Planner, with the router held constant</td><td>~0.2, CPU router</td></tr>
+      <tr><td><code>m4-d</code></td><td>Qwen3.5-4B planning and routing in one prompt</td><td>prompt</td><td>Whether the separate router earns its place</td><td>0, inference</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p><b>Metrics:</b> DAG validity rate reported first, routing accuracy against gold, subtask completion rate on execution, end-to-end completion time, tokens per plan.<br>
+  <b>Router features:</b> subtask verb class, tool availability, estimated step count, text length, prior success rate for that verb class.<br>
+  <b>Ablation:</b> planner temperature 0.0 and 0.3; DAG depth cap 3 and 5.<br>
+  <b>Failure codes:</b> <code>invalid_json</code>, <code>cyclic_graph</code>, <code>orphan_node</code>, <code>wrong_assignee</code>, <code>over_decomposed</code>.</p>
+
+  <h3>Baseline · MAST judge reproduction <span class="own o-p">Pramod</span></h3>
+  <p>Reproduce the LLM-as-a-Judge validation result from Cemri et al., NeurIPS 2025: 94 percent accuracy and Cohen's Kappa 0.77 against expert annotation on the released MAST-Data traces. Target tolerance 2 percentage points. Then run three cheaper judges on identical traces with the identical prompt.</p>
+  <div class="scroll">
+  <table class="tbl">
+    <thead><tr><th>id</th><th>Judge</th><th>Mode</th><th>Purpose</th><th>Cost</th></tr></thead>
+    <tbody>
+      <tr><td><code>base-a</code></td><td>Frontier reasoning model, paper configuration</td><td>prompt</td><td>The reproduction itself</td><td>API ~$20</td></tr>
+      <tr><td><code>base-b</code></td><td>Mid-tier hosted model</td><td>prompt</td><td>First step down the cost curve</td><td>API ~$3</td></tr>
+      <tr><td><code>base-c</code></td><td>Qwen3.5-4B local, identical prompt</td><td>prompt</td><td>Open small model as judge</td><td>inference</td></tr>
+      <tr><td><code>base-d</code></td><td>ModernBERT classifier on MAST labels</td><td>finetune</td><td>Whether this needs an LLM at all</td><td>~0.7 GPU-h</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p><b>Metrics:</b> accuracy, Cohen's Kappa, per-failure-mode F1 across the 14 MAST modes, cost per 100 traces, latency per trace.</p>
+
+  <h3>Totals</h3>
+  <div class="scroll">
+  <table class="tbl">
+    <thead><tr><th>Task</th><th>Candidates</th><th>Runs at 3 seeds</th><th>GPU-hours</th><th>API</th></tr></thead>
+    <tbody>
+      <tr><td>M1</td><td>4</td><td>12</td><td>~24</td><td>0</td></tr>
+      <tr><td>M2</td><td>4</td><td>12 + ablation</td><td>~12</td><td>0</td></tr>
+      <tr><td>M3</td><td>4</td><td>12</td><td>~10</td><td>~$5</td></tr>
+      <tr><td>M4</td><td>4</td><td>12</td><td>~2</td><td>~$15</td></tr>
+      <tr><td>Baseline</td><td>4</td><td>12</td><td>~2</td><td>~$30</td></tr>
+      <tr><td><b>Total</b></td><td><b>20</b></td><td><b>60+</b></td><td><b>~50</b></td><td><b>~$50</b></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- 8 -->
+<section id="data">
+  <h2>Datasets and splits</h2>
+  <p class="h2sub">Two public sources and one collected in-house. Every split is frozen and committed before any candidate runs against it, and every result records which split produced it.</p>
+
+  <div class="scroll">
+  <table class="tbl">
+    <thead><tr><th>Source</th><th>Contents</th><th>Feeds</th><th>Split key</th><th>Owner</th></tr></thead>
+    <tbody>
+      <tr><td>MAST-Data</td><td>1,642 annotated multi-agent traces, 7 frameworks, 14 failure modes</td><td>baseline, failure taxonomy</td><td>authors' split, unchanged</td><td><span class="own o-p">Pramod</span></td></tr>
+      <tr><td>QMSum</td><td>1,808 query-summary pairs over 232 multi-party meetings</td><td>M1 supervision</td><td>authors' split, unchanged</td><td><span class="own o-a">Ayush</span></td></tr>
+      <tr><td>Seed sets</td><td>hand-built examples per task</td><td>M2, M3, M4 pipeline development</td><td>by example, stratified</td><td>task owners</td></tr>
+      <tr><td>Session corpus</td><td>recorded sessions, event logs only, annotated</td><td>M2, M3, M4 final results</td><td><b>by session, never by event</b></td><td><span class="own o-n">Naman</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Seed sets</h3>
+  <p>Hand-built so that all four bake-offs can run before session recording begins. Same schema as the real data, so the identical configs re-run against the real split with no code change.</p>
+  <div class="scroll">
+  <table class="tbl">
+    <thead><tr><th>File</th><th>Size</th><th>Construction</th><th>Owner</th></tr></thead>
+    <tbody>
+      <tr><td><code>data/seed/m2_seed.jsonl</code></td><td>150 examples</td><td>15 synthetic session transcripts, 3 to 4 named participants each, every instruction labelled with the participant it serves. Two independent labellers, kappa recorded.</td><td><span class="own o-n">Naman</span></td></tr>
+      <tr><td><code>data/seed/m3_seed.jsonl</code></td><td>120 pairs</td><td>30 per outcome class, including hard cases where <code>merge_both</code> and <code>escalate</code> are both arguable.</td><td><span class="own o-m">Manav</span></td></tr>
+      <tr><td><code>data/seed/m4_seed.jsonl</code></td><td>60 goals</td><td>Six scenario briefs, ten variants each, with a gold DAG and a gold human-or-agent assignment per node.</td><td><span class="own o-s">Shriram</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Every table generated from a seed split carries <code>split: seed</code> in its caption. Seed and real results are never combined in one table.</p>
+
+  <h3>Session collection</h3>
+  <ol>
+    <li>Six fixed scenario briefs, committed in <code>data/scenarios/</code>. Each brief assigns at least two participants partially conflicting sub-goals.</li>
+    <li>Per session: 3 to 4 human participants, 2 agents, 20 to 30 minutes.</li>
+    <li>Captured automatically as the event log. No audio, video or screen recording.</li>
+    <li><code>export_sessions.py</code> pulls events from Postgres to <code>data/sessions/raw/&lt;session_id&gt;.jsonl</code>.</li>
+    <li><code>anonymise.py</code> replaces display names with <code>p_1 .. p_n</code> before anything is committed.</li>
+    <li>Two annotators label every example independently in <code>tools/annotator/</code>. Cohen's Kappa written to <code>data/sessions/annotated/AGREEMENT.md</code>.</li>
+    <li><code>make_splits.py --by session --seed 13</code> produces train, validation and test. Splits are committed and never regenerated.</li>
+  </ol>
+  <p>Targets: 30 sessions, 800 labelled instructions, 250 conflict cases.</p>
+
+  <h3>Data commands</h3>
+<pre>python data/scripts/download_mast.py           <span class="c"># writes data/mast/, records row counts in STATS.md</span>
+python data/scripts/download_qmsum.py          <span class="c"># writes data/qmsum/, records row counts</span>
+python data/scripts/export_sessions.py --since 2026-10-01
+python data/scripts/anonymise.py data/sessions/raw
+python data/scripts/make_splits.py --task m2 --by session --seed 13 --out data/splits/m2_v1/
+python data/scripts/stats.py --task m2         <span class="c"># class balance, length distribution, leakage check</span></pre>
+</section>
+
+<!-- 9 -->
+<section id="packages">
+  <h2>Build packages</h2>
+  <p class="h2sub">One package per person. Each names the files owned, the build order, the commands, and the acceptance criteria. Hand a coding agent the briefing in section 12 plus exactly one of these.</p>
+
+  <!-- AYUSH -->
+  <div class="wp" style="--c:var(--ayush);--bg:var(--ayush-bg)">
+    <div class="wp-head"><span class="n">Ayush Gawai</span><span class="t">session service · serving · deployment · M1 · integration</span></div>
+    <div class="wp-body">
+      <h4>Owns</h4>
+      <pre>session-service/**    serving/**    models/common/checkpointing.py
+models/m1_catchup/**  eval/configs/m1-a.yaml m1-b.yaml m1-c.yaml m1-d.yaml
+infra/**  .github/workflows/ci.yml  requirements.txt  requirements.lock.txt
+docs/tables/m1_bakeoff.md  docs/decisions/**</pre>
+
+      <h4>Build order</h4>
+      <ol>
+        <li><b>Repository foundation.</b> <code>requirements.txt</code> with the pins in section 2, <code>pip freeze &gt; requirements.lock.txt</code>, <code>.python-version</code>, <code>.nvmrc</code>, directory skeleton, branch protection, CI running ruff, mypy and pytest.</li>
+        <li><b>Schema.</b> Implement every contract in section 4 as Pydantic v2 models in <code>app/schemas.py</code>. Export <code>openapi.json</code>. Generate TypeScript types into <code>client/src/lib/api.ts</code>. Commit and announce; the rest of the team codes against this.</li>
+        <li><b>Event log.</b> Postgres tables, alembic migration, append-only insert with monotonic <code>seq</code> allocated inside a transaction per session. Reject writes that attempt to mutate an existing row.</li>
+        <li><b>Permissions.</b> Role per participant, checked on every event append. Rejected actions are still logged as <code>type: rejected</code>.</li>
+        <li><b>Replay.</b> <code>app/replay.py</code> rebuilds full session state from events alone, given a <code>to_seq</code>. Rollback endpoint uses it.</li>
+        <li><b>WebSocket fan-out.</b> Redis pub/sub, one channel per session, delivering every appended event to subscribers.</li>
+        <li><b>Serving.</b> <code>serving/serve.py</code> implementing the uniform predict interface. Stub adapters for m2, m3 and m4 that return fixed valid responses, so teammates can integrate before their models exist.</li>
+        <li><b>Checkpointing utility.</b> <code>models/common/checkpointing.py</code> with save-to-remote every N steps and resume-from-remote. All five training scripts import this.</li>
+        <li><b>Docker Compose and deployment.</b> Postgres, Redis, Jaeger, all four services. One cloud deployment target.</li>
+      </ol>
+
+      <h4>M1 bake-off</h4>
+      <pre>python data/scripts/download_qmsum.py
+python data/scripts/make_splits.py --task m1 --by document --seed 13 --out data/splits/m1_v1/
+git add data/splits/m1_v1 &amp;&amp; git commit -m <span class="s">"DAT-xx: freeze m1 split"</span>
+
+<span class="c"># write eval/configs/m1-a.yaml .. m1-d.yaml per the schema in section 6</span>
+python eval/harness.py --task m1 --all --seeds 13,29,47 --split real
+python eval/compare.py --task m1 --split real --out docs/tables/m1_bakeoff.md
+<span class="c"># write models/m1_catchup/MODEL_CARD.md from the template</span>
+<span class="c"># point serving/adapters/m1.py at the winning checkpoint</span></pre>
+      <p>Implementation notes: <code>m1-a</code> scores each event-window sentence for relevance with ModernBERT and fills a fixed template, so it produces a summary without generation. <code>m1-b</code>, <code>m1-c</code> and <code>m1-d</code> share one training script parameterised by config; do not fork it per model.</p>
+
+      <h4>Acceptance</h4>
+      <ul>
+        <li><code>docker compose up</code> plus README brings the stack up on a clean machine</li>
+        <li><code>tests/test_replay.py</code> passes: state rebuilt from events equals live state</li>
+        <li>Concurrent append of 200 events from 3 clients yields a gapless <code>seq</code> sequence</li>
+        <li>Rejected action appears in the log with <code>type: rejected</code> and is not applied</li>
+        <li>Four M1 result JSONs committed, each with three seeds and per-seed values</li>
+        <li><code>docs/tables/m1_bakeoff.md</code> generated, <code>MODEL_CARD.md</code> complete</li>
+        <li><code>serving/adapters/m1.py</code> serves the winner and returns within the latency recorded in the card</li>
+      </ul>
+
+      <h4>Also owns</h4>
+      <p>Integration health and the demo build. Before every deliverable: bring the full stack up, run a scripted end-to-end session, record a screen capture to <code>docs/demo/</code>. ADRs for any interface change.</p>
+    </div>
+  </div>
+
+  <!-- NAMAN -->
+  <div class="wp" style="--c:var(--naman);--bg:var(--naman-bg)">
+    <div class="wp-head"><span class="n">Naman Chheda</span><span class="t">corpus · annotation · splits · M2 · coordination</span></div>
+    <div class="wp-body">
+      <h4>Owns</h4>
+      <pre>data/**  tools/annotator/**  models/m2_intent/**
+eval/configs/m2-a.yaml m2-b.yaml m2-c.yaml m2-d.yaml
+docs/tables/m2_bakeoff.md  docs/reports/**</pre>
+
+      <h4>Build order</h4>
+      <ol>
+        <li><b>Scenario briefs.</b> Six briefs in <code>data/scenarios/*.md</code>. Each specifies the goal, the participant roles, the tools in play, and the conflicting sub-goals assigned to at least two participants.</li>
+        <li><b>Seed set.</b> <code>data/seed/m2_seed.jsonl</code>, 150 examples in the <code>AttributionExample</code> schema. Two independent labellers, kappa recorded.</li>
+        <li><b>Download scripts.</b> <code>download_mast.py</code> and <code>download_qmsum.py</code>, each writing a <code>STATS.md</code> with row counts and checksums.</li>
+        <li><b>Annotation tool.</b> Streamlit app over JSONL. Shows an instruction plus its event window, collects a label from the roster, stores per-annotator records, computes Cohen's Kappa on demand. Must support all three label types: attribution, conflict resolution, MAST failure code.</li>
+        <li><b>Export and anonymise.</b> <code>export_sessions.py</code> reads the event log by date range. <code>anonymise.py</code> replaces display names, strips name mentions from payload text, and is idempotent.</li>
+        <li><b>Splits.</b> <code>make_splits.py --by session</code> with a leakage assertion: no <code>session_id</code> appears in more than one split. Fails loudly if violated.</li>
+        <li><b>Stats.</b> <code>stats.py</code> emits class balance, length distribution and a leakage check per task.</li>
+      </ol>
+
+      <h4>M2 bake-off</h4>
+      <pre><span class="c"># seed split first, to build and debug the pipeline</span>
+python eval/harness.py --task m2 --all --seeds 13,29,47 --split seed
+python eval/compare.py --task m2 --split seed --out docs/tables/m2_bakeoff_seed.md
+
+<span class="c"># real split, identical commands, once the corpus is annotated</span>
+python data/scripts/make_splits.py --task m2 --by session --seed 13 --out data/splits/m2_v1/
+python eval/harness.py --task m2 --all --seeds 13,29,47 --split real
+python eval/compare.py --task m2 --split real --out docs/tables/m2_bakeoff.md</pre>
+      <p>Implementation notes: <code>m2-a</code> is TF-IDF over the instruction concatenated with the flattened event window, one-vs-rest logistic regression. <code>m2-b</code> and <code>m2-c</code> share one cross-encoder training script; pairs are (instruction, participant context) with the roster expanded to one pair per candidate participant plus a <code>shared</code> pseudo-participant. <code>m2-d</code> uses a sequence-classification head on the LoRA-adapted decoder. The context ablation runs inside the same harness call and must be reported for all four candidates.</p>
+
+      <h4>Acceptance</h4>
+      <ul>
+        <li>Six scenario briefs committed</li>
+        <li>150-example seed set with kappa in <code>AGREEMENT.md</code></li>
+        <li>Annotation tool records two independent labels per example and computes kappa</li>
+        <li><code>anonymise.py</code> leaves zero occurrences of any display name in output, verified by a test</li>
+        <li><code>make_splits.py</code> asserts no session crosses splits</li>
+        <li>Four M2 result JSONs on <code>seed</code> and four on <code>real</code>, each with the context ablation</li>
+        <li><code>MODEL_CARD.md</code> complete, winner wired into <code>serving/adapters/m2.py</code></li>
+      </ul>
+
+      <h4>Also owns</h4>
+      <p>Linear board accuracy: one named assignee per issue, a linked artifact on every closed issue. Assembly of progress reports, workbooks and the final report from sections each person writes.</p>
+    </div>
+  </div>
+
+  <!-- MANAV -->
+  <div class="wp" style="--c:var(--manav);--bg:var(--manav-bg)">
+    <div class="wp-head"><span class="n">Manav Patel</span><span class="t">client · CRDT · conflict UX · M3 · presentation</span></div>
+    <div class="wp-body">
+      <h4>Owns</h4>
+      <pre>client/**  crdt-server/**  models/m3_arbitration/**
+eval/configs/m3-a.yaml m3-b.yaml m3-c.yaml m3-d.yaml
+data/seed/m3_seed.jsonl  docs/tables/m3_bakeoff.md  docs/slides/**</pre>
+
+      <h4>Build order</h4>
+      <ol>
+        <li><b>Scaffold against a mock.</b> Vite plus React plus TypeScript. <code>src/mocks/</code> implements every route in section 5 from <code>openapi.json</code>, so the client runs without the backend.</li>
+        <li><b>CRDT layer.</b> Yjs document with a <code>Y.XmlFragment</code> for the document body and a <code>Y.Map</code> for session metadata. y-websocket provider pointing at <code>crdt-server/</code>. Awareness carries participant id, display name and colour.</li>
+        <li><b>Bridge.</b> Yjs update observer converts document changes into <code>doc_update</code> SessionEvents posted to the session service. Deduplicate by Yjs update origin so agent writes are not double-logged.</li>
+        <li><b>Editor.</b> TipTap bound to the Yjs fragment, per-participant cursors and selection colours.</li>
+        <li><b>Agent console.</b> Direct, interrupt and hand off. Streams <code>agent_step</code> events as they arrive. Interrupt must show a stopped state within 2 seconds.</li>
+        <li><b>Conflict tray.</b> Shows both instructions side by side with actor and timestamp, offers accept A, accept B, merge, ask us. Initially driven by the <code>m3-a</code> rule, later by the winning model through <code>serving/adapters/m3.py</code>. Never auto-dismisses.</li>
+        <li><b>Replay viewer.</b> Scrubs the event log, rebuilds document state at any <code>seq</code> by calling the rollback endpoint in read-only mode, and can commit a rollback.</li>
+      </ol>
+
+      <h4>M3 bake-off</h4>
+      <pre><span class="c"># m3-a and m3-d require no training and can run first</span>
+python eval/harness.py --task m3 --candidate m3-a --seeds 13,29,47 --split seed
+python eval/harness.py --task m3 --candidate m3-d --seeds 13,29,47 --split seed
+python eval/harness.py --task m3 --candidate m3-b --seeds 13,29,47 --split seed
+python eval/harness.py --task m3 --candidate m3-c --seeds 13,29,47 --split seed
+python eval/compare.py --task m3 --split seed --out docs/tables/m3_bakeoff_seed.md</pre>
+      <p>Implementation notes: <code>m3-a</code> is deterministic, so its three seeds will be identical; record that in the result rather than skipping seeds. <code>m3-d</code> reads <code>models/m3_arbitration/prompt_fewshot.txt</code> verbatim, with exemplars drawn only from the train split. Escalation precision and recall are reported separately in the model card, not folded into macro-F1 alone.</p>
+
+      <h4>Acceptance</h4>
+      <ul>
+        <li>Three writers, 200 operations, all clients converge to identical document state</li>
+        <li>Per-participant cursors visible with stable colours across reconnects</li>
+        <li>Interrupt shows stopped state within 2 seconds and the session remains editable</li>
+        <li>Conflict tray renders from a live <code>arbitration</code> event and posts the human decision back as an event</li>
+        <li>Replay viewer scrubs a 300-event session and rebuilds state at any point</li>
+        <li>Four M3 result JSONs with escalation precision and recall broken out</li>
+        <li><code>MODEL_CARD.md</code> complete, winner wired into <code>serving/adapters/m3.py</code></li>
+      </ul>
+
+      <h4>Also owns</h4>
+      <p>All decks and figures: progress report figures, workbook diagrams, presentation slides, and the demo script Ayush records against.</p>
+    </div>
+  </div>
+
+  <!-- SHRIRAM -->
+  <div class="wp" style="--c:var(--shriram);--bg:var(--shriram-bg)">
+    <div class="wp-head"><span class="n">Shriram Dundigalla</span><span class="t">agent runtime · tools · tracing · M4 · verification</span></div>
+    <div class="wp-body">
+      <h4>Owns</h4>
+      <pre>agent-runtime/**  tests/**  models/m4_routing/**
+eval/configs/m4-a.yaml m4-b.yaml m4-c.yaml m4-d.yaml
+data/seed/m4_seed.jsonl  docs/tables/m4_bakeoff.md  docs/verification/**</pre>
+
+      <h4>Build order</h4>
+      <ol>
+        <li><b>Fixture harness.</b> A recorded session event log in <code>tests/fixtures/</code> so the runtime develops without the live stack.</li>
+        <li><b>Agent loop.</b> LangGraph state machine: plan, act, observe, repeat, with a hard step cap. Every transition emits a <code>agent_step</code> SessionEvent.</li>
+        <li><b>Tools.</b> The five tools from section 5. Each enforces its timeout and cap, returns a structured error rather than raising on timeout, and emits <code>tool_call</code> and <code>tool_result</code> events.</li>
+        <li><b>Interruption.</b> <code>runtime/interrupt.py</code>. Cancellation token checked between every step and inside long tool calls. On interrupt, finish or discard the in-flight tool call cleanly, emit <code>interrupt</code>, leave the document in a valid state, support resume with a new instruction.</li>
+        <li><b>Hand-off.</b> Calls M1 through the serving layer for a summary, emits <code>handoff</code> with the summary in the payload.</li>
+        <li><b>Tracing.</b> OTel span per agent step, tool call and model call, with <code>session_id</code>, <code>event_id</code> and <code>run_id</code> as attributes. OTLP export to Jaeger, plus a JSONL exporter the harness reads.</li>
+        <li><b>Test suite.</b> <code>test_replay.py</code>, <code>test_contracts.py</code> validating every payload against its Pydantic model, <code>test_tools.py</code> for timeouts and caps, <code>test_concurrent_edit.py</code>, <code>test_harness.py</code> smoke. Wire all into CI.</li>
+      </ol>
+
+      <h4>M4 bake-off</h4>
+      <pre>python eval/harness.py --task m4 --all --seeds 13,29,47 --split seed
+python eval/compare.py --task m4 --split seed --out docs/tables/m4_bakeoff_seed.md</pre>
+      <p>Implementation notes: the planner emits JSON constrained to a schema with <code>nodes[]</code> and <code>edges[]</code>; validate with a JSON schema check and a cycle check before scoring anything else. <code>m4-b</code> and <code>m4-c</code> must use the identical LightGBM router trained on identical features, so the comparison isolates the planner. <code>m4-d</code> uses one prompt producing both the DAG and the assignment. Report DAG validity rate before routing accuracy; routing accuracy is computed only over valid DAGs and the denominator is stated.</p>
+
+      <h4>Acceptance</h4>
+      <ul>
+        <li>Agent completes a two-tool task inside a live session and writes results back as events</li>
+        <li>Every tool enforces its timeout and cap, verified by <code>test_tools.py</code></li>
+        <li>Interrupt cancels within 2 seconds with a consistent document state, verified by test</li>
+        <li>Traces visible in Jaeger with session and event ids attached, and exportable to JSONL</li>
+        <li>Four M4 result JSONs with DAG validity, routing accuracy and completion time</li>
+        <li><code>MODEL_CARD.md</code> complete, winner wired into <code>serving/adapters/m4.py</code></li>
+        <li>CI green on all tests</li>
+      </ul>
+
+      <h4>Also owns</h4>
+      <p>Independent verification. For every completed bake-off, re-run one seed of the winning candidate from a clean checkout and confirm the primary metric matches within its recorded standard deviation. Record the command, the observed value and the outcome in <code>docs/verification/&lt;task&gt;.md</code>.</p>
+    </div>
+  </div>
+
+  <!-- PRAMOD -->
+  <div class="wp" style="--c:var(--pramod);--bg:var(--pramod-bg)">
+    <div class="wp-head"><span class="n">Pramod Dindukurthi</span><span class="t">harness · metrics · MAST baseline · judge bake-off · protocol</span></div>
+    <div class="wp-body">
+      <h4>Owns</h4>
+      <pre>eval/**  (exclusive)   models/baseline_mast/**
+docs/protocol.md  docs/failure-analysis.md  docs/tables/base_bakeoff.md</pre>
+
+      <h4>Build order</h4>
+      <ol>
+        <li><b>Seeding.</b> <code>eval/seeding.py</code> exposing <code>set_all_seeds(seed: int)</code> covering <code>random</code>, <code>numpy</code>, <code>torch</code>, <code>torch.cuda</code>, cuDNN determinism flags and dataloader <code>worker_init_fn</code>.</li>
+        <li><b>Metrics.</b> <code>eval/metrics/rouge.py</code> fixing the exact <code>rouge_scorer</code> construction with stemming on. <code>classification.py</code> fixing macro-F1, per-class F1 and confusion. <code>latency.py</code> fixing the 10 warm-up plus 100 measured protocol. <code>dag.py</code> fixing DAG validity, cycle detection and orphan detection. Document each in <code>docs/protocol.md</code>.</li>
+        <li><b>Harness.</b> <code>eval/harness.py</code>: loads a config, dispatches on <code>mode</code> to one of four runners (finetune, lora, prompt, classical), loops seeds, computes metrics, classifies failures against <code>failure_codes</code>, writes the result JSON. Supports <code>--all</code>, <code>--split</code> and <code>--smoke</code>.</li>
+        <li><b>Compare.</b> <code>eval/compare.py</code>: reads every result for a task and split, emits a markdown table, applies the tie-break order, marks the winner, and writes the split into the caption.</li>
+        <li><b>MAST verification.</b> Clone the MAST repository, confirm traces and judge prompts are present, run 10 traces end to end, record findings.</li>
+        <li><b>Baseline reproduction.</b> <code>base-a</code> in the paper configuration, three seeds, target 94 percent accuracy and Kappa 0.77 within 2 points.</li>
+        <li><b>Judge bake-off.</b> <code>base-b</code>, <code>base-c</code>, <code>base-d</code> on identical traces with the identical prompt. Emit accuracy against cost per 100 traces.</li>
+        <li><b>Failure analysis.</b> <code>docs/failure-analysis.md</code> aggregating failure codes across every task's winning model, mapped to MAST modes where applicable.</li>
+      </ol>
+
+      <h4>Commands</h4>
+      <pre>python models/baseline_mast/run_judge.py --verify --n 10    <span class="c"># runnability check</span>
+python eval/harness.py --task base --all --seeds 13,29,47 --split real
+python eval/compare.py --task base --split real --out docs/tables/base_bakeoff.md</pre>
+
+      <h4>Acceptance</h4>
+      <ul>
+        <li>Harness runs all four modes and is the only evaluation path used in the repository</li>
+        <li><code>grep -r "rouge_scorer\|f1_score" --include=*.py</code> returns hits only under <code>eval/metrics/</code></li>
+        <li><code>docs/protocol.md</code> documents every metric call verbatim</li>
+        <li>Baseline reproduced within 2 percentage points, three seeds, committed</li>
+        <li>Judge comparison table with accuracy against cost per 100 traces</li>
+        <li><code>docs/failure-analysis.md</code> populated across all four winning models</li>
+        <li>Every <code>MODEL_CARD.md</code> in the repository reviewed and signed</li>
+      </ul>
+
+      <h4>Also owns</h4>
+      <p>Protocol enforcement. A candidate run with a different budget, prompt or metric implementation than its siblings is rejected and re-run. Sign-off on every model card before it is referenced in any document.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section id="collab">
+  <h2>Shared responsibilities</h2>
+  <p class="h2sub">Work that spans packages. Each item has one accountable owner and named contributors.</p>
+
+  <div class="scroll">
+  <table class="tbl">
+    <thead><tr><th>Item</th><th>Accountable</th><th>Contributors</th><th>Artifact</th></tr></thead>
+    <tbody>
+      <tr><td>Integration health, full stack runs</td><td><span class="own o-a">Ayush</span></td><td>each owner fixes their own service</td><td><code>docker compose up</code> green, smoke passes</td></tr>
+      <tr><td>Demo build and recording</td><td><span class="own o-a">Ayush</span></td><td>Manav scripts, Shriram tests</td><td><code>docs/demo/</code></td></tr>
+      <tr><td>ADRs for interface changes</td><td><span class="own o-a">Ayush</span></td><td>proposer writes it</td><td><code>docs/decisions/ADR-nnn.md</code></td></tr>
+      <tr><td>Linear board accuracy</td><td><span class="own o-n">Naman</span></td><td>everyone updates own issues</td><td>one assignee per issue, artifact on close</td></tr>
+      <tr><td>Reports and workbooks</td><td><span class="own o-n">Naman</span></td><td>each person writes own section</td><td><code>docs/reports/</code></td></tr>
+      <tr><td>Decks and figures</td><td><span class="own o-m">Manav</span></td><td>each person supplies own numbers</td><td><code>docs/slides/</code></td></tr>
+      <tr><td>Test suite and CI</td><td><span class="own o-s">Shriram</span></td><td>package owners fix own failures</td><td><code>tests/</code>, CI green on main</td></tr>
+      <tr><td>Independent result verification</td><td><span class="own o-s">Shriram</span></td><td>task owner hands over one config</td><td><code>docs/verification/</code></td></tr>
+      <tr><td>Protocol enforcement, model card sign-off</td><td><span class="own o-p">Pramod</span></td><td>task owners write the cards</td><td><code>docs/protocol.md</code>, signed cards</td></tr>
+      <tr><td>Failure analysis across all tasks</td><td><span class="own o-p">Pramod</span></td><td>task owners supply failure codes</td><td><code>docs/failure-analysis.md</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Result sign-off</h3>
+  <p>A result is complete when three things exist: the committed result JSON from the harness, a Pramod sign-off that the protocol was followed, and a Shriram entry in <code>docs/verification/</code> confirming an independent re-run of one seed matched within the recorded standard deviation. Only then may the number appear in a model card, a report or a slide.</p>
+
+  <h3>Cadence</h3>
+  <ul>
+    <li>Monday sync, 30 minutes. Shipped, next, blocked. Linear updated live.</li>
+    <li>Thursday async status: candidates run, candidates remaining, any protocol deviation.</li>
+    <li>Before each deliverable: Ayush runs the stack, Shriram runs the suite, Pramod confirms every number traces to a harness result. All three sign off in the Linear issue.</li>
+  </ul>
+</section>
+
+<!-- 11 -->
+<section id="milestones">
+  <h2>Milestones</h2>
+  <p class="h2sub">Course dates and the state of the build at each.</p>
+
+  <figure>
+    <svg viewBox="0 0 980 296" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Build timeline">
+      <g>
+        <line x1="124" y1="30" x2="124" y2="262" stroke="#e8eef5"/>
+        <line x1="252" y1="30" x2="252" y2="262" stroke="#e8eef5"/>
+        <line x1="440" y1="30" x2="440" y2="262" stroke="#e8eef5"/>
+        <line x1="636" y1="30" x2="636" y2="262" stroke="#e8eef5"/>
+        <line x1="860" y1="30" x2="860" y2="262" stroke="#e8eef5"/>
+        <line x1="960" y1="30" x2="960" y2="262" stroke="#e8eef5"/>
+      </g>
+      <text class="dm" x="126" y="22">19 Sep</text>
+      <text class="dm" x="254" y="22">24 Sep · PR1</text>
+      <text class="dm" x="442" y="22">7 Oct · WB1</text>
+      <text class="dm" x="638" y="22">22 Oct · PR2</text>
+      <text class="dm" x="834" y="22">11 Nov · WB2</text>
+
+      <text class="dt" x="4" y="56">Ayush</text>
+      <rect x="124" y="42" width="128" height="20" rx="3" fill="#1f5fa8"/><text class="dw" x="132" y="56">schema, CI, m1 split</text>
+      <rect x="252" y="42" width="188" height="20" rx="3" fill="#1f5fa8" opacity=".84"/><text class="dw" x="260" y="56">event log, replay, serving</text>
+      <rect x="440" y="42" width="196" height="20" rx="3" fill="#1f5fa8" opacity=".68"/><text class="dw" x="448" y="56">M1 bake-off, 4 candidates</text>
+      <rect x="636" y="42" width="324" height="20" rx="3" fill="#1f5fa8" opacity=".52"/><text class="dw" x="644" y="56">deploy, integrate winners, demo</text>
+
+      <text class="dt" x="4" y="94">Pramod</text>
+      <rect x="124" y="80" width="128" height="20" rx="3" fill="#9a6a00"/><text class="dw" x="132" y="94">harness, metrics lock</text>
+      <rect x="252" y="80" width="188" height="20" rx="3" fill="#9a6a00" opacity=".84"/><text class="dw" x="260" y="94">MAST reproduction</text>
+      <rect x="440" y="80" width="196" height="20" rx="3" fill="#9a6a00" opacity=".68"/><text class="dw" x="448" y="94">judge bake-off, 4 arms</text>
+      <rect x="636" y="80" width="324" height="20" rx="3" fill="#9a6a00" opacity=".52"/><text class="dw" x="644" y="94">sign-offs, failure analysis, tables</text>
+
+      <text class="dt" x="4" y="132">Manav</text>
+      <rect x="124" y="118" width="128" height="20" rx="3" fill="#a8443a"/><text class="dw" x="132" y="132">client, Yjs on mock</text>
+      <rect x="252" y="118" width="188" height="20" rx="3" fill="#a8443a" opacity=".84"/><text class="dw" x="260" y="132">console, tray, m3 seed set</text>
+      <rect x="440" y="118" width="196" height="20" rx="3" fill="#a8443a" opacity=".68"/><text class="dw" x="448" y="132">M3 bake-off on seed</text>
+      <rect x="636" y="118" width="324" height="20" rx="3" fill="#a8443a" opacity=".52"/><text class="dw" x="644" y="132">M3 on real split, replay, slides</text>
+
+      <text class="dt" x="4" y="170">Shriram</text>
+      <rect x="124" y="156" width="128" height="20" rx="3" fill="#71499b"/><text class="dw" x="132" y="170">LangGraph on fixture</text>
+      <rect x="252" y="156" width="188" height="20" rx="3" fill="#71499b" opacity=".84"/><text class="dw" x="260" y="170">5 tools, interrupt, tracing</text>
+      <rect x="440" y="156" width="196" height="20" rx="3" fill="#71499b" opacity=".68"/><text class="dw" x="448" y="170">M4 bake-off on seed</text>
+      <rect x="636" y="156" width="324" height="20" rx="3" fill="#71499b" opacity=".52"/><text class="dw" x="644" y="170">M4 on real split, verifications</text>
+
+      <text class="dt" x="4" y="208">Naman</text>
+      <rect x="124" y="194" width="128" height="20" rx="3" fill="#2b7a58"/><text class="dw" x="132" y="208">briefs, Linear, downloads</text>
+      <rect x="252" y="194" width="188" height="20" rx="3" fill="#2b7a58" opacity=".84"/><text class="dw" x="260" y="208">m2 seed set, annotator</text>
+      <rect x="440" y="194" width="196" height="20" rx="3" fill="#2b7a58" opacity=".68"/><text class="dw" x="448" y="208">M2 on seed, recording starts</text>
+      <rect x="636" y="194" width="324" height="20" rx="3" fill="#2b7a58" opacity=".52"/><text class="dw" x="644" y="208">sessions, labels, splits, M2 on real</text>
+
+      <rect x="124" y="232" width="836" height="20" rx="3" fill="#5c6f80" opacity=".18"/>
+      <text class="dm" x="180" y="246" fill="#14202b">PR1 24 Sep · WB1 7 Oct · Team Mtg 8 Oct · PR2 22 Oct · WB2 11 Nov · Team Mtg 12 Nov · Final + slides 7 Dec · Conference 8 Dec</text>
+      <text class="dms" x="4" y="282">Integration gate is 7 Oct. Everything depending on real session data sits to its right; seed sets carry the bake-offs before it.</text>
+    </svg>
+    <figcaption>Fig 3. Bake-offs run on seed and public data in October, refresh on the session corpus in November.</figcaption>
+  </figure>
+
+  <div class="scroll">
+  <table class="tbl">
+    <thead><tr><th>Date</th><th>Deliverable</th><th>Build state</th></tr></thead>
+    <tbody>
+      <tr><td>24 Sep, Thu</td><td>Progress Report 1</td><td>Repo, pins and CI live. <code>SessionEvent</code> frozen. MAST and QMSum downloaded with row counts. Harness runs one candidate end to end. Twenty candidate configs drafted.</td></tr>
+      <tr><td>7 Oct, Wed</td><td>Workbook 1</td><td>Integration gate: client, session service and runtime run one end-to-end session. Three seed sets built. MAST baseline reproduced within 2 points.</td></tr>
+      <tr><td>8 Oct, Thu</td><td>Team Meeting 1, 9:00 to 11:45</td><td>Live demo of an end-to-end session.</td></tr>
+      <tr><td>22 Oct, Thu</td><td>Progress Report 2</td><td>All four bake-offs run on seed or public splits. Four comparison tables generated. Judge bake-off complete. Session recording underway.</td></tr>
+      <tr><td>11 Nov, Wed</td><td>Workbook 2</td><td>15+ sessions recorded, anonymised and annotated. Splits frozen. M1 final on real data. Verification entries for every completed bake-off.</td></tr>
+      <tr><td>12 Nov, Thu</td><td>Team Meeting 2, 9:00 to 11:45</td><td>Demo with winning models wired into the live system.</td></tr>
+      <tr><td>7 Dec, Mon</td><td>Final Report and slides</td><td>All four bake-offs refreshed on real splits. Four model cards signed. Winners integrated. Failure analysis complete. Demo recorded.</td></tr>
+      <tr><td>8 Dec, Tue</td><td>Project Presentation, 9:00 to 12:00</td><td>Conference day.</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- 12 -->
+<section id="agent">
+  <h2>Agent briefing</h2>
+  <p class="h2sub">Paste this block plus exactly one build package from section 9 into the coding agent.</p>
+
+<pre>You are building for <span class="k">&lt;NAME&gt;</span> on DATA 298A Team 4, project "Multiplayer Agent
+Sessions", repository github.com/ayushgawai/multiplayer-agent-sessions
+
+SCOPE
+Build only what is listed under "Owns" in <span class="k">&lt;NAME&gt;</span>'s build package.
+Do not create, modify or refactor files owned by another team member.
+If a task appears to require touching another owner's files, stop and report it.
+
+HARD CONSTRAINTS
+1.  Every model evaluation goes through eval/harness.py. Never write a separate
+    evaluation loop. Never compute ROUGE, F1, latency or DAG validity outside
+    eval/metrics/.
+2.  Every candidate runs seeds 13, 29 and 47. Report mean, standard deviation
+    and per-seed values. Never report a single number.
+3.  Pin model weights by repository id plus commit revision hash in the config.
+    Never a bare model name or branch.
+4.  Train LoRA adapters or encoder weights only. No full fine-tune above 4B.
+    Import models/common/checkpointing.py; save every 200 steps to remote
+    storage and support --resume_from_checkpoint, because local disk is wiped
+    between sessions.
+5.  Splits are frozen and committed before any candidate runs. Never re-split.
+    Session data splits by session_id, never by event.
+6.  Candidates within a task share identical epochs, max sequence length and
+    effective batch size. Any deviation is recorded in the result JSON.
+7.  Prompted candidates read their prompt from a committed file, verbatim. No
+    prompt strings inline in code.
+8.  Every result JSON records split, git_sha, model_revision, hardware,
+    peak_vram_gb and wall_clock_min.
+9.  No browser storage APIs in the client. No network calls to services not in
+    infra/docker-compose.yml.
+10. Any change to a schema, an API route or a metric definition requires an ADR
+    in docs/decisions/ before the change.
+
+DEFINITION OF DONE for a task owner
+  - 4 candidate configs committed under eval/configs/
+  - 4 result JSONs under eval/results/, each with 3 seeds and per-seed values
+  - docs/tables/&lt;task&gt;_bakeoff.md generated by eval/compare.py
+  - models/&lt;task&gt;/MODEL_CARD.md completed from the template in section 6
+  - winning checkpoint served through serving/adapters/&lt;task&gt;.py
+  - failure codes populated in every result JSON
+
+DEFINITION OF DONE for a service owner
+  - service starts from docker compose with no manual steps
+  - /healthz returns ok
+  - every route in section 5 implemented and present in openapi.json
+  - tests in tests/ cover the acceptance criteria listed in the package
+
+STYLE
+  Python 3.11, full type hints, ruff clean, line length 100.
+  TypeScript strict, no any.
+  Commit messages begin with the Linear issue id, for example
+  "DAT-42: freeze m2 split".
+  No em dashes or en dashes in any prose, comment or document you write.</pre>
+
+  <h3>Per-person one-line scope</h3>
+  <div class="scroll">
+  <table class="tbl">
+    <thead><tr><th>Person</th><th>Build</th><th>Do not touch</th></tr></thead>
+    <tbody>
+      <tr><td><span class="own o-a">Ayush</span></td><td><code>session-service/</code>, <code>serving/</code>, <code>models/common/</code>, <code>models/m1_catchup/</code>, <code>infra/</code>, CI, m1 configs</td><td><code>client/</code>, <code>agent-runtime/</code>, <code>data/</code>, <code>eval/harness.py</code>, <code>tests/</code></td></tr>
+      <tr><td><span class="own o-n">Naman</span></td><td><code>data/</code>, <code>tools/annotator/</code>, <code>models/m2_intent/</code>, m2 configs, <code>docs/reports/</code></td><td><code>session-service/</code>, <code>client/</code>, <code>agent-runtime/</code>, <code>eval/harness.py</code></td></tr>
+      <tr><td><span class="own o-m">Manav</span></td><td><code>client/</code>, <code>crdt-server/</code>, <code>models/m3_arbitration/</code>, m3 configs, <code>docs/slides/</code></td><td><code>session-service/</code> internals, <code>agent-runtime/</code>, <code>data/</code>, <code>eval/harness.py</code></td></tr>
+      <tr><td><span class="own o-s">Shriram</span></td><td><code>agent-runtime/</code>, <code>tests/</code>, <code>models/m4_routing/</code>, m4 configs, <code>docs/verification/</code></td><td><code>client/</code>, <code>session-service/</code> internals, <code>data/</code>, <code>eval/harness.py</code></td></tr>
+      <tr><td><span class="own o-p">Pramod</span></td><td><code>eval/</code> exclusively, <code>models/baseline_mast/</code>, <code>docs/protocol.md</code>, <code>docs/failure-analysis.md</code></td><td>every other model training script, all services, <code>client/</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Build order across the team</h3>
+  <ol>
+    <li>Ayush commits the repository skeleton, pins and CI.</li>
+    <li>Ayush freezes <code>SessionEvent</code> and exports <code>openapi.json</code>. Manav generates client types from it; Shriram builds his fixture from it.</li>
+    <li>Pramod lands <code>seeding.py</code>, <code>metrics/</code> and <code>harness.py</code>, validated against one M1 candidate.</li>
+    <li>Ayush, Naman, Manav and Shriram write their four configs each and run their bake-offs on seed or public splits.</li>
+    <li>Naman lands the corpus pipeline and freezes the real splits.</li>
+    <li>All four bake-offs re-run on real splits with identical configs.</li>
+    <li>Model cards written, signed by Pramod, verified by Shriram, winners wired into serving adapters.</li>
+  </ol>
+</section>
+
+    </main>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    Build specification v2 · Multiplayer Agent Sessions · DATA 298A Section 21 Team 4.
+    Changes to a schema, an API route, a metric definition or the candidate matrix require an ADR under <code>docs/decisions/</code>.
+  </div>
+</footer>
+
+</body>
+</html>
