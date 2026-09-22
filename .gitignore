@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+.env
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+*.cover
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+*.swp
+
+# Local secrets and runtime
+.env.local
+*.pem
+credentials.json
+
+# Model and data downloads (not committed)
+data/mast/
+data/qmsum/
+data/sessions/raw/
+checkpoints/
+wandb/
+mlruns/
+*.pt
+*.bin
+*.safetensors
+
+# Generated locally but openapi.json is committed intentionally
+*.log
+.cache/
