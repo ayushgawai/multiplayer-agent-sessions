@@ -10,7 +10,7 @@ from app.schemas import HealthResponse
 VERSION = "0.1.0"
 
 app = FastAPI(
-    title="Multiplayer Agent Sessions — Session Service",
+    title="Multiplayer Agent Sessions - Session Service",
     version=VERSION,
     description="Event log, join, rollback, and stream surface for Team 4.",
 )

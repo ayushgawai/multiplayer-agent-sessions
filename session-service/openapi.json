@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Multiplayer Agent Sessions \u2014 Session Service",
+    "title": "Multiplayer Agent Sessions - Session Service",
     "description": "Event log, join, rollback, and stream surface for Team 4.",
     "version": "0.1.0"
   },
@@ -265,6 +265,31 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/v1/sessions/{session_id}/stream": {
+      "get": {
+        "summary": "Subscribe to session event stream (WebSocket)",
+        "description": "WebSocket endpoint. Upgrade from HTTP GET. Server pushes SessionEvent JSON objects after each append. Not a plain HTTP GET despite OpenAPI listing.",
+        "operationId": "stream_session_events",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "101": {
+            "description": "Switching Protocols (WebSocket)"
+          },
+          "404": {
+            "description": "session not found"
           }
         }
       }
