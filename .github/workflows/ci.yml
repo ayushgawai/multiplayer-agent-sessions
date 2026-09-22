@@ -21,7 +21,14 @@ jobs:
       - name: Ruff
         run: ruff check session-service serving models
       - name: Mypy
-        run: mypy --ignore-missing-imports session-service/app serving
-      - name: Pytest
+        run: |
+          mypy --ignore-missing-imports session-service/app
+          mypy --ignore-missing-imports serving
+      - name: Pytest session-service
         working-directory: session-service
         run: pytest -q
+      - name: Pytest serving
+        working-directory: serving
+        run: pytest -q
+      - name: Checkpointing self-check
+        run: PYTHONPATH=. python models/common/check_checkpointing.py
