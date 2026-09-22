@@ -19,6 +19,7 @@ Shared live sessions where humans and agents edit one workspace with concurrent 
 - Repository: https://github.com/ayushgawai/multiplayer-agent-sessions
 - Linear: https://linear.app/data-298a-team-4/team/DAT
 - Build specification: [docs/build-plan.html](docs/build-plan.html)
+- **Team context (read after every pull):** [CONTEXT.md](CONTEXT.md)
 
 ## Run locally
 
