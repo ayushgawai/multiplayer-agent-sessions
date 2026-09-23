@@ -122,3 +122,8 @@ PYTHONPATH=. python models/baseline_mast/view_results.py \
 - CI does not yet run pytest for this folder (request to environment owner)
 - Root `.editorconfig` would trim trailing spaces and insert a final newline;
   request an exception for `judge_prompt.txt` from the environment owner
+- Ownership: CONTEXT.md lists `models/baseline_mast/` under the evaluation
+  owner; written approval for the prompt, parser and viewer files is pending.
+- ADR-002 prediction record: field names used by the parser and viewer are
+  proposed and need agreement from the execution owner and environment owner
+  before real runs are saved.
