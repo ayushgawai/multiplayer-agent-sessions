@@ -1,9 +1,9 @@
 # MAST baseline judge
 
 This folder holds the frozen MAST LLM-as-a-Judge prompt, the response parser,
-and (later) the result viewer. The evaluation harness consumes
-`judge_prompt.txt` through `prompt_file` in `eval/configs/base-*.yaml`
-(owned by the evaluation owner).
+and a static result viewer over saved prediction records. The evaluation
+harness consumes `judge_prompt.txt` through `prompt_file` in
+`eval/configs/base-*.yaml` (owned by the evaluation owner).
 
 ## Judge prompt mast-judge-v1
 
@@ -56,6 +56,33 @@ Rules:
   and `3.2` (leading "No" in the template name)
 - How failed parses count in metrics is decided by the evaluation owner
 
+## Result viewer
+
+Field names follow ADR-002 (proposed). The viewer reads saved JSONL only; it
+never calls a model.
+
+```bash
+PYTHONPATH=. python models/baseline_mast/view_results.py \
+  --predictions path/to/predictions.jsonl \
+  --manifest path/to/run_manifest.json \
+  --out path/to/report.html
+```
+
+Header: run id, model, prompt version plus sha256 prefix, parser version,
+dataset version, record count, counts by `parse_status`, disagreement count,
+and per-code FP/FN totals.
+
+Main table columns: `trace_id`, `framework`, `parse_status`, disagreement
+count, then a 14-code grid. Each cell shows text `TP` / `FP` / `FN` / `TN` /
+`NA` (colour is optional; text is the signal).
+
+Filters (inline script): disagreements only; parse problems only
+(`parse_status` not `ok`); framework dropdown; code dropdown (FP or FN on that
+code); text search on `trace_id`. Default shows all rows with "N of M shown".
+
+`tests/fixtures/sample_run/` is **test data only** (built by calling
+`parse_judge_response` on parser fixtures). Do not treat it as a real judge run.
+
 ## Known quirks preserved on purpose
 
 - Missing spaces between joined string literals (for example
@@ -82,6 +109,10 @@ ruff check models
 mypy --ignore-missing-imports models/baseline_mast
 PYTHONPATH=. python models/baseline_mast/check_prompt.py
 PYTHONPATH=. python models/baseline_mast/check_parser.py
+PYTHONPATH=. python models/baseline_mast/view_results.py \
+  --predictions models/baseline_mast/tests/fixtures/sample_run/predictions.jsonl \
+  --manifest models/baseline_mast/tests/fixtures/sample_run/run_manifest.json \
+  --out /tmp/mast_viewer.html
 ```
 
 ## Open questions
