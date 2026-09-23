@@ -1,0 +1,31 @@
+# M3 conflict arbitration candidates share these train knobs.
+# Per-candidate differences are only model repo/revision, mode and prompt_file.
+# Output classes per build plan M3: accept_a, accept_b, merge_both, escalate.
+# serving/adapters/m3.py stub returns escalate_human; flagged to environment owner.
+
+task: m3_arbitration
+candidate_id: m3-a
+label: "Last-writer-wins rule"
+mode: classical
+# Deterministic classical baseline: no neural weights. Three seeds will be
+# identical and are still run so the harness path stays uniform.
+model:
+  repo: null
+  revision: null
+split: data/splits/m3_v1/
+train:
+  epochs: 3
+  max_seq_len: 4096
+  effective_batch_size: 16
+  lr: 2.0e-5
+  warmup_ratio: 0.06
+  save_steps: 200
+  checkpoint_uri: "file://./checkpoints/m3-a/"
+lora: null
+prompt_file: null
+metrics: [macro_f1, escalation_precision, escalation_recall, harmful_merge_rate, latency_p50]
+primary_metric: macro_f1
+ablation:
+  doc_context: [true, false]
+  participant_role: [true, false]
+failure_codes: [under_escalated, over_escalated, wrong_winner, invalid_merge]
