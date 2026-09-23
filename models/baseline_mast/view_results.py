@@ -169,6 +169,8 @@ th,td{border:1px solid #c5ced6;padding:4px 6px;text-align:left;
 vertical-align:top}
 th{background:#e8eef3}
 .grid td{text-align:center;min-width:2.2em}
+td.trace,td.trace details,td.trace pre,details,details pre{
+text-align:left}
 .TP{background:#dff0e6}.FP{background:#f8d7da}.FN{background:#fff3cd}
 .TN{background:#eef2f5}.NA{background:#f0f0f0;color:#666}
 .filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;
@@ -352,7 +354,7 @@ def build_html(
             f'data-framework="{_esc(framework)}" '
             f'data-status="{_esc(status)}" '
             f'data-disagreements="{dis}">'
-            f"<td>{_esc(trace_id)}{detail}</td>"
+            f'<td class="trace">{_esc(trace_id)}{detail}</td>'
             f"<td>{_esc(framework)}</td>"
             f"<td>{_esc(status)}</td>"
             f"<td>{dis}</td>"
