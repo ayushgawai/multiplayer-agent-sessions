@@ -1,9 +1,9 @@
 # MAST baseline judge
 
-This folder holds the frozen MAST LLM-as-a-Judge prompt and, later, the response
-parser and result viewer. The evaluation harness consumes `judge_prompt.txt`
-through `prompt_file` in `eval/configs/base-*.yaml` (owned by the evaluation
-owner).
+This folder holds the frozen MAST LLM-as-a-Judge prompt, the response parser,
+and (later) the result viewer. The evaluation harness consumes
+`judge_prompt.txt` through `prompt_file` in `eval/configs/base-*.yaml`
+(owned by the evaluation owner).
 
 ## Judge prompt mast-judge-v1
 
@@ -27,6 +27,34 @@ https://github.com/multi-agent-systems-failure-taxonomy/MAST at commit
   `bfefa4f2c788fa1658f6879afa8a2b4577a027f224ce3e3b6ba0927dfd82f9ce`
 - Upstream sha256 of `examples.txt`:
   `3cf84f024eccecbb1f51deddae889bd8d14d55b539002665210555f00fe60964`
+
+## Response parser mast-parser-v1
+
+`parse_judge.py` turns a judge reply into validated labels with an explicit
+parse status. Validated labels never silently default missing codes to false.
+
+| Status | Meaning |
+|--------|---------|
+| `ok` | All 14 codes present, no conflicts or ambiguity |
+| `partial` | At least one code missing |
+| `ambiguous` | Conflicting duplicates or unclear yes/no |
+| `empty` | None or blank input |
+| `malformed` | Non-string (non-dict) input, or no MAST codes found |
+
+Fields include `raw_response` (unmodified), `labels`, `predicted_labels`,
+`missing_codes`, `ambiguous_codes`, `conflicting_codes`, `unknown_codes`,
+`summary`, `task_completed`, `warnings`, and `labels_official`.
+
+Rules:
+- `raw_response` is preserved byte-for-byte for string inputs
+- Missing codes stay `null` (never coerced to false)
+- `labels_official` is a faithful port of upstream cell-8 `parse_responses`
+  for reproduction comparison only; it is not the validated label
+- On all-yes template answers, validated predicted count is 14 while
+  `sum(labels_official.values())` is 12 because upstream matches `yes`/`no`
+  without word boundaries and misreads `2.5` (substring `no` in "Ignored")
+  and `3.2` (leading "No" in the template name)
+- How failed parses count in metrics is decided by the evaluation owner
 
 ## Known quirks preserved on purpose
 
@@ -53,6 +81,7 @@ cd models/baseline_mast && pytest -q && cd ../..
 ruff check models
 mypy --ignore-missing-imports models/baseline_mast
 PYTHONPATH=. python models/baseline_mast/check_prompt.py
+PYTHONPATH=. python models/baseline_mast/check_parser.py
 ```
 
 ## Open questions
