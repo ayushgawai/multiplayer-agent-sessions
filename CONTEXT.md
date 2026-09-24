@@ -110,15 +110,17 @@ When you finish a feature, add one bullet here under your name and bump **Last u
 - (none yet)
 
 ### Manav
-- MAST 07 (DAT-31): frozen judge prompt mast-judge-v1, byte-exact to upstream MAST
-  commit a70542e (sha256 6a73fd53...), branch dat-31-mast-judge-prompt.
-- MAST 08 (DAT-32): response parser mast-parser-v1 with explicit parse status and raw
-  response preservation, branch dat-32-mast-judge-parser.
-- MAST 09 (DAT-33): static result viewer for disagreement and parse problem inspection,
-  branch dat-33-mast-result-viewer.
-- M3 configs (DAT-40): m3-a to m3-d drafted per build plan, branch dat-40-m3-configs.
-- Pending: evaluation owner approval for files in models/baseline_mast/, ADR-002
-  prediction record agreement, 3.2/3.3 label mapping. Client scaffold not started.
+- MAST 07 (DAT-31): Locked the judge prompt (mast-judge-v1) so it matches the upstream
+  MAST file exactly. Branch: dat-31-mast-judge-prompt.
+- MAST 08 (DAT-32): Built a parser (mast-parser-v1) that reads the judge reply, marks
+  whether parsing worked, and keeps the raw text. Branch: dat-32-mast-judge-parser.
+- MAST 09 (DAT-33): Built a local HTML viewer to spot disagreements and parse problems.
+  Branch: dat-33-mast-result-viewer.
+- M3 configs (DAT-40): Drafted four config files (m3-a through m3-d) for the bake-off.
+  Branch: dat-40-m3-configs.
+- Still open: Need approval to keep files under models/baseline_mast/, agreement on the
+  ADR-002 prediction record shape, and clarity on labels 3.2 / 3.3. Client work not
+  started yet.
 
 ### Shriram
 - (none yet)
