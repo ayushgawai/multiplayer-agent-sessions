@@ -94,7 +94,7 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 
 ## Current status (update on pull / after each feature)
 
-**Last updated:** 2026-09-22 (Ayush)
+**Last updated:** 2026-09-23 (Manav)
 
 - `main` has repository skeleton, requirements + lock, CI, session service (in-memory) + OpenAPI, serving stubs, M1 configs, checkpointing helper, Compose files, ADR-001, Progress Report draft.
 - Session persistence is still **in-memory** (Postgres/Redis next for Ayush).
@@ -110,7 +110,15 @@ When you finish a feature, add one bullet here under your name and bump **Last u
 - (none yet)
 
 ### Manav
-- (none yet)
+- MAST 07 (DAT-31): frozen judge prompt mast-judge-v1, byte-exact to upstream MAST
+  commit a70542e (sha256 6a73fd53...), branch dat-31-mast-judge-prompt.
+- MAST 08 (DAT-32): response parser mast-parser-v1 with explicit parse status and raw
+  response preservation, branch dat-32-mast-judge-parser.
+- MAST 09 (DAT-33): static result viewer for disagreement and parse problem inspection,
+  branch dat-33-mast-result-viewer.
+- M3 configs (DAT-40): m3-a to m3-d drafted per build plan, branch dat-40-m3-configs.
+- Pending: evaluation owner approval for files in models/baseline_mast/, ADR-002
+  prediction record agreement, 3.2/3.3 label mapping. Client scaffold not started.
 
 ### Shriram
 - (none yet)
