@@ -30,5 +30,7 @@ jobs:
       - name: Pytest serving
         working-directory: serving
         run: pytest -q
+      - name: Pytest data
+        run: pytest -q data/tests
       - name: Checkpointing self-check
         run: PYTHONPATH=. python models/common/check_checkpointing.py
