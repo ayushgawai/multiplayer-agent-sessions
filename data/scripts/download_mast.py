@@ -19,15 +19,16 @@ What this script does
 ----------------------
 1. Downloads the files above into data/mast/hf/ and data/mast/taxonomy/.
 2. The HF revision is pinned to the commit sha above. There is no "latest revision"
-   resolution: every run, cached or not, targets that exact commit.
+   resolution: every run, cached or not, targets that exact commit. The GitHub
+   taxonomy revision is pinned the same way.
 3. Is idempotent for the HF release: if a target file already exists, it is not
    re-downloaded unless --force is passed. A cached file is still re-checksummed
    and re-validated against the pinned revision's expected SHA-256 on every run,
    so a stale local file left over from before the pin (or corrupted on disk)
    cannot be silently paired with the pinned revision string in STATS.md. The two
-   small GitHub taxonomy reference files are re-fetched every run against a commit
-   sha resolved at fetch time (see resolve_github_main_sha); --force only affects
-   the HF release.
+   small GitHub taxonomy reference files are re-fetched every run from their pinned
+   commit and validated against expected checksums; --force only affects the HF
+   release.
 4. Computes a SHA-256 checksum for every file it manages, and fails loudly
    (raises, non-zero exit) if a checksum does not match the pinned expected value
    for that file.
@@ -119,11 +120,19 @@ EXPECTED_HF_CHECKSUMS: dict[str, str] = {
 
 MAST_GITHUB_REPO = "multi-agent-systems-failure-taxonomy/MAST"
 MAST_GITHUB_URL = f"https://github.com/{MAST_GITHUB_REPO}"
-MAST_GITHUB_API_COMMITS_URL = f"https://api.github.com/repos/{MAST_GITHUB_REPO}/commits/main"
-GITHUB_TAXONOMY_FILES = [
+MAST_GITHUB_REVISION = "a70542e541b2104ef8fcd785778179e173fb8d70"
+GITHUB_TAXONOMY_FILES: tuple[str, ...] = (
     "taxonomy_definitions_examples/definitions.txt",
     "taxonomy_definitions_examples/examples.txt",
-]
+)
+EXPECTED_TAXONOMY_CHECKSUMS: dict[str, str] = {
+    "taxonomy_definitions_examples/definitions.txt": (
+        "bfefa4f2c788fa1658f6879afa8a2b4577a027f224ce3e3b6ba0927dfd82f9ce"
+    ),
+    "taxonomy_definitions_examples/examples.txt": (
+        "3cf84f024eccecbb1f51deddae889bd8d14d55b539002665210555f00fe60964"
+    ),
+}
 
 # Paper: Cemri et al., 2025, "Why Do Multi-Agent LLM Systems Fail?" (arXiv:2503.13657)
 EXPECTED_TRACE_COUNT = 1642
@@ -226,32 +235,21 @@ def download_hf_release(force: bool, stats: RunStats) -> None:
         )
 
 
-def resolve_github_main_sha() -> str:
-    """Resolve the current commit sha of the MAST repo's main branch.
-
-    Pinning by commit sha (instead of the floating "main" ref) keeps the raw
-    file URLs reproducible: a raw.githubusercontent.com/.../main/... URL can
-    silently start serving different bytes if main advances, whereas a URL
-    built from a resolved sha always serves the same content. Unlike the HF
-    release above, this repo has no verified expected checksum pinned yet, so
-    this part still resolves the sha fresh each run rather than pinning to a
-    literal constant.
-    """
-    resp = requests.get(
-        MAST_GITHUB_API_COMMITS_URL,
-        timeout=30,
-        headers={"Accept": "application/vnd.github+json"},
-    )
-    resp.raise_for_status()
-    return resp.json()["sha"]
+def verify_taxonomy_checksum(relative_path: str, actual_sha256: str) -> None:
+    """Fail if a taxonomy file differs from the pinned upstream revision."""
+    expected = EXPECTED_TAXONOMY_CHECKSUMS[relative_path]
+    if actual_sha256 != expected:
+        raise ChecksumMismatchError(
+            f"{relative_path}: SHA-256 mismatch at pinned MAST taxonomy revision "
+            f"{MAST_GITHUB_REVISION}. expected {expected}, got {actual_sha256}."
+        )
 
 
 def download_github_taxonomy(force: bool, stats: RunStats) -> None:
     TAXONOMY_DIR.mkdir(parents=True, exist_ok=True)
 
-    sha = resolve_github_main_sha()
-    stats.github_taxonomy_sha = sha
-    raw_base = f"https://raw.githubusercontent.com/{MAST_GITHUB_REPO}/{sha}"
+    stats.github_taxonomy_sha = MAST_GITHUB_REVISION
+    raw_base = f"https://raw.githubusercontent.com/{MAST_GITHUB_REPO}/{MAST_GITHUB_REVISION}"
 
     for rel in GITHUB_TAXONOMY_FILES:
         filename = Path(rel).name
@@ -259,20 +257,21 @@ def download_github_taxonomy(force: bool, stats: RunStats) -> None:
         url = f"{raw_base}/{rel}"
         # These two files are small (well under 100 KB combined), so unlike the
         # multi-hundred-MB HF release we do not skip-on-exists here: every run
-        # re-fetches from the sha resolved above, so the checksum recorded in
-        # STATS.md always corresponds to the exact pinned URL recorded next to
-        # it. --force has no extra effect here; it only controls the HF release
-        # download, which is the part worth skipping for idempotency.
+        # re-fetches from the pinned sha and validates the expected checksum.
+        # --force has no extra effect here; it only controls the HF release,
+        # which is the part worth skipping for idempotency.
         resp = requests.get(url, timeout=60)
         resp.raise_for_status()
         dest.write_bytes(resp.content)
-        status = "downloaded (re-verified against resolved sha)"
+        actual_sha256 = sha256_of(dest)
+        verify_taxonomy_checksum(rel, actual_sha256)
+        status = "downloaded (verified against pinned sha)"
         stats.files.append(
             FileRecord(
                 relative_path=str(dest.relative_to(DATA_DIR)).replace("\\", "/"),
                 source_url=url,
                 size_bytes=dest.stat().st_size,
-                sha256=sha256_of(dest),
+                sha256=actual_sha256,
                 status=status,
             )
         )
@@ -341,7 +340,7 @@ def write_stats_md(stats: RunStats, force: bool) -> None:
         f"- Official MAST GitHub repo (taxonomy/label reference not in the HF release): {MAST_GITHUB_URL}"
     )
     if stats.github_taxonomy_sha:
-        lines.append(f"  - Resolved commit sha (main, at fetch time): `{stats.github_taxonomy_sha}`")
+        lines.append(f"  - Pinned commit sha: `{stats.github_taxonomy_sha}`")
     for rel in GITHUB_TAXONOMY_FILES:
         lines.append(f"  - `{rel}`")
     lines.append("")

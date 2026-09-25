@@ -116,6 +116,17 @@ def test_hf_filenames_are_exactly_the_three_pinned_files():
     )
 
 
+def test_taxonomy_revision_and_checksums_are_pinned():
+    assert dm.MAST_GITHUB_REVISION == "a70542e541b2104ef8fcd785778179e173fb8d70"
+    assert set(dm.EXPECTED_TAXONOMY_CHECKSUMS) == set(dm.GITHUB_TAXONOMY_FILES)
+    assert all(len(checksum) == 64 for checksum in dm.EXPECTED_TAXONOMY_CHECKSUMS.values())
+
+
+def test_no_latest_revision_resolution_helper_exists_for_taxonomy():
+    assert not hasattr(dm, "resolve_github_main_sha")
+    assert not hasattr(dm, "MAST_GITHUB_API_COMMITS_URL")
+
+
 def test_download_hf_release_always_requests_the_pinned_revision(monkeypatch):
     seen_revisions = []
 
@@ -137,6 +148,48 @@ def test_download_hf_release_always_requests_the_pinned_revision(monkeypatch):
     assert seen_revisions == [dm.HF_REVISION] * len(dm.HF_FILENAMES)
     assert stats.hf_revision == dm.HF_REVISION
     assert all(dm.HF_REVISION in rec.source_url for rec in stats.files)
+
+
+def test_download_taxonomy_uses_pinned_revision_and_validates_checksums(monkeypatch):
+    requested_urls = []
+    content_by_path = {rel: f"content for {rel}".encode() for rel in dm.GITHUB_TAXONOMY_FILES}
+    for rel, content in content_by_path.items():
+        monkeypatch.setitem(dm.EXPECTED_TAXONOMY_CHECKSUMS, rel, _sha256(content))
+
+    class FakeResponse:
+        def __init__(self, content):
+            self.content = content
+
+        def raise_for_status(self):
+            return None
+
+    def fake_get(url, timeout):
+        requested_urls.append(url)
+        rel = next(rel for rel in dm.GITHUB_TAXONOMY_FILES if url.endswith(rel))
+        return FakeResponse(content_by_path[rel])
+
+    monkeypatch.setattr(dm.requests, "get", fake_get)
+
+    stats = _new_stats()
+    dm.download_github_taxonomy(force=False, stats=stats)
+
+    assert stats.github_taxonomy_sha == dm.MAST_GITHUB_REVISION
+    assert len(requested_urls) == len(dm.GITHUB_TAXONOMY_FILES)
+    assert all(dm.MAST_GITHUB_REVISION in url for url in requested_urls)
+    assert all(rec.status == "downloaded (verified against pinned sha)" for rec in stats.files)
+
+
+def test_download_taxonomy_fails_on_checksum_mismatch(monkeypatch):
+    class FakeResponse:
+        content = b"unexpected taxonomy bytes"
+
+        def raise_for_status(self):
+            return None
+
+    monkeypatch.setattr(dm.requests, "get", lambda url, timeout: FakeResponse())
+
+    with pytest.raises(dm.ChecksumMismatchError, match="pinned MAST taxonomy revision"):
+        dm.download_github_taxonomy(force=False, stats=_new_stats())
 
 
 # ---------------------------------------------------------------------------
