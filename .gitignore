@@ -36,6 +36,9 @@ credentials.json
 # Model and data downloads (not committed); keep dir READMEs
 data/mast/**
 !data/mast/README.md
+!data/mast/AUDIT_REPORT.md
+!data/mast/eval_manifest.DRAFT.json
+!data/mast/eval_manifest.json
 data/qmsum/**
 !data/qmsum/README.md
 data/sessions/raw/
