@@ -40,6 +40,11 @@ from models.baseline_mast.prompt import (
     render_prompt,
     was_truncated,
 )
+from models.baseline_mast.provenance import (
+    build_run_manifest,
+    missing_manifest_fields,
+    write_run_manifest,
+)
 
 PREDICTIONS_FILE = "predictions.jsonl"
 FAILURES_FILE = "failures.jsonl"
@@ -249,6 +254,26 @@ def failed_record_ids(result_dir: Path) -> list[str]:
     return seen
 
 
+def seal_partial_line(path: Path) -> bool:
+    """Terminate a partial final line left by a killed run.
+
+    A hard kill can leave the last line without its newline. Appending
+    straight onto that byte would glue the next record to the fragment and
+    silently lose it, so the fragment is closed off first. It stays on its own
+    line, where read_jsonl discards it. Returns True when a seal was needed.
+    """
+    if not path.exists() or path.stat().st_size == 0:
+        return False
+    with path.open("rb+") as handle:
+        handle.seek(-1, os.SEEK_END)
+        if handle.read(1) == b"\n":
+            return False
+        handle.write(b"\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+    return True
+
+
 def _append_jsonl(path: Path, payload: dict[str, Any]) -> None:
     """Append one record and force it to disk before returning."""
     line = json.dumps(payload, ensure_ascii=False, default=str)
@@ -372,10 +397,14 @@ class BatchRunner:
             run_id=self.run_id,
             started_at=datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         )
-        done = completed_record_ids(self.result_dir)
-        wanted = set(only) if only is not None else None
         predictions = self.result_dir / PREDICTIONS_FILE
         failures = self.result_dir / FAILURES_FILE
+        for path in (predictions, failures):
+            if seal_partial_line(path):
+                self.log(f"sealed a partial final line in {path.name}")
+
+        done = completed_record_ids(self.result_dir)
+        wanted = set(only) if only is not None else None
 
         for rec in records:
             if wanted is not None and rec.record_id not in wanted:
@@ -490,6 +519,28 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     only = failed_record_ids(args.result_dir) if args.retry_failed else None
     summary = runner.run(records, only=only)
+
+    run_manifest = build_run_manifest(
+        run_id=runner.run_id,
+        model_id=runner.judge.model_id,
+        model_settings=runner.judge.model_settings,
+        dataset_path=args.dataset,
+        dataset_sha256=runner.dataset_sha256,
+        dataset_revision=manifest.get("dataset", {}).get("pinned_revision"),
+        eval_manifest_path=args.manifest,
+        reference_source=args.reference,
+        summary=summary,
+        result_dir=args.result_dir,
+    )
+    write_run_manifest(args.result_dir, run_manifest)
+
+    incomplete = missing_manifest_fields(run_manifest)
+    if incomplete:
+        print(
+            f"run manifest is missing provenance fields: {incomplete}",
+            file=sys.stderr,
+        )
+
     print(json.dumps(summary.__dict__, indent=2))
     return 0
 

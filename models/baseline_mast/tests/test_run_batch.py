@@ -24,6 +24,7 @@ from models.baseline_mast.run_batch import (
     load_eval_records,
     make_record_id,
     read_jsonl,
+    seal_partial_line,
 )
 
 DATASET_SHA = "a" * 64
@@ -220,6 +221,38 @@ def test_truncated_final_line_is_tolerated_on_resume(tmp_path: Path) -> None:
     summary = make_runner(tmp_path).run(make_records(4))
     assert summary.skipped == 3
     assert summary.succeeded == 1
+
+
+def test_resume_after_a_partial_line_loses_no_record(tmp_path: Path) -> None:
+    """A fragment with no trailing newline must not swallow the next append."""
+    make_runner(tmp_path).run(make_records(3))
+    path = tmp_path / PREDICTIONS_FILE
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write('{"run_id": "run-test-001", "trace_id": "AG2_GSM_Plus_Cla')
+
+    make_runner(tmp_path).run(make_records(4))
+
+    ids = [r["trace_id"] for r in read_jsonl(path)]
+    expected = [make_record_id("AG2_GSM_Plus_Claude", i) for i in range(4)]
+    assert sorted(ids) == sorted(expected)
+    assert len(ids) == len(set(ids)) == 4
+
+
+def test_seal_partial_line_only_acts_when_needed(tmp_path: Path) -> None:
+    path = tmp_path / PREDICTIONS_FILE
+
+    assert seal_partial_line(path) is False  # missing file
+
+    path.write_text("", encoding="utf-8")
+    assert seal_partial_line(path) is False  # empty file
+
+    path.write_text('{"a": 1}\n', encoding="utf-8")
+    assert seal_partial_line(path) is False  # already terminated
+
+    path.write_text('{"a": 1}\n{"b": 2', encoding="utf-8")
+    assert seal_partial_line(path) is True
+    assert path.read_text(encoding="utf-8").endswith("\n")
+    assert seal_partial_line(path) is False  # idempotent
 
 
 def test_failed_items_are_recorded_and_identifiable(tmp_path: Path) -> None:
