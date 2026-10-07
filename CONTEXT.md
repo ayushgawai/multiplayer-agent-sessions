@@ -74,11 +74,17 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 | Serving stubs m1–m4 | Ayush | Done |
 | M1 configs `m1-a`…`m1-d` | Ayush | Done |
 | Docker Compose skeleton | Ayush | Done |
-| Progress Report draft Parts A–D | Ayush (scaffold) | Done — teammates fill `[TBD]` |
-| MAST + QMSum downloaded + STATS.md row counts | Naman | Open |
-| Harness runs one candidate end to end | Pramod | Open |
-| Configs m2 / m3 / m4 / baseline (16 files) | Naman, Manav, Shriram, Pramod | Open |
-| Meeting minutes times / attendance | Team | Open — fill Part B `[TBD]` |
+| Progress Report 1 (`T4.A3`) | Team | Submitted / past due |
+| Workbook 1 (`T4.A4-v2`) | Team review | Draft ready — each owner review sections (see `tmp/team-message.md` locally) |
+| MAST download script + `data/mast/STATS.md` | Naman (merged DAT-28) | Done on `main` |
+| QMSum download + STATS.md | Naman | Open |
+| Harness runs one candidate end to end | Pramod | Open (branch/PR work in flight) |
+| Configs m2 / m3 / m4 / baseline | Naman, Manav, Shriram, Pramod | Partial — m3 on branch `dat-40-m3-configs` (no PR yet) |
+| Client / CRDT for integration gate | Manav | Open — `client/` still empty on `main` |
+| Agent runtime on fixture | Shriram | Open PR #6 (DAT-18) |
+| MAST judge prompt / parser / viewer | Manav | Branches only — need stacked PRs |
+| MAST batch + provenance | Shriram | Open PR #5 (DAT-34/35) |
+| MAST metrics | Pramod | Draft PR #3 (DAT-37) |
 
 ### Part C — fill your row in the report
 
@@ -94,39 +100,39 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 
 ## Current status (update on pull / after each feature)
 
-**Last updated:** 2026-09-23 (Manav)
+**Last updated:** 2026-10-06 (Ayush, after pull)
 
-- `main` has repository skeleton, requirements + lock, CI, session service (in-memory) + OpenAPI, serving stubs, M1 configs, checkpointing helper, Compose files, ADR-001, Progress Report draft.
-- Session persistence is still **in-memory** (Postgres/Redis next for Ayush).
-- No training runs yet (needs QMSum/split + harness + GPU).
-- No client, agent-runtime, harness, or public data downloads in repo yet.
+- `main` still has Ayush foundation (session service in-memory, serving stubs, M1 configs, CI, Compose, ADR-001).
+- **Merged since:** DAT-28 MAST download script + `data/mast/STATS.md` (1,642 traces pinned; human-labelled set 19).
+- **Not on `main` yet:** client, agent-runtime, harness, QMSum, m2/m3/m4 configs, MAST judge/parser/viewer/batch (see open PRs/branches below).
+- Session persistence still **in-memory**. Next Ayush build: Postgres event log + Redis fan-out (needed for Oct 7–8 integration / demo).
+- No M1 training yet (needs QMSum split + harness + GPU).
+
+**Open PRs (as of pull):** #2 DAT-29, #3 DAT-37 (draft), #4 DAT-30, #5 DAT-34/35, #6 DAT-18.
+
+**Branches without PRs (Manav):** `dat-31-mast-judge-prompt` → `dat-32-mast-judge-parser` → `dat-33-mast-result-viewer`; `dat-40-m3-configs`.
 
 When you finish a feature, add one bullet here under your name and bump **Last updated**.
 
 ### Ayush
-- Foundation through Progress Report scaffold (see git log DAT-1…).
+- Foundation through Progress Report scaffold and CONTEXT.md.
+- Next: durable event log (Postgres/alembic), Redis stream fan-out, keep OpenAPI stable for Manav/Shriram.
 
 ### Naman
-- (none yet)
+- DAT-28 merged: MAST download + checksums + STATS.md.
+- Still open: QMSum download/STATS, data dictionary (DAT-29 PR), eval manifest (DAT-30 PR).
 
 ### Manav
-- MAST 07 (DAT-31): Locked the judge prompt (mast-judge-v1) so it matches the upstream
-  MAST file exactly. Branch: dat-31-mast-judge-prompt.
-- MAST 08 (DAT-32): Built a parser (mast-parser-v1) that reads the judge reply, marks
-  whether parsing worked, and keeps the raw text. Branch: dat-32-mast-judge-parser.
-- MAST 09 (DAT-33): Built a local HTML viewer to spot disagreements and parse problems.
-  Branch: dat-33-mast-result-viewer.
-- M3 configs (DAT-40): Drafted four config files (m3-a through m3-d) for the bake-off.
-  Branch: dat-40-m3-configs.
-- Still open: Need approval to keep files under models/baseline_mast/, agreement on the
-  ADR-002 prediction record shape, and clarity on labels 3.2 / 3.3. Client work not
-  started yet.
+- MAST 07–09 and M3 configs on branches (DAT-31/32/33/40); not merged. Client work not on `main`.
+- Still open: open stacked PRs; start `client/` before Team Meeting demo.
 
 ### Shriram
-- (none yet)
+- DAT-18 LangGraph loop: PR #6 open.
+- DAT-34/35 MAST batch + provenance: PR #5 open.
 
 ### Pramod
-- (none yet)
+- DAT-37 MAST metrics: draft PR #3.
+- Still open: harness one-candidate E2E; protocol lock.
 
 ---
 
