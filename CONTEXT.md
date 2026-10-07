@@ -136,6 +136,19 @@ When you finish a feature, add one bullet here under your name and bump **Last u
 
 ---
 
+## Compute (team truth)
+
+Do **not** budget paid cloud GPU for 298A unless the lab host is down.
+
+| Resource | Detail | Cost |
+|----------|--------|------|
+| Lab GPU host | `ssh ADS-Admin@100.125.217.67` (`IDS-TWIN-LAB-09`, Windows 11) | $0 (unlimited team access) |
+| GPU | NVIDIA GeForce RTX 5080 Laptop, 16 GB VRAM, driver 592.02 | $0 |
+| CPU / RAM | 24 logical cores, 63.5 GB RAM | $0 |
+| LLM APIs | OpenRouter and/or OpenAI / Anthropic / Kiro CLI as needed for MAST judge and prompted arms | pay-as-you-go; keep receipts; no fixed $100–$250 commitment |
+
+Workbook section 2.3 must describe this host, not invented cloud GPU spend. Adapter training and M1 bake-off run here. Colab is fallback only if this machine is unavailable.
+
 ## Local commands
 
 ```bash
@@ -154,7 +167,7 @@ cd session-service && pytest -q
 cd serving && pytest -q
 ```
 
-Training extras (GPU hosts only): `pip install -r requirements-models.txt`
+Training extras (on the lab GPU host): `pip install -r requirements-models.txt`
 
 ---
 
