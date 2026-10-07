@@ -100,15 +100,14 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 
 ## Current status (update on pull / after each feature)
 
-**Last updated:** 2026-10-06 (Ayush, after pull)
+**Last updated:** 2026-10-06 (Ayush)
 
-- `main` still has Ayush foundation (session service in-memory, serving stubs, M1 configs, CI, Compose, ADR-001).
-- **Merged since:** DAT-28 MAST download script + `data/mast/STATS.md` (1,642 traces pinned; human-labelled set 19).
-- **Not on `main` yet:** client, agent-runtime, harness, QMSum, m2/m3/m4 configs, MAST judge/parser/viewer/batch (see open PRs/branches below).
-- Session persistence still **in-memory**. Next Ayush build: Postgres event log + Redis fan-out (needed for Oct 7–8 integration / demo).
+- Ayush foundation plus **durable event log** (SQLAlchemy; SQLite in CI, Postgres in Compose) and **Redis/in-process fan-out** (ADR-002). OpenAPI routes unchanged.
+- **Merged earlier:** DAT-28 MAST download + `data/mast/STATS.md`.
+- **Not on `main` yet:** client, agent-runtime, harness, QMSum, m2/m3/m4 configs, MAST judge/parser/viewer/batch.
 - No M1 training yet (needs QMSum split + harness + GPU).
 
-**Open PRs (as of pull):** #2 DAT-29, #3 DAT-37 (draft), #4 DAT-30, #5 DAT-34/35, #6 DAT-18.
+**Open PRs (as of earlier pull):** #2 DAT-29, #3 DAT-37 (draft), #4 DAT-30, #5 DAT-34/35, #6 DAT-18.
 
 **Branches without PRs (Manav):** `dat-31-mast-judge-prompt` → `dat-32-mast-judge-parser` → `dat-33-mast-result-viewer`; `dat-40-m3-configs`.
 
@@ -116,7 +115,8 @@ When you finish a feature, add one bullet here under your name and bump **Last u
 
 ### Ayush
 - Foundation through Progress Report scaffold and CONTEXT.md.
-- Next: durable event log (Postgres/alembic), Redis stream fan-out, keep OpenAPI stable for Manav/Shriram.
+- DAT-42: Postgres/SQLite event log, alembic `001_event_log`, role rejects as `type: rejected`, replay helper, Redis/local stream fan-out, ADR-002. Concurrent append test (200 ops) green.
+- Next after integration gate: wire M1 serving to a real checkpoint once bake-off data exists.
 
 ### Naman
 - DAT-28 merged: MAST download + checksums + STATS.md.
