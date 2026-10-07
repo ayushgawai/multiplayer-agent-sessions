@@ -100,7 +100,7 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 
 ## Current status (update on pull / after each feature)
 
-**Last updated:** 2026-10-06 (Ayush)
+**Last updated:** 2026-10-07 (Ayush)
 
 - Ayush foundation plus **durable event log** (SQLAlchemy; SQLite in CI, Postgres in Compose) and **Redis/in-process fan-out** (ADR-002). OpenAPI routes unchanged.
 - **Merged earlier:** DAT-28 MAST download + `data/mast/STATS.md`.
@@ -114,9 +114,9 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 When you finish a feature, add one bullet here under your name and bump **Last updated**.
 
 ### Ayush
-- Foundation through Progress Report scaffold and CONTEXT.md.
-- DAT-42: Postgres/SQLite event log, alembic `001_event_log`, role rejects as `type: rejected`, replay helper, Redis/local stream fan-out, ADR-002. Concurrent append test (200 ops) green.
-- Next after integration gate: wire M1 serving to a real checkpoint once bake-off data exists.
+- Foundation, ADR-001/002, durable event log + fan-out on main; DAT-9 marked Done with commit link.
+- Workbook 1 figures regenerated (Gantt/PERT) for four-candidate bake-offs; MAST parallel, not critical path.
+- Next: MAST-01/02/03 (DAT-25–27) and M1 QMSum/split once data tickets move.
 
 ### Naman
 - DAT-28 merged: MAST download + checksums + STATS.md.
