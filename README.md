@@ -32,6 +32,14 @@ cd session-service && uvicorn app.main:app --reload --port 8000
 cd serving && uvicorn serve:app --reload --port 8001
 ```
 
+Defaults to in-memory SQLite. For Postgres + Redis (Compose):
+
+```bash
+export DATABASE_URL=postgresql+psycopg://mas:mas@localhost:5432/mas
+export REDIS_URL=redis://localhost:6379/0
+cd session-service && alembic upgrade head && uvicorn app.main:app --reload --port 8000
+```
+
 - Session service health: `GET http://localhost:8000/healthz`
 - Serving health: `GET http://localhost:8001/healthz`
 - OpenAPI: `session-service/openapi.json`

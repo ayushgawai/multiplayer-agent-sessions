@@ -75,10 +75,10 @@
       "3.3": "Task Verification"
     },
     "source_commit": {
-      "provisional": true,
-      "provisional_note": "DAT-29 (data/mast/TAXONOMY.md, data/mast/DATA_DICTIONARY.md) has not been rebased onto main yet. This commit hash is dat-29's current tip and WILL change once dat-29 is rebased and merged. Update this field (and re-verify the canonical_label_order and naming_conflict_note below still match) at that point; do not treat this as final.",
+      "provisional": false,
+      "provisional_note": "DAT-29 was merged through PR #2 at merge commit 20f87635526d55ecd6d84565696fe84924f23a19. Commit 843bf0afba52abb3e803e78418f6131c7ae17fe1 remains the content source for data/mast/TAXONOMY.md and data/mast/DATA_DICTIONARY.md.",
       "repo": "this repo (multiplayer-agent-sessions)",
-      "branch": "dat-29-mast05-data-dictionary",
+      "branch": "main",
       "commit": "843bf0afba52abb3e803e78418f6131c7ae17fe1",
       "file": "data/mast/TAXONOMY.md"
     },
