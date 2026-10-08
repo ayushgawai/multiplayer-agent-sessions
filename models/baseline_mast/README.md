@@ -79,6 +79,9 @@ Rules:
 content change creates `mast-judge-v2` and a new protocol version; `v1` stays
 frozen for the reproduction condition.
 
+`models/baseline_mast/.gitattributes` keeps `judge_prompt.txt` and fixtures
+byte-exact on every OS (no CRLF conversion).
+
 ## Verify
 
 ```bash
