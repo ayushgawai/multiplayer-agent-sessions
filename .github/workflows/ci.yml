@@ -35,5 +35,7 @@ jobs:
         run: pytest -q data/tests
       - name: Pytest eval
         run: pytest -q eval/tests
+      - name: Pytest MAST baseline
+        run: pytest -q models/baseline_mast/tests
       - name: Checkpointing self-check
         run: PYTHONPATH=. python models/common/check_checkpointing.py
