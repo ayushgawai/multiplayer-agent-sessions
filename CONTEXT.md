@@ -100,7 +100,7 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 
 ## Current status (update on pull / after each feature)
 
-**Last updated:** 2026-10-07 (Ayush)
+**Last updated:** 2026-10-07 (Manav)
 
 - Ayush foundation plus **durable event log** (SQLAlchemy; SQLite in CI, Postgres in Compose) and **Redis/in-process fan-out** (ADR-002). OpenAPI routes unchanged.
 - **Merged earlier:** DAT-28 MAST download + `data/mast/STATS.md`.
@@ -123,8 +123,10 @@ When you finish a feature, add one bullet here under your name and bump **Last u
 - Still open: QMSum download/STATS, data dictionary (DAT-29 PR), eval manifest (DAT-30 PR).
 
 ### Manav
-- MAST 07–09 and M3 configs on branches (DAT-31/32/33/40); not merged. Client work not on `main`.
-- Still open: open stacked PRs; start `client/` before Team Meeting demo.
+- MAST 07 to 09 (DAT-31/32/33) merged to main (#7, #8, #9): judge prompt mast-judge-v1, parser mast-parser-v1.1, result viewer. Integration-tested with the data manifest and batch runner.
+- M3 configs (DAT-40) merged (#10). Stub label fix escalate_human to escalate in #11 (serving owner reviewing).
+- Client scaffold (DAT-15) in progress on dat-15-client-scaffold. Next: Yjs editor (DAT-16), presence (DAT-17).
+- Open: ADR-003 MAST prediction record with execution owner; m3-d prompt_fewshot.txt after M3 seed set.
 
 ### Shriram
 - DAT-18 LangGraph loop: PR #6 open.
