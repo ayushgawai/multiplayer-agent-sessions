@@ -58,8 +58,15 @@ Rules:
 
 ## Result viewer
 
-Field names follow ADR-002 (proposed). The viewer reads saved JSONL only; it
-never calls a model.
+Field names follow ADR-003 (MAST prediction record, proposed). The viewer reads
+saved JSONL only; it never calls a model.
+
+The header shows `reference_source` ("unknown" if the record has none) and the
+label block is titled "reference labels (<reference_source>)". The record key
+is still `human_labels` (the runner's field name), but the labels may come from
+the released LLM annotation, not from humans (see `data/mast/DATA_DICTIONARY.md`
+on the DAT-29 branch). The detail block also shows `trace_key`, `llm_name` and
+`benchmark` when present.
 
 ```bash
 PYTHONPATH=. python models/baseline_mast/view_results.py \
@@ -89,8 +96,12 @@ code); text search on `trace_id`. Default shows all rows with "N of M shown".
   `behaviour.There are several`)
 - Example answer lists codes `1.6` and `2.7`, which are absent from the answer
   template
-- Codes `3.2` and `3.3` use swapped names between the answer template and
-  `definitions.txt`
+- 3.2 and 3.3: the answer template in `judge_prompt.txt` lists these codes by
+  number only. The definitions further down (and `data/mast/TAXONOMY.md`) name
+  3.2 Weak Verification and 3.3 No or Incorrect Verification, while `MAST_NAMES`
+  in `parse_judge.py` uses the opposite names for display. The parser keys on
+  code numbers, which is what the judge replies with. How codes map to meaning
+  for scoring is decided by the evaluation owner.
 - Trailing spaces on example-answer lines; no final newline on the template
 - Upstream `parse_responses` matches `yes`/`no` without word boundaries (can
   misread `2.5` and `3.2`) and defaults missing answers to 0
@@ -124,6 +135,6 @@ PYTHONPATH=. python models/baseline_mast/view_results.py \
   request an exception for `judge_prompt.txt` from the environment owner
 - Ownership: CONTEXT.md lists `models/baseline_mast/` under the evaluation
   owner; written approval for the prompt, parser and viewer files is pending.
-- ADR-002 prediction record: field names used by the parser and viewer are
+- ADR-003 prediction record: field names used by the parser and viewer are
   proposed and need agreement from the execution owner and environment owner
   before real runs are saved.
