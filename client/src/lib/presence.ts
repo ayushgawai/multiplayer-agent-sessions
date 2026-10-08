@@ -17,11 +17,17 @@ export const PALETTE: readonly string[] = [
   "#4a5568",
 ];
 
-/** Stable colour for a participant id (FNV-1a hash into the palette). */
-export function colourFor(participantId: string): string {
+/**
+ * Stable colour for a participant. The hash input is the display name, trimmed
+ * and lowercased, not the participant id: rejoining a session issues a new id,
+ * but the same person keeps the same colour. Two people who pick the same name
+ * share a colour; the id still tells them apart everywhere else.
+ */
+export function colourFor(displayName: string): string {
+  const key = displayName.trim().toLowerCase();
   let hash = 0x811c9dc5;
-  for (let i = 0; i < participantId.length; i += 1) {
-    hash ^= participantId.charCodeAt(i);
+  for (let i = 0; i < key.length; i += 1) {
+    hash ^= key.charCodeAt(i);
     hash = Math.imul(hash, 0x01000193) >>> 0;
   }
   return PALETTE[hash % PALETTE.length] ?? PALETTE[0] ?? "#4a5568";
@@ -51,7 +57,7 @@ export interface PresenceEntry {
 }
 
 export function buildPresenceState(info: PresenceInfo): PresenceState {
-  const colour = colourFor(info.participantId);
+  const colour = colourFor(info.displayName);
   return {
     participant_id: info.participantId,
     display_name: info.displayName,

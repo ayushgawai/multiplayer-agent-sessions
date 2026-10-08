@@ -73,8 +73,10 @@ cd client && npm run dev
 
 Each tab publishes its participant id, display name, role and colour through
 Yjs awareness (the provider's own channel; nothing is stored). The colour is a
-hash of the participant id into a fixed palette of eight colours that are
-readable under white text, so it is the same after a reconnect or reload.
+hash of the display name (trimmed, lowercased) into a fixed palette of eight
+colours that are readable under white text. Rejoining a session issues a new
+participant id, so the colour follows the name and stays the same after a
+reconnect or rejoin. Two people who choose the same name share a colour.
 `@tiptap/extension-collaboration-cursor` draws labelled carets and selections,
 and the presence bar above the editor lists everyone present (one entry per
 participant, even with two tabs). Observers appear in the bar and get a

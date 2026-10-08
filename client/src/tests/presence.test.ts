@@ -12,19 +12,33 @@ function luminance(hex: string): number {
 }
 
 describe("colours", () => {
-  it("the same id always gives the same colour", () => {
-    for (const id of ["p_1", "p_2", "ses-user-77"]) {
-      const first = colourFor(id);
+  it("the same name always gives the same colour", () => {
+    for (const name of ["Ada", "Ben", "Mary Ann"]) {
+      const first = colourFor(name);
       for (let i = 0; i < 20; i += 1) {
-        expect(colourFor(id)).toBe(first);
+        expect(colourFor(name)).toBe(first);
       }
     }
   });
 
-  it("50 ids use every one of the 8 colours", () => {
+  it("rejoining with a new participant id keeps the colour", () => {
+    const before = buildPresenceState({ participantId: "p_2", displayName: "Ada", role: "author" });
+    const after = buildPresenceState({ participantId: "p_4", displayName: "Ada", role: "author" });
+    expect(after.colour).toBe(before.colour);
+    expect(after.user.color).toBe(before.user.color);
+  });
+
+  it("case and surrounding spaces do not matter", () => {
+    const base = colourFor("Ada Lovelace");
+    expect(colourFor("  ada lovelace ")).toBe(base);
+    expect(colourFor("ADA LOVELACE")).toBe(base);
+    expect(colourFor("\tAda Lovelace\n")).toBe(base);
+  });
+
+  it("50 names use every one of the 8 colours", () => {
     const used = new Set<string>();
     for (let i = 1; i <= 50; i += 1) {
-      used.add(colourFor(`p_${i}`));
+      used.add(colourFor(`person ${i}`));
     }
     expect(PALETTE).toHaveLength(8);
     expect(used.size).toBe(8);
@@ -54,9 +68,9 @@ describe("awareness state", () => {
       participant_id: "p_3",
       display_name: "Cy",
       role: "reviewer",
-      colour: colourFor("p_3"),
+      colour: colourFor("Cy"),
     });
-    expect(state.user).toEqual({ name: "Cy", color: colourFor("p_3") });
+    expect(state.user).toEqual({ name: "Cy", color: colourFor("Cy") });
     awareness.destroy();
   });
 
