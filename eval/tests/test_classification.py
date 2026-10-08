@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -119,6 +120,55 @@ def test_single_all_negative_label_keeps_primary_and_micro_scores_consistent() -
     }
 
 
+def test_single_label_uses_positive_class_for_per_label_and_averages() -> None:
+    truth = [[1], [0], [1], [0]]
+    predictions = [[1], [0], [0], [0]]
+
+    result = compute_multilabel_metrics(truth, predictions, label_names=("1.1",))
+
+    expected = {
+        "precision": 1.0,
+        "recall": 0.5,
+        "f1": pytest.approx(2 / 3),
+    }
+    assert result["per_label"]["1.1"] == {
+        "accuracy": 0.75,
+        **expected,
+        "support": 2,
+        "predicted_positive": 1,
+    }
+    assert result["averages"]["macro"] == expected
+    assert result["averages"]["weighted"] == expected
+
+
+def test_all_canonical_mast_labels_are_preserved_in_manifest_order() -> None:
+    manifest_path = Path(__file__).parents[2] / "data" / "mast" / "eval_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    canonical_labels = tuple(manifest["taxonomy"]["canonical_label_order"])
+    truth = [[1 if index % 2 == 0 else 0 for index in range(len(canonical_labels))]]
+
+    result = compute_multilabel_metrics(truth, truth, label_names=canonical_labels)
+
+    assert canonical_labels == (
+        "1.1",
+        "1.2",
+        "1.3",
+        "1.4",
+        "1.5",
+        "2.1",
+        "2.2",
+        "2.3",
+        "2.4",
+        "2.5",
+        "2.6",
+        "3.1",
+        "3.2",
+        "3.3",
+    )
+    assert result["n_labels"] == 14
+    assert tuple(result["per_label"]) == canonical_labels
+
+
 @pytest.mark.parametrize(
     ("truth", "predictions", "labels", "message"),
     [
@@ -130,8 +180,8 @@ def test_single_all_negative_label_keeps_primary_and_micro_scores_consistent() -
     ],
 )
 def test_invalid_inputs_are_rejected(
-    truth: list[object],
-    predictions: list[object],
+    truth: list[int] | list[list[int]],
+    predictions: list[int] | list[list[int]],
     labels: tuple[str, ...],
     message: str,
 ) -> None:

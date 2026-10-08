@@ -19,11 +19,12 @@ jobs:
           python -m pip install -U pip
           pip install -r requirements.txt
       - name: Ruff
-        run: ruff check session-service serving models
+        run: ruff check session-service serving models eval
       - name: Mypy
         run: |
           mypy --ignore-missing-imports session-service/app
           mypy --ignore-missing-imports serving
+          mypy eval
       - name: Pytest session-service
         working-directory: session-service
         run: pytest -q
@@ -32,5 +33,7 @@ jobs:
         run: pytest -q
       - name: Pytest data
         run: pytest -q data/tests
+      - name: Pytest eval
+        run: pytest -q eval/tests
       - name: Checkpointing self-check
         run: PYTHONPATH=. python models/common/check_checkpointing.py

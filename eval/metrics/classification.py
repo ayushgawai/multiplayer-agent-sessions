@@ -15,8 +15,12 @@ from typing import Any
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
-from sklearn.metrics import accuracy_score, cohen_kappa_score, confusion_matrix
-from sklearn.metrics import precision_recall_fscore_support
+from sklearn.metrics import (  # type: ignore[import-untyped]
+    accuracy_score,
+    cohen_kappa_score,
+    confusion_matrix,
+    precision_recall_fscore_support,
+)
 
 METRIC_CONVENTION = "mast_binary_label_cells_v1"
 
@@ -50,22 +54,70 @@ def _validated_label_names(label_names: Sequence[str], *, expected: int) -> tupl
     return labels
 
 
-def _averaged_scores(
+def _per_label_positive_scores(
     y_true: NDArray[np.int_],
     y_pred: NDArray[np.int_],
+) -> tuple[
+    NDArray[np.float64],
+    NDArray[np.float64],
+    NDArray[np.float64],
+    NDArray[np.int_],
+]:
+    """Return positive-class scores for each label column.
+
+    Scikit-learn treats a two-dimensional ``(n_samples, 1)`` target as a
+    binary-class problem rather than a one-output multilabel problem. Passing
+    ``labels=[1]`` to each one-dimensional column keeps the positive class
+    semantics identical for one-label and multi-label inputs.
+    """
+
+    precision = np.zeros(y_true.shape[1], dtype=float)
+    recall = np.zeros(y_true.shape[1], dtype=float)
+    f1 = np.zeros(y_true.shape[1], dtype=float)
+    support = np.zeros(y_true.shape[1], dtype=int)
+
+    for index in range(y_true.shape[1]):
+        column_precision, column_recall, column_f1, column_support = (
+            precision_recall_fscore_support(
+                y_true[:, index],
+                y_pred[:, index],
+                labels=[1],
+                average=None,
+                zero_division=0,
+            )
+        )
+        precision[index] = column_precision[0]
+        recall[index] = column_recall[0]
+        f1[index] = column_f1[0]
+        support[index] = column_support[0]
+
+    return precision, recall, f1, support
+
+
+def _averaged_scores(
+    precision: NDArray[np.float64],
+    recall: NDArray[np.float64],
+    f1: NDArray[np.float64],
+    support: NDArray[np.int_],
     *,
     average: str,
 ) -> dict[str, float]:
-    precision, recall, f1, _ = precision_recall_fscore_support(
-        y_true,
-        y_pred,
-        average=average,
-        zero_division=0,
-    )
+    """Aggregate positive-class per-label scores using macro or support weights."""
+
+    if average == "macro":
+        weights: NDArray[np.float64] | None = None
+    elif average == "weighted":
+        total_support = int(support.sum())
+        if total_support == 0:
+            return {"precision": 0.0, "recall": 0.0, "f1": 0.0}
+        weights = support.astype(float, copy=False)
+    else:
+        raise ValueError(f"unsupported average: {average}")
+
     return {
-        "precision": float(precision),
-        "recall": float(recall),
-        "f1": float(f1),
+        "precision": float(np.average(precision, weights=weights)),
+        "recall": float(np.average(recall, weights=weights)),
+        "f1": float(np.average(f1, weights=weights)),
     }
 
 
@@ -129,12 +181,7 @@ def compute_multilabel_metrics(
             warnings.append("cohen_kappa_undefined")
 
     per_label_precision, per_label_recall, per_label_f1, per_label_support = (
-        precision_recall_fscore_support(
-            truth,
-            predictions,
-            average=None,
-            zero_division=0,
-        )
+        _per_label_positive_scores(truth, predictions)
     )
     per_label: dict[str, dict[str, float | int]] = {}
     for index, label in enumerate(labels):
@@ -160,8 +207,20 @@ def compute_multilabel_metrics(
         "cohen_kappa": kappa,
         "averages": {
             "micro": micro_scores,
-            "macro": _averaged_scores(truth, predictions, average="macro"),
-            "weighted": _averaged_scores(truth, predictions, average="weighted"),
+            "macro": _averaged_scores(
+                per_label_precision,
+                per_label_recall,
+                per_label_f1,
+                per_label_support,
+                average="macro",
+            ),
+            "weighted": _averaged_scores(
+                per_label_precision,
+                per_label_recall,
+                per_label_f1,
+                per_label_support,
+                average="weighted",
+            ),
         },
         "confusion": {
             "true_negative": int(tn),
