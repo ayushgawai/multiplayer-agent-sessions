@@ -86,6 +86,32 @@ def test_event_ids_are_unique_and_sortable(
     assert ids == sorted(ids)
 
 
+def test_run_context_events_still_validate_against_the_contract() -> None:
+    """Rebinding session and root per run must not break the event shape."""
+    loop = AgentLoop(TwoStepPlanner(), tools={"echo": EchoTool()})
+    state = loop.run(
+        "pull the Q3 numbers into the table",
+        session_id="ses_live",
+        root_instruction_event_id="evt_root",
+    )
+
+    assert state["events"]
+    for event in state["events"]:
+        SessionEvent.model_validate(event)
+        assert event["session_id"] == "ses_live"
+        assert event["causality"]["root_instruction"] == "evt_root"
+
+
+def test_event_ids_stay_monotonic_across_consecutive_runs() -> None:
+    loop = AgentLoop(TwoStepPlanner(), tools={"echo": EchoTool()})
+    loop.run("one", session_id="ses_a")
+    loop.run("two", session_id="ses_b")
+
+    ids = [e["event_id"] for e in loop.events]
+    assert len(ids) == len(set(ids))
+    assert ids == sorted(ids)
+
+
 def test_causality_carries_the_root_instruction() -> None:
     sink = ListSink()
     emitter = EventEmitter(

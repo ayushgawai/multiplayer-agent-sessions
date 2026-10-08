@@ -15,6 +15,10 @@ The step cap is hard. It is checked before planning and again on the edge out
 of observe, so a planner that never returns a finish plan still terminates and
 says so in `halted_reason` rather than running forever.
 
+Cancellation is a terminal node, not an exception. Every edge routes to it
+when the token is set, so a cancelled run still returns the steps it had
+already completed and the events it had already emitted.
+
 Tools arrive under DAT-19. The loop takes a registry and treats an unknown
 tool as a failed observation rather than an exception, which keeps one bad
 plan from killing the run.
@@ -24,20 +28,18 @@ from __future__ import annotations
 
 from typing import Any
 
-from langgraph.graph import END, StateGraph
+from langgraph.graph import END, START, StateGraph
 
-from runtime.events import EventEmitter, ListSink
+from runtime.events import EventEmitter, ListSink, RecordingSink
 from runtime.state import AgentState, Observation, Planner, Step, Tool
 
 DEFAULT_MAX_STEPS = 12
 
+DEFAULT_SESSION_ID = "ses_local"
+
 HALT_STEP_CAP = "step_cap_reached"
 HALT_PLANNER_FINISHED = "planner_finished"
 HALT_CANCELLED = "cancelled"
-
-
-class Cancelled(Exception):
-    """Raised inside the loop when a cancellation token is set."""
 
 
 class CancellationToken:
@@ -76,24 +78,39 @@ class AgentLoop:
             raise ValueError("max_steps must be at least 1")
         self.planner = planner
         self.tools = tools or {}
-        self.sink = ListSink()
-        self.emitter = emitter or EventEmitter(
-            self.sink,
-            session_id="ses_local",
+        base = emitter or EventEmitter(
+            ListSink(),
+            session_id=DEFAULT_SESSION_ID,
             agent_id="agent_1",
             display_name="Agent",
         )
+        # Everything the loop emits goes through one recorder, including events
+        # bound for a caller's own sink, so `events` is the same stream the
+        # sink saw rather than a second one kept alongside it.
+        self.sink = RecordingSink(base.sink)
+        self.emitter = base.derive(sink=self.sink)
         self.max_steps = max_steps
         self.token = token or CancellationToken()
         self.graph = self._build().compile()
 
+    def _emitter_for(self, state: AgentState) -> EventEmitter:
+        """An emitter carrying this run's session and root instruction.
+
+        Built from state on every call rather than stored on the loop, so no
+        run context survives into the next run and two loops sharing an
+        emitter cannot overwrite each other's.
+        """
+        return self.emitter.derive(
+            session_id=state.get("session_id"),
+            root_instruction=state.get("root_instruction_event_id"),
+        )
+
     # nodes
 
     def _plan(self, state: AgentState) -> dict[str, Any]:
-        self._check_cancelled(state)
         steps = state.get("steps", [])
         plan = self.planner.plan(state["instruction"], steps)
-        self.emitter.agent_step(
+        self._emitter_for(state).agent_step(
             index=state.get("step_count", 0),
             phase="plan",
             thought=plan.thought,
@@ -103,7 +120,6 @@ class AgentLoop:
         return {"plan": plan}
 
     def _act(self, state: AgentState) -> dict[str, Any]:
-        self._check_cancelled(state)
         plan = state.get("plan")
         if plan is None or plan.kind == "finish":
             return {"observation": None}
@@ -125,7 +141,7 @@ class AgentLoop:
                     error=f"{type(exc).__name__}: {exc}",
                 )
 
-        self.emitter.agent_step(
+        self._emitter_for(state).agent_step(
             index=state.get("step_count", 0),
             phase="act",
             thought=plan.thought,
@@ -141,9 +157,10 @@ class AgentLoop:
         observation = state.get("observation")
         index = state.get("step_count", 0)
         steps = list(state.get("steps", []))
+        emitter = self._emitter_for(state)
 
         if plan is not None and plan.kind == "finish":
-            event = self.emitter.agent_step(
+            event = emitter.agent_step(
                 index=index,
                 phase="observe",
                 thought=plan.thought,
@@ -170,7 +187,7 @@ class AgentLoop:
             }
 
         assert observation is not None
-        event = self.emitter.agent_step(
+        event = emitter.agent_step(
             index=index,
             phase="observe",
             thought=plan.thought if plan else "",
@@ -193,17 +210,8 @@ class AgentLoop:
         )
         return {"steps": steps, "step_count": index + 1, "done": False}
 
-    # edges
-
-    def _should_continue(self, state: AgentState) -> str:
-        if state.get("done"):
-            return END
-        if state.get("step_count", 0) >= state.get("max_steps", self.max_steps):
-            return "cap"
-        return "planner"
-
     def _halt_on_cap(self, state: AgentState) -> dict[str, Any]:
-        self.emitter.agent_step(
+        self._emitter_for(state).agent_step(
             index=state.get("step_count", 0),
             phase="halt",
             thought=f"step cap of {state.get('max_steps')} reached",
@@ -211,34 +219,79 @@ class AgentLoop:
         )
         return {"done": True, "halted_reason": HALT_STEP_CAP}
 
-    def _check_cancelled(self, state: AgentState) -> None:
+    def _halt_on_cancel(self, state: AgentState) -> dict[str, Any]:
+        self._emitter_for(state).agent_step(
+            index=state.get("step_count", 0),
+            phase="halt",
+            thought=self.token.reason or HALT_CANCELLED,
+            error=HALT_CANCELLED,
+        )
+        return {"done": True, "halted_reason": HALT_CANCELLED}
+
+    # edges
+
+    def _enter(self, state: AgentState) -> str:
+        """Cancelling before the run starts still produces a halt event."""
+        return "cancelled" if self.token.cancelled else "planner"
+
+    def _after_planner(self, state: AgentState) -> str:
+        return "cancelled" if self.token.cancelled else "actor"
+
+    def _after_actor(self, state: AgentState) -> str:
+        return "cancelled" if self.token.cancelled else "observer"
+
+    def _should_continue(self, state: AgentState) -> str:
+        # A run that has already finished is finished; a late cancellation
+        # does not retroactively make a completed answer a cancelled one.
+        if state.get("done"):
+            return END
         if self.token.cancelled:
-            self.emitter.agent_step(
-                index=state.get("step_count", 0),
-                phase="halt",
-                thought=self.token.reason or HALT_CANCELLED,
-                error=HALT_CANCELLED,
-            )
-            raise Cancelled(self.token.reason or HALT_CANCELLED)
+            return "cancelled"
+        if state.get("step_count", 0) >= state.get("max_steps", self.max_steps):
+            return "cap"
+        return "planner"
 
     def _build(self) -> StateGraph:
         # Node names must not collide with state keys, so the nodes are named
         # for the actor rather than the phase: planner, actor, observer.
+        #
+        # Cancellation is a terminal node rather than an exception, so the
+        # state LangGraph has accumulated - the completed steps above all -
+        # survives into the returned state instead of being unwound.
         graph: StateGraph = StateGraph(AgentState)
         graph.add_node("planner", self._plan)
         graph.add_node("actor", self._act)
         graph.add_node("observer", self._observe)
         graph.add_node("cap", self._halt_on_cap)
+        graph.add_node("cancelled", self._halt_on_cancel)
 
-        graph.set_entry_point("planner")
-        graph.add_edge("planner", "actor")
-        graph.add_edge("actor", "observer")
+        graph.add_conditional_edges(
+            START,
+            self._enter,
+            {"planner": "planner", "cancelled": "cancelled"},
+        )
+        graph.add_conditional_edges(
+            "planner",
+            self._after_planner,
+            {"actor": "actor", "cancelled": "cancelled"},
+        )
+        graph.add_conditional_edges(
+            "actor",
+            self._after_actor,
+            {"observer": "observer", "cancelled": "cancelled"},
+        )
         graph.add_conditional_edges(
             "observer",
             self._should_continue,
-            {"planner": "planner", "cap": "cap", END: END},
+            {
+                "planner": "planner",
+                "cap": "cap",
+                "cancelled": "cancelled",
+                END: END,
+            },
         )
         graph.add_edge("cap", END)
+        graph.add_edge("cancelled", END)
         return graph
 
     # entry point
@@ -252,6 +305,9 @@ class AgentLoop:
         root_instruction_event_id: str | None = None,
     ) -> AgentState:
         """Run one instruction to completion, the step cap, or cancellation."""
+        # session_id and root_instruction_event_id are read back out of state
+        # by every node, so the run's context reaches the emitter without
+        # being stored on the loop and outliving the run.
         initial: AgentState = {
             "session_id": session_id or self.emitter.session_id,
             "run_id": run_id,
@@ -269,16 +325,8 @@ class AgentLoop:
         # recursion_limit guards the graph itself; the step cap is the real
         # bound, so give LangGraph enough room to reach it and halt cleanly.
         config = {"recursion_limit": self.max_steps * 4 + 10}
-        try:
-            final: AgentState = self.graph.invoke(initial, config=config)
-        except Cancelled as exc:
-            initial["done"] = True
-            initial["halted_reason"] = HALT_CANCELLED
-            initial["answer"] = None
-            initial["steps"] = list(initial.get("steps", []))
-            initial["cancel_detail"] = str(exc)  # type: ignore[typeddict-unknown-key]
-            return initial
-        final["events"] = list(self.sink.events)
+        final: AgentState = self.graph.invoke(initial, config=config)
+        final["events"] = self.events
         return final
 
     @property

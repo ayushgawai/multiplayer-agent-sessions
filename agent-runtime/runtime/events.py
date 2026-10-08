@@ -78,6 +78,28 @@ class ListSink:
         return [e for e in self.events if e["type"] == event_type]
 
 
+class RecordingSink:
+    """Passes every event to a downstream sink and keeps an ordered record.
+
+    The session service sink writes to the event log and exposes nothing to
+    read back, so a caller that supplies its own emitter would otherwise have
+    no way to ask the runtime what it emitted. Teeing here keeps one
+    authoritative stream: the record is what went downstream, in order, rather
+    than a second stream built in parallel.
+    """
+
+    def __init__(self, downstream: EventSink) -> None:
+        self.downstream = downstream
+        self.events: list[dict[str, Any]] = []
+
+    def emit(self, event: dict[str, Any]) -> None:
+        self.downstream.emit(event)
+        self.events.append(event)
+
+    def of_type(self, event_type: str) -> list[dict[str, Any]]:
+        return [e for e in self.events if e["type"] == event_type]
+
+
 class EventEmitter:
     """Builds contract shaped events for one agent in one session."""
 
@@ -95,6 +117,32 @@ class EventEmitter:
         self.agent_id = agent_id
         self.display_name = display_name
         self.root_instruction = root_instruction
+
+    def derive(
+        self,
+        *,
+        sink: EventSink | None = None,
+        session_id: str | None = None,
+        root_instruction: str | None = None,
+    ) -> EventEmitter:
+        """A copy of this emitter with the given fields replaced.
+
+        Deriving rather than mutating is what makes per-run context safe: a
+        run cannot change the emitter it was handed, so one run's session can
+        never show up on a later run's events, and two runs can share a sink
+        without sharing context.
+        """
+        return EventEmitter(
+            self.sink if sink is None else sink,
+            session_id=self.session_id if session_id is None else session_id,
+            agent_id=self.agent_id,
+            display_name=self.display_name,
+            root_instruction=(
+                self.root_instruction
+                if root_instruction is None
+                else root_instruction
+            ),
+        )
 
     def _actor(self) -> dict[str, Any]:
         return {
