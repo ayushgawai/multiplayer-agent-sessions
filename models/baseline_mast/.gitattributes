@@ -1,0 +1,2 @@
+judge_prompt.txt -text
+tests/fixtures/** -text
