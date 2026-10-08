@@ -7,4 +7,4 @@ from typing import Any
 
 def predict(inputs: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:
     _ = inputs, params
-    return {"resolution": "escalate_human", "confidence": 0.0}
+    return {"resolution": "escalate", "confidence": 0.0}
