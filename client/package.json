@@ -16,12 +16,14 @@
   "dependencies": {
     "@tiptap/core": "2.8.0",
     "@tiptap/extension-collaboration": "2.8.0",
+    "@tiptap/extension-collaboration-cursor": "2.8.0",
     "@tiptap/pm": "2.8.0",
     "@tiptap/react": "2.8.0",
     "@tiptap/starter-kit": "2.8.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "y-prosemirror": "1.2.13",
+    "y-protocols": "1.0.7",
     "y-websocket": "2.0.4",
     "yjs": "13.6.20"
   },
@@ -30,6 +32,7 @@
     "@types/react": "18.3.12",
     "@types/react-dom": "18.3.1",
     "@vitejs/plugin-react": "4.3.4",
+    "jsdom": "25.0.1",
     "openapi-typescript": "7.4.4",
     "typescript": "5.6.3",
     "vite": "5.4.11",

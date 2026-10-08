@@ -69,6 +69,20 @@ cd client && npm run dev
 - Rollback changes the event log only; it does not rewind the document. The
   replay viewer will cover that.
 
+## Presence
+
+Each tab publishes its participant id, display name, role and colour through
+Yjs awareness (the provider's own channel; nothing is stored). The colour is a
+hash of the display name (trimmed, lowercased) into a fixed palette of eight
+colours that are readable under white text. Rejoining a session issues a new
+participant id, so the colour follows the name and stays the same after a
+reconnect or rejoin. Two people who choose the same name share a colour.
+`@tiptap/extension-collaboration-cursor` draws labelled carets and selections,
+and the presence bar above the editor lists everyone present (one entry per
+participant, even with two tabs). Observers appear in the bar and get a
+read-only editor. A closed tab is removed at once; a dropped network falls back
+to awareness's 30 second timeout. In mock mode the bar shows only you.
+
 ## Scripts
 
 | Script | What it does |
