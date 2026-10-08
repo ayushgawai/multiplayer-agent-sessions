@@ -7,6 +7,7 @@ from pathlib import Path
 
 from models.baseline_mast.parse_judge import (
     MAST_CODES,
+    MAST_NAME_ALIASES,
     PARSER_VERSION,
     official_labels,
     parse_judge_response,
@@ -204,3 +205,33 @@ def test_no_silent_false_defaults() -> None:
 def test_official_labels_helper() -> None:
     text = _load("all_yes_template.txt")
     assert sum(official_labels(text).values()) == 12
+
+
+def _label(line: str, code: str) -> bool | None:
+    return parse_judge_response(f"C.\n{line}\n").labels[code]
+
+
+def test_bare_name_is_not_read_as_no() -> None:
+    parsed = parse_judge_response("C.\n3.3 No or Incorrect Verification\n")
+    assert parsed.labels["3.3"] is None
+    assert "3.3" in parsed.ambiguous_codes
+    assert parsed.labels["3.3"] is not False
+
+
+def test_answered_3_3_name_yes_and_no() -> None:
+    assert _label("3.3 No or Incorrect Verification: yes", "3.3") is True
+    assert _label("3.3 No or Incorrect Verification: no", "3.3") is False
+
+
+def test_3_2_weak_verification_answered_and_bare() -> None:
+    assert _label("3.2 Weak Verification: no", "3.2") is False
+    assert _label("3.2 Weak Verification", "3.2") is None
+
+
+def test_2_6_reasoning_action_alias() -> None:
+    assert _label("2.6 Reasoning-Action Mismatch: yes", "2.6") is True
+    assert _label("2.6 Reasoning-Action Mismatch", "2.6") is None
+
+
+def test_aliases_cover_every_code() -> None:
+    assert set(MAST_NAME_ALIASES) == set(MAST_CODES)

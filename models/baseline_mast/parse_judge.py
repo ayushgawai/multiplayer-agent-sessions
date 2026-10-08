@@ -14,7 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from models.baseline_mast.prompt import PROMPT_VERSION
 
-PARSER_VERSION: str = "mast-parser-v1"
+PARSER_VERSION: str = "mast-parser-v1.1"
 
 MAST_CODES: tuple[str, ...] = (
     "1.1",
@@ -51,6 +51,42 @@ MAST_NAMES: dict[str, str] = {
     "3.1": "Premature Termination",
     "3.2": "No or Incorrect Verification",
     "3.3": "Weak Verification",
+}
+
+# Every known name per code: answer template (MAST_NAMES), definitions.txt, and
+# the spellings listed in data/mast/TAXONOMY.md "Name differences between
+# sources". All are stripped before yes/no is read, so a bare name such as
+# "3.3 No or Incorrect Verification" is never read as an answer.
+MAST_NAME_ALIASES: dict[str, tuple[str, ...]] = {
+    "1.1": ("Disobey Task Specification",),
+    "1.2": ("Disobey Role Specification",),
+    "1.3": ("Step Repetition",),
+    "1.4": ("Loss of Conversation History",),
+    "1.5": (
+        "Unaware of Termination Conditions",
+        "Unaware of Stopping Conditions",
+    ),
+    "2.1": ("Conversation Reset",),
+    "2.2": ("Fail to Ask for Clarification",),
+    "2.3": ("Task Derailment",),
+    "2.4": ("Information Withholding", "Information Witholding"),
+    "2.5": (
+        "Ignored Other Agent's Input",
+        "Ignoring Other Agent's Suggestions",
+        "Ignored Other Agents' Input",
+    ),
+    "2.6": ("Action-Reasoning Mismatch", "Reasoning-Action Mismatch"),
+    "3.1": ("Premature Termination",),
+    "3.2": (
+        "No or Incorrect Verification",
+        "Weak Verification",
+        "No or Incomplete Verification",
+    ),
+    "3.3": (
+        "Weak Verification",
+        "No or Incorrect Verification",
+        "Incorrect Verification",
+    ),
 }
 
 ParseStatus = Literal["ok", "partial", "ambiguous", "empty", "malformed"]
@@ -220,8 +256,10 @@ def _extract_json_payload(text: str) -> dict[str, Any] | None:
 def _value_from_rest(code: str, rest: str) -> bool | None | str:
     """Return True/False, 'ambiguous', based on yes/no tokens in rest."""
     cleaned = rest
-    name = MAST_NAMES.get(code, "")
-    if name:
+    names = set(MAST_NAME_ALIASES.get(code, ()))
+    if code in MAST_NAMES:
+        names.add(MAST_NAMES[code])
+    for name in sorted(names, key=len, reverse=True):
         cleaned = re.sub(re.escape(name), "", cleaned, flags=re.IGNORECASE)
     if ":" in cleaned:
         cleaned = cleaned.rsplit(":", 1)[-1]
