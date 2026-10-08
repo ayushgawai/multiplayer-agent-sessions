@@ -96,12 +96,14 @@ code); text search on `trace_id`. Default shows all rows with "N of M shown".
   `behaviour.There are several`)
 - Example answer lists codes `1.6` and `2.7`, which are absent from the answer
   template
-- 3.2 and 3.3: the answer template in `judge_prompt.txt` lists these codes by
-  number only. The definitions further down (and `data/mast/TAXONOMY.md`) name
-  3.2 Weak Verification and 3.3 No or Incorrect Verification, while `MAST_NAMES`
-  in `parse_judge.py` uses the opposite names for display. The parser keys on
-  code numbers, which is what the judge replies with. How codes map to meaning
-  for scoring is decided by the evaluation owner.
+- 3.2 and 3.3: the answer template at the top of `judge_prompt.txt` asks for
+  "3.2 No or Incorrect Verification" and "3.3 Weak Verification", while the
+  definitions further down (and `data/mast/TAXONOMY.md`) use the opposite names.
+  This swap is in the upstream MAST prompt and is preserved on purpose.
+  `MAST_NAMES` in `parse_judge.py` follows the answer template, because that is
+  the format the judge replies in and the parser strips those names before
+  reading yes/no. How codes map to meaning for scoring is decided by the
+  evaluation owner.
 - Trailing spaces on example-answer lines; no final newline on the template
 - Upstream `parse_responses` matches `yes`/`no` without word boundaries (can
   misread `2.5` and `3.2`) and defaults missing answers to 0
