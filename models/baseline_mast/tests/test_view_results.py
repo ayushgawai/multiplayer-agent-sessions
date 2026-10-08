@@ -114,3 +114,48 @@ def test_cli_writes_file(tmp_path: Path) -> None:
     text = out.read_text(encoding="utf-8")
     assert "MAST result viewer" in text
     assert "trace-agree-01" in text
+
+
+def _rec(**extra: object) -> dict[str, object]:
+    base: dict[str, object] = {
+        "run_id": "r1",
+        "trace_id": "t1",
+        "framework": "ChatDev",
+        "parse_status": "ok",
+        "human_labels": {},
+        "labels": {},
+    }
+    base.update(extra)
+    return base
+
+
+def test_reference_source_in_header_or_unknown() -> None:
+    with_src = build_html([_rec(reference_source="released_llm_annotation")], None)
+    assert "<b>reference_source</b><br/>released_llm_annotation" in with_src
+    without = build_html([_rec()], None)
+    assert "<b>reference_source</b><br/>unknown" in without
+
+
+def test_reference_labels_heading_replaces_human_labels() -> None:
+    page = build_html([_rec(reference_source="human_consensus")], None)
+    assert "<b>reference labels (human_consensus)</b>" in page
+    assert "<b>human_labels</b>" not in page
+    assert "human_labels</b>" not in page
+
+
+def test_trace_key_llm_name_benchmark_escaped() -> None:
+    page = build_html(
+        [
+            _rec(
+                trace_key="<i>k</i>",
+                llm_name="<b>gpt</b>",
+                benchmark="<u>bench</u>",
+            )
+        ],
+        None,
+    )
+    for raw in ("<i>k</i>", "<b>gpt</b>", "<u>bench</u>"):
+        assert raw not in page
+    assert "<b>trace_key</b>: &lt;i&gt;k&lt;/i&gt;" in page
+    assert "<b>llm_name</b>: &lt;b&gt;gpt&lt;/b&gt;" in page
+    assert "<b>benchmark</b>: &lt;u&gt;bench&lt;/u&gt;" in page

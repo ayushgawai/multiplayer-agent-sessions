@@ -1,6 +1,6 @@
 """Static HTML viewer for saved MAST prediction JSONL records.
 
-Reads ADR-002 shaped files only. No network, no sample data in this module.
+Reads saved prediction JSONL records only. No network, no sample data in this module.
 """
 
 from __future__ import annotations
@@ -14,11 +14,14 @@ from typing import Any
 
 from models.baseline_mast.parse_judge import MAST_CODES
 
-# update here if ADR-002 changes
+# update here if ADR-003 (MAST prediction record) changes
 F_RUN_ID = "run_id"
 F_TRACE_ID = "trace_id"
 F_FRAMEWORK = "framework"
 F_BENCHMARK = "benchmark"
+F_REFERENCE_SOURCE = "reference_source"
+F_TRACE_KEY = "trace_key"
+F_LLM_NAME = "llm_name"
 F_DATASET_VERSION = "dataset_version"
 F_DATASET_SHA256 = "dataset_sha256"
 F_PROMPT_VERSION = "prompt_version"
@@ -244,6 +247,11 @@ def build_html(
     run_id = manifest.get(F_RUN_ID) or (
         records[0].get(F_RUN_ID) if records else ""
     )
+    reference_source = str(
+        manifest.get(F_REFERENCE_SOURCE)
+        or (records[0].get(F_REFERENCE_SOURCE) if records else "")
+        or "unknown"
+    )
     model_id = manifest.get(F_MODEL_ID) or (
         records[0].get(F_MODEL_ID) if records else ""
     )
@@ -304,6 +312,12 @@ def build_html(
         human = _as_bool_map(rec.get(F_HUMAN_LABELS))
         predicted = _as_bool_map(rec.get(F_LABELS))
         human_json = _esc(json.dumps(human, indent=2))
+        ref_source = rec.get(F_REFERENCE_SOURCE) or reference_source
+        id_parts = "".join(
+            f"<p><b>{key}</b>: {_esc(rec.get(key))}</p>\n"
+            for key in (F_TRACE_KEY, F_LLM_NAME, F_BENCHMARK)
+            if rec.get(key)
+        )
         pred_json = _esc(json.dumps(predicted, indent=2))
         parsed_json = _esc(
             json.dumps(
@@ -330,7 +344,7 @@ def build_html(
         detail = f"""
 <details>
 <summary>detail {_esc(trace_id)}</summary>
-<p><b>summary</b>: {_esc(rec.get(F_SUMMARY))}</p>
+{id_parts}<p><b>summary</b>: {_esc(rec.get(F_SUMMARY))}</p>
 <p><b>task_completed</b>: {_esc(rec.get(F_TASK_COMPLETED))}</p>
 <p><b>warnings</b>: {_esc(rec.get(F_WARNINGS))}</p>
 <p><b>missing</b>: {_esc(rec.get(F_MISSING_CODES))}
@@ -342,7 +356,7 @@ def build_html(
  | <b>latency_ms</b>: {_esc(rec.get(F_LATENCY_MS))}
  | <b>error</b>: {_esc(rec.get(F_ERROR))}
  | <b>truncated</b>: {_esc(rec.get(F_TRUNCATED))}</p>
-<div><b>human_labels</b><pre>{human_json}</pre></div>
+<div><b>reference labels ({_esc(ref_source)})</b><pre>{human_json}</pre></div>
 <div><b>predicted labels</b><pre>{pred_json}</pre></div>
 <div><b>raw_response</b><pre>{_esc(rec.get(F_RAW_RESPONSE))}</pre></div>
 <div><b>parsed fields</b><pre>{parsed_json}</pre></div>
@@ -373,6 +387,7 @@ def build_html(
 <h1>MAST result viewer</h1>
 <div class="meta">
 <div><b>run_id</b><br/>{_esc(run_id)}</div>
+<div><b>reference_source</b><br/>{_esc(reference_source)}</div>
 <div><b>model_id</b><br/>{_esc(model_id)}</div>
 <div><b>prompt</b><br/>{_esc(prompt_version)} {_esc(sha12)}</div>
 <div><b>parser_version</b><br/>{_esc(parser_version)}</div>
