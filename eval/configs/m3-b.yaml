@@ -1,7 +1,7 @@
 # M3 conflict arbitration candidates share these train knobs.
 # Per-candidate differences are only model repo/revision, mode and prompt_file.
 # Output classes per build plan M3: accept_a, accept_b, merge_both, escalate.
-# serving/adapters/m3.py stub returns escalate_human; flagged to environment owner.
+# serving/adapters/m3.py stub aligned to escalate in PR #11.
 
 task: m3_arbitration
 candidate_id: m3-b
