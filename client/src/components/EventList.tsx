@@ -1,10 +1,6 @@
 import type { SessionEvent } from "../lib/api";
 import { describeEvent } from "../lib/events";
-
-function formatTime(ts: string): string {
-  const d = new Date(ts);
-  return Number.isNaN(d.getTime()) ? ts : d.toLocaleTimeString();
-}
+import { formatEventTime } from "../lib/time";
 
 export function EventList({ events }: { events: SessionEvent[] }): JSX.Element {
   if (events.length === 0) {
@@ -26,7 +22,7 @@ export function EventList({ events }: { events: SessionEvent[] }): JSX.Element {
           {events.map((e) => (
             <tr key={`${e.seq ?? 0}:${e.event_id}`} className={`type-${e.type}`}>
               <td>{e.seq}</td>
-              <td>{formatTime(e.ts)}</td>
+              <td>{formatEventTime(e.ts)}</td>
               <td>
                 {e.actor.display_name} <span className="muted">({e.actor.role})</span>
               </td>
