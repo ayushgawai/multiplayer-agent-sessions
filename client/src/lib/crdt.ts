@@ -1,3 +1,4 @@
+import { Awareness } from "y-protocols/awareness";
 import { WebsocketProvider } from "y-websocket";
 import * as Y from "yjs";
 
@@ -30,6 +31,8 @@ export interface CollabDoc {
   meta: Y.Map<unknown>;
   /** Null in mock mode: the document is local only. */
   provider: WebsocketProvider | null;
+  /** Presence channel: the provider's awareness, or a local one in mock mode. */
+  awareness: Awareness;
   /** True for updates that came from the server rather than this tab. */
   isRemote: (origin: unknown) => boolean;
   onStatus: (listener: (status: CollabStatus) => void) => () => void;
@@ -56,17 +59,22 @@ export function createCollabDoc(options: CollabOptions): CollabDoc {
   meta.set("sessionId", sessionId);
 
   if (env.VITE_USE_MOCK === "true") {
+    const awareness = new Awareness(doc);
     return {
       doc,
       body,
       meta,
       provider: null,
+      awareness,
       isRemote: () => false,
       onStatus: (listener) => {
         listener("local");
         return () => undefined;
       },
-      destroy: () => doc.destroy(),
+      destroy: () => {
+        awareness.destroy();
+        doc.destroy();
+      },
     };
   }
 
@@ -79,6 +87,7 @@ export function createCollabDoc(options: CollabOptions): CollabDoc {
     body,
     meta,
     provider,
+    awareness: provider.awareness,
     isRemote: (origin) => origin === provider,
     onStatus: (listener) => {
       const handler = ({ status }: { status: string }): void => {
