@@ -232,3 +232,28 @@ table.events th {
 tr.type-rejected td {
   background: #fff4f2;
 }
+
+.editor .ProseMirror {
+  min-height: 140px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  outline: none;
+}
+
+.editor .ProseMirror:focus {
+  border-color: var(--accent);
+}
+
+.editor .ProseMirror p {
+  margin: 0 0 8px;
+}
+
+.badge-collab-connected {
+  background: #d9f2e6;
+}
+
+.badge-collab-offline {
+  background: #fde2df;
+}

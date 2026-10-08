@@ -45,6 +45,30 @@ it directly. Two options:
 
 The header shows MOCK or REAL, the API base, and the `/healthz` result.
 
+## Collaborative document (Yjs)
+
+Each session has one Y.Doc with a `Y.XmlFragment` named `body` and a `Y.Map`
+named `meta`. A TipTap editor (history off, undo comes from Yjs) is bound to
+the fragment. The y-websocket provider connects to
+`VITE_CRDT_URL` + `/` + session id (default `ws://localhost:1234/crdt`). Start
+the server with `cd crdt-server && npm run dev`.
+
+```bash
+# terminals: session-service on 8000, crdt-server on 1234, then
+cd client && npm run dev
+```
+
+- Mock mode (`VITE_USE_MOCK=true`) keeps a local-only Y.Doc and needs no
+  crdt-server. Nothing is stored in the browser, and the broadcast channel is
+  off, so the CRDT server is the only path between tabs.
+- Observers see the document read-only.
+- `src/lib/bridge.ts` merges local edits and, after 800 ms of quiet, posts one
+  `doc_update` event (payload: `encoding`, base64 `update`, `bytes`). Updates
+  that came from the server, or from the bridge itself, are never logged, so
+  an edit is logged once, by the tab that made it.
+- Rollback changes the event log only; it does not rewind the document. The
+  replay viewer will cover that.
+
 ## Scripts
 
 | Script | What it does |

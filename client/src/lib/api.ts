@@ -15,6 +15,7 @@ export type AppendEventResponse = Schemas["AppendEventResponse"];
 export type RollbackResponse = Schemas["RollbackResponse"];
 export type HealthResponse = Schemas["HealthResponse"];
 export type ParticipantRole = Schemas["ParticipantRole"];
+export type Actor = Schemas["Actor"];
 export type EventType = Schemas["EventType"];
 
 export { ApiError };

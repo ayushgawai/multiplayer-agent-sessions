@@ -1,6 +1,7 @@
 import type { ApiClient } from "../lib/api";
 import type { Identity } from "../lib/session";
 import { useSessionEvents } from "../lib/useSessionEvents";
+import { DocumentEditor } from "./DocumentEditor";
 import { EventList } from "./EventList";
 import { InstructionBox } from "./InstructionBox";
 import { RollbackPanel } from "./RollbackPanel";
@@ -46,6 +47,8 @@ export function SessionView({ client, identity, onLeave }: Props): JSX.Element {
           {feed.error}
         </p>
       )}
+
+      <DocumentEditor client={client} identity={identity} />
 
       <section className="card">
         <h2>Events</h2>
