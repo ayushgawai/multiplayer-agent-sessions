@@ -2,10 +2,13 @@ import { useEffect, useState } from "react";
 import type { ApiClient } from "./api";
 import { attachBridge } from "./bridge";
 import { createCollabDoc, type CollabDoc, type CollabStatus } from "./crdt";
+import { announce, type PresenceState } from "./presence";
 import { canWrite, type Identity } from "./session";
 
 export interface Collab {
   doc: CollabDoc | null;
+  /** This tab's published presence (name, role, colour). */
+  presence: PresenceState | null;
   status: CollabStatus;
   error: string | null;
 }
@@ -15,6 +18,7 @@ export function useCollab(client: ApiClient, identity: Identity): Collab {
   const [doc, setDoc] = useState<CollabDoc | null>(null);
   const [status, setStatus] = useState<CollabStatus>("connecting");
   const [error, setError] = useState<string | null>(null);
+  const [presence, setPresence] = useState<PresenceState | null>(null);
 
   useEffect(() => {
     const collab = createCollabDoc({
@@ -37,14 +41,22 @@ export function useCollab(client: ApiClient, identity: Identity): Collab {
         })
       : null;
     const offStatus = collab.onStatus(setStatus);
+    setPresence(
+      announce(collab.awareness, {
+        participantId: identity.participantId,
+        displayName: identity.displayName,
+        role: identity.role,
+      }),
+    );
     setDoc(collab);
     return () => {
       offStatus();
       bridge?.destroy();
       collab.destroy();
       setDoc(null);
+      setPresence(null);
     };
   }, [client, identity]);
 
-  return { doc, status, error };
+  return { doc, presence, status, error };
 }
