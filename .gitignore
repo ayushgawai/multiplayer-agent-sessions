@@ -38,7 +38,8 @@ tmp/
 data/mast/**
 !data/mast/README.md
 !data/mast/STATS.md
-
+!data/mast/DATA_DICTIONARY.md
+!data/mast/TAXONOMY.md
 data/qmsum/**
 !data/qmsum/README.md
 data/sessions/raw/
