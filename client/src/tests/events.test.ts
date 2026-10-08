@@ -53,6 +53,7 @@ describe("eventsSignature and describeEvent", () => {
   it("describes instruction, join and rejected events", () => {
     expect(describeEvent(ev(1, "a", "instruction", { text: "hello" }))).toBe("hello");
     expect(describeEvent(ev(2, "b", "join", { role: "reviewer" }))).toBe("joined as reviewer");
+    expect(describeEvent(ev(4, "d", "doc_update", { bytes: 42 }))).toBe("document edit (42 bytes)");
     expect(
       describeEvent(ev(3, "c", "rejected", { attempted_type: "instruction", reason: "role observer cannot append instruction" })),
     ).toBe("instruction rejected: role observer cannot append instruction");
