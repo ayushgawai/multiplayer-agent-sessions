@@ -28,10 +28,15 @@ https://github.com/multi-agent-systems-failure-taxonomy/MAST at commit
 - Upstream sha256 of `examples.txt`:
   `3cf84f024eccecbb1f51deddae889bd8d14d55b539002665210555f00fe60964`
 
-## Response parser mast-parser-v1
+## Response parser mast-parser-v1.1
 
 `parse_judge.py` turns a judge reply into validated labels with an explicit
 parse status. Validated labels never silently default missing codes to false.
+
+v1.1: before reading yes/no the parser strips every known name for the code
+(answer template, `definitions.txt` and the `data/mast/TAXONOMY.md` spellings,
+listed in `MAST_NAME_ALIASES`), so a bare name such as
+"3.3 No or Incorrect Verification" is never read as an answer.
 
 | Status | Meaning |
 |--------|---------|
