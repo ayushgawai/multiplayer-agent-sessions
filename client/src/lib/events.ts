@@ -81,6 +81,10 @@ export function describeEvent(event: SessionEvent): string {
       return asText(payload["text"]) ?? "(no text)";
     case "join":
       return `joined as ${asText(payload["role"]) ?? event.actor.role}`;
+    case "doc_update": {
+      const bytes = payload["bytes"];
+      return typeof bytes === "number" ? `document edit (${bytes} bytes)` : "document edit";
+    }
     case "rejected": {
       const attempted = asText(payload["attempted_type"]) ?? "event";
       const reason = asText(payload["reason"]) ?? "rejected";
