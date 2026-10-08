@@ -123,9 +123,9 @@ When you finish a feature, add one bullet here under your name and bump **Last u
 - Still open: QMSum download/STATS, data dictionary (DAT-29 PR), eval manifest (DAT-30 PR).
 
 ### Manav
-- MAST 07 to 09 (DAT-31/32/33) merged to main (#7, #8, #9): judge prompt mast-judge-v1, parser mast-parser-v1.1, result viewer. Integration-tested with the data manifest and batch runner.
-- M3 configs (DAT-40) merged (#10). Stub label fix escalate_human to escalate in #11 (serving owner reviewing).
-- Client scaffold (DAT-15) in progress on dat-15-client-scaffold. Next: Yjs editor (DAT-16), presence (DAT-17).
+- MAST 07 to 09 (DAT-31/32/33) merged (#7, #8, #9): judge prompt mast-judge-v1, parser mast-parser-v1.1, result viewer. Integration-tested with the data manifest and batch runner.
+- M3 configs (DAT-40) merged (#10). Stub label escalate_human to escalate in #11 (serving owner reviewing).
+- Client, stacked PRs waiting for review: DAT-15 scaffold (#12), DAT-16 Yjs editor and crdt-server (#13), DAT-17 presence and cursors (#14). Browser-tested against the session service with up to three participants.
 - Open: ADR-003 MAST prediction record with execution owner; m3-d prompt_fewshot.txt after M3 seed set.
 
 ### Shriram
