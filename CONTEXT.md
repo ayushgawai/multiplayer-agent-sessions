@@ -75,16 +75,20 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 | M1 configs `m1-a`…`m1-d` | Ayush | Done |
 | Docker Compose skeleton | Ayush | Done |
 | Progress Report 1 (`T4.A3`) | Team | Submitted / past due |
-| Workbook 1 (`T4.A4-v2`) | Team review | Draft ready — each owner review sections (see `tmp/team-message.md` locally) |
-| MAST download script + `data/mast/STATS.md` | Naman (merged DAT-28) | Done on `main` |
-| QMSum download + STATS.md | Naman | Open |
-| Harness runs one candidate end to end | Pramod | Open (branch/PR work in flight) |
-| Configs m2 / m3 / m4 / baseline | Naman, Manav, Shriram, Pramod | Partial — m3 on branch `dat-40-m3-configs` (no PR yet) |
-| Client / CRDT for integration gate | Manav | Open — `client/` still empty on `main` |
-| Agent runtime on fixture | Shriram | Open PR #6 (DAT-18) |
-| MAST judge prompt / parser / viewer | Manav | Branches only — need stacked PRs |
-| MAST batch + provenance | Shriram | Open PR #5 (DAT-34/35) |
-| MAST metrics | Pramod | Draft PR #3 (DAT-37) |
+| Workbook 1 (`T4.A4.docx`) | Team | On `main` at `docs/reports/T4.A4.docx`. Canvas upload is the team's copy of that file. |
+| MAST download script + `data/mast/STATS.md` | Naman (DAT-28, PR #1) | Done on `main` |
+| MAST dictionary + taxonomy | Naman (DAT-29, PR #2) | Done on `main`: `data/mast/DATA_DICTIONARY.md`, `data/mast/TAXONOMY.md` |
+| Frozen eval manifest | Naman (DAT-30, PR #4) | Done on `main`: `data/mast/eval_manifest.json` |
+| QMSum download + STATS.md | Naman (DAT-11) | Open |
+| MAST classification metrics | Pramod (DAT-37, PR #3) | Done on `main`: `eval/metrics/classification.py`. Convention `mast_binary_label_cells_v1` is provisional until checked against the paper. |
+| Harness runs one candidate end to end | Pramod | Open. `eval/harness.py` is not on `main`. |
+| M3 configs `m3-a`…`m3-d` | Manav (DAT-40, PR #10) | Done on `main` |
+| M2 / M4 configs | Naman, Shriram | Not started |
+| MAST judge prompt / parser / viewer | Manav (DAT-31/32/33, PRs #7 #8 #9) | Done on `main` under `models/baseline_mast/` |
+| MAST batch + provenance | Shriram (DAT-34/35, PR #5) | Done on `main`: `run_batch.py`, `provenance.py` |
+| Client / CRDT / presence | Manav (DAT-15/16/17) | In review: PRs #12, #13, #14. `client/` on `main` is still the scaffold. |
+| Agent runtime on fixture | Shriram (DAT-18) | In review: PR #6 |
+| Stub label `escalate_human` to `escalate` | Manav (DAT-40 follow-up) | Open PR #11. Serving owner reviews. |
 
 ### Part C — fill your row in the report
 
@@ -100,41 +104,39 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 
 ## Current status (update on pull / after each feature)
 
-**Last updated:** 2026-10-07 (Manav)
+**Last updated:** 2026-10-08 (Ayush)
 
-- Ayush foundation plus **durable event log** (SQLAlchemy; SQLite in CI, Postgres in Compose) and **Redis/in-process fan-out** (ADR-002). OpenAPI routes unchanged.
-- **Merged earlier:** DAT-28 MAST download + `data/mast/STATS.md`.
-- **Not on `main` yet:** client, agent-runtime, harness, QMSum, m2/m3/m4 configs, MAST judge/parser/viewer/batch.
-- No M1 training yet (needs QMSum split + harness + GPU).
+- Session service on `main`: durable event log (SQLAlchemy; SQLite in CI, Postgres in Compose) and Redis or in-process fan-out (ADR-002). OpenAPI routes unchanged.
+- MAST track on `main` through download, dictionary, manifest, prompt, parser, viewer, batch, provenance, and classification metrics. No reproduction score has been posted.
+- M1 configs and M3 configs are on `main`. M2 and M4 configs are not. No model has been trained.
+- **Not on `main` yet:** React client and Yjs (PRs #12–#14), LangGraph runtime (PR #6), `eval/harness.py`, QMSum, M2/M4 configs, ADR-003.
 
-**Open PRs (as of earlier pull):** #2 DAT-29, #3 DAT-37 (draft), #4 DAT-30, #5 DAT-34/35, #6 DAT-18.
-
-**Branches without PRs (Manav):** `dat-31-mast-judge-prompt` → `dat-32-mast-judge-parser` → `dat-33-mast-result-viewer`; `dat-40-m3-configs`.
+**Open PRs:** #6 DAT-18 (Shriram), #11 stub label rename (Manav), #12 DAT-15, #13 DAT-16, #14 DAT-17 (Manav).
 
 When you finish a feature, add one bullet here under your name and bump **Last updated**.
 
 ### Ayush
-- Foundation, ADR-001/002, durable event log + fan-out on main; DAT-9 marked Done with commit link.
-- Workbook 1 figures regenerated (Gantt/PERT) for four-candidate bake-offs; MAST parallel, not critical path.
-- Next: MAST-01/02/03 (DAT-25–27) and M1 QMSum/split once data tickets move.
+- Foundation, ADR-001/002, durable event log and fan-out, serving stubs, M1 configs, Compose, CI.
+- Workbook 1 figures: Gantt and PERT. MAST is parallel to the critical path, not on it.
+- Next: pin the MAST judge environment (DAT-25), judge metadata (DAT-26), clean-environment smoke test (DAT-27). Branch protection (DAT-10) is still open.
 
 ### Naman
-- DAT-28 merged: MAST download + checksums + STATS.md.
-- Still open: QMSum download/STATS, data dictionary (DAT-29 PR), eval manifest (DAT-30 PR).
+- On `main`: DAT-28 download and checksums, DAT-29 dictionary and taxonomy, DAT-30 eval manifest.
+- Still open: QMSum download (DAT-11), six scenario briefs (DAT-21), team sign-off (DAT-22).
 
 ### Manav
-- MAST 07 to 09 (DAT-31/32/33) merged (#7, #8, #9): judge prompt mast-judge-v1, parser mast-parser-v1.1, result viewer. Integration-tested with the data manifest and batch runner.
-- M3 configs (DAT-40) merged (#10). Stub label escalate_human to escalate in #11 (serving owner reviewing).
-- Client, stacked PRs waiting for review: DAT-15 scaffold (#12), DAT-16 Yjs editor and crdt-server (#13), DAT-17 presence and cursors (#14). Browser-tested against the session service with up to three participants.
-- Open: ADR-003 MAST prediction record with execution owner; m3-d prompt_fewshot.txt after M3 seed set.
+- On `main`: judge prompt `mast-judge-v1`, parser `mast-parser-v1.1`, result viewer, M3 configs `m3-a` through `m3-d`.
+- In review: client scaffold (#12), Yjs editor and crdt-server (#13), presence (#14). Browser-tested against the session service with up to three participants. Not merged, so do not demo the client from `main`.
+- Open: ADR-003 prediction record (DAT-52, in progress). PR #11 renames the serving stub label `escalate_human` to `escalate`.
 
 ### Shriram
-- DAT-18 LangGraph loop: PR #6 open.
-- DAT-34/35 MAST batch + provenance: PR #5 open.
+- On `main`: resumable MAST batch and run provenance (DAT-34/35, PR #5). Notes in `docs/verification/dat-34-dat-35-batch-execution.md`.
+- In review: LangGraph plan, act, observe loop (DAT-18, PR #6). `agent-runtime/` on `main` is still the scaffold.
+- Still open: final MAST runs (DAT-36), `doc_read` and `calc` (DAT-19), end-to-end loop on a fixture (DAT-20).
 
 ### Pramod
-- DAT-37 MAST metrics: draft PR #3.
-- Still open: harness one-candidate E2E; protocol lock.
+- On `main`: MAST classification metrics (DAT-37, PR #3), including CI for `eval/tests`.
+- Still open: harness one-candidate end to end, published comparison (DAT-38, due 5 Nov), error analysis (DAT-39, due 11 Nov), dataset screenshot (DAT-12), locking the ROUGE call (DAT-13).
 
 ---
 
