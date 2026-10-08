@@ -41,8 +41,10 @@ from models.baseline_mast.prompt import (
     was_truncated,
 )
 from models.baseline_mast.provenance import (
+    RUN_MANIFEST_FILE,
     build_run_manifest,
     missing_manifest_fields,
+    redact,
     write_run_manifest,
 )
 
@@ -53,6 +55,7 @@ FAILURES_FILE = "failures.jsonl"
 # (trace.key, trace_id) is the only unique record key. See DAT-29 data
 # dictionary, "trace_id -- Not a unique id".
 RECORD_ID_SEP = "::"
+HASH_CHUNK_SIZE = 1024 * 1024
 
 
 def make_record_id(trace_key: str, trace_index: int) -> str:
@@ -154,6 +157,62 @@ def _as_reference_labels(raw: object) -> dict[str, bool | None]:
     return out
 
 
+def sha256_file(path: Path) -> str:
+    """Return a file digest without loading the full dataset into memory."""
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(HASH_CHUNK_SIZE), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def validate_dataset_file(
+    manifest: dict[str, Any],
+    dataset_path: Path,
+    reference_type: str,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Verify that the selected reference uses this exact frozen dataset."""
+    sources = {s["reference_type"]: s for s in manifest.get("reference_sources", [])}
+    if reference_type not in sources:
+        raise ValueError(
+            f"reference_type {reference_type!r} not in manifest; "
+            f"have {sorted(sources)}"
+        )
+    source = sources[reference_type]
+    source_file = source.get("source_file")
+    if not source_file:
+        raise ValueError(f"reference_type {reference_type!r} has no source_file")
+    if dataset_path.name != Path(str(source_file)).name:
+        raise ValueError(
+            f"reference_type {reference_type!r} requires {source_file!r}, "
+            f"not {dataset_path.name!r}"
+        )
+
+    entries = manifest.get("dataset", {}).get("files", [])
+    entry = next(
+        (
+            candidate
+            for candidate in entries
+            if candidate.get("filename") == dataset_path.name
+            and candidate.get("relative_path", source_file) == source_file
+        ),
+        None,
+    )
+    if entry is None:
+        raise ValueError(f"dataset {dataset_path.name!r} is not listed in the manifest")
+
+    expected_sha256 = str(entry.get("sha256", ""))
+    if not expected_sha256:
+        raise ValueError(f"dataset {dataset_path.name!r} has no manifest SHA-256")
+    actual_sha256 = sha256_file(dataset_path)
+    if actual_sha256 != expected_sha256:
+        raise ValueError(
+            f"dataset SHA-256 mismatch for {dataset_path}: "
+            f"expected {expected_sha256}, got {actual_sha256}"
+        )
+    return source, entry
+
+
 def load_eval_records(
     manifest_path: Path,
     dataset_path: Path,
@@ -165,13 +224,7 @@ def load_eval_records(
     matching the manifest's own inclusion rule rather than re-deriving it here.
     """
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    sources = {s["reference_type"]: s for s in manifest.get("reference_sources", [])}
-    if reference_type not in sources:
-        raise ValueError(
-            f"reference_type {reference_type!r} not in manifest; "
-            f"have {sorted(sources)}"
-        )
-    source = sources[reference_type]
+    source, _ = validate_dataset_file(manifest, dataset_path, reference_type)
     label_field = source["label_field"]
 
     excluded = {
@@ -241,6 +294,26 @@ def completed_record_ids(result_dir: Path) -> set[str]:
         for rec in read_jsonl(result_dir / PREDICTIONS_FILE)
         if rec.get("trace_id")
     }
+
+
+def existing_run_id(result_dir: Path) -> str | None:
+    """Return the sole run id already present, rejecting mixed directories."""
+    run_ids: set[str] = set()
+    manifest_path = result_dir / RUN_MANIFEST_FILE
+    if manifest_path.exists():
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"invalid {RUN_MANIFEST_FILE}: {exc}") from exc
+        if manifest.get("run_id"):
+            run_ids.add(str(manifest["run_id"]))
+    for filename in (PREDICTIONS_FILE, FAILURES_FILE):
+        for record in read_jsonl(result_dir / filename):
+            if record.get("run_id"):
+                run_ids.add(str(record["run_id"]))
+    if len(run_ids) > 1:
+        raise ValueError(f"result directory contains multiple run_ids: {sorted(run_ids)}")
+    return next(iter(run_ids), None)
 
 
 def failed_record_ids(result_dir: Path) -> list[str]:
@@ -320,6 +393,62 @@ class BatchRunner:
         self.log = log or (lambda msg: print(msg, file=sys.stderr))
         self.result_dir.mkdir(parents=True, exist_ok=True)
 
+    def _prediction_identity(self) -> dict[str, Any]:
+        return {
+            "run_id": self.run_id,
+            "dataset_version": self.dataset_version,
+            "dataset_sha256": self.dataset_sha256,
+            "prompt_version": PROMPT_VERSION,
+            "prompt_sha256": PROMPT_SHA256,
+            "parser_version": PARSER_VERSION,
+            "model_id": self.judge.model_id,
+            "model_settings": redact(self.judge.model_settings),
+        }
+
+    def _validate_existing_result_identity(self) -> None:
+        """Refuse to append when existing artifacts belong to another run."""
+        expected = self._prediction_identity()
+        for record in read_jsonl(self.result_dir / PREDICTIONS_FILE):
+            for identity_field, expected_value in expected.items():
+                if record.get(identity_field) != expected_value:
+                    raise ValueError(
+                        f"existing prediction {record.get('trace_id')!r} has "
+                        f"incompatible {identity_field}; use a new result directory"
+                    )
+
+        for record in read_jsonl(self.result_dir / FAILURES_FILE):
+            if record.get("run_id") != self.run_id:
+                raise ValueError(
+                    "existing failure record has incompatible run_id; "
+                    "use a new result directory"
+                )
+
+        manifest_path = self.result_dir / RUN_MANIFEST_FILE
+        if not manifest_path.exists():
+            return
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"invalid {RUN_MANIFEST_FILE}: {exc}") from exc
+        manifest_identity = {
+            key: expected[key]
+            for key in (
+                "run_id",
+                "dataset_sha256",
+                "prompt_version",
+                "prompt_sha256",
+                "parser_version",
+                "model_id",
+                "model_settings",
+            )
+        }
+        for identity_field, expected_value in manifest_identity.items():
+            if manifest.get(identity_field) != expected_value:
+                raise ValueError(
+                    f"existing {RUN_MANIFEST_FILE} has incompatible {identity_field}; "
+                    "use a new result directory"
+                )
+
     def _call_judge(self, prompt: str) -> JudgeCall:
         """Invoke the judge, retrying only on a returned error."""
         attempts = 0
@@ -372,7 +501,7 @@ class BatchRunner:
             "prompt_sha256": PROMPT_SHA256,
             "parser_version": PARSER_VERSION,
             "model_id": self.judge.model_id,
-            "model_settings": self.judge.model_settings,
+            "model_settings": redact(self.judge.model_settings),
             "timestamp_utc": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "latency_ms": round(call.latency_ms, 3),
             "retry_count": call.retry_count,
@@ -403,6 +532,7 @@ class BatchRunner:
             if seal_partial_line(path):
                 self.log(f"sealed a partial final line in {path.name}")
 
+        self._validate_existing_result_identity()
         done = completed_record_ids(self.result_dir)
         wanted = set(only) if only is not None else None
 
@@ -501,19 +631,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 2
 
     manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
-    dataset_files = {f["filename"]: f for f in manifest["dataset"]["files"]}
-    entry = dataset_files.get(args.dataset.name, {})
-
     records = load_eval_records(args.manifest, args.dataset, args.reference)
+    dataset_files = {f["filename"]: f for f in manifest["dataset"]["files"]}
+    entry = dataset_files[args.dataset.name]
     if args.limit is not None:
         records = records[: args.limit]
+
+    run_id = args.run_id or existing_run_id(args.result_dir) or _default_run_id()
 
     runner = BatchRunner(
         judge=StubJudge(),
         result_dir=args.result_dir,
         dataset_version=str(manifest.get("manifest_version", "unknown")),
         dataset_sha256=str(entry.get("sha256", "")),
-        run_id=args.run_id or _default_run_id(),
+        run_id=run_id,
         max_retries=args.max_retries,
     )
 

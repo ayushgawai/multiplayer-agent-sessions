@@ -89,7 +89,7 @@ def test_manifest_records_code_dataset_manifest_prompt_and_model_versions(
     assert manifest["eval_manifest_status"] == "FROZEN"
     assert manifest["prompt_version"] == "mast-judge-v1"
     assert manifest["prompt_sha256"]
-    assert manifest["parser_version"] == "mast-parser-v1"
+    assert manifest["parser_version"] == "mast-parser-v1.1"
     assert manifest["model_id"] == "stub-judge-v1"
 
 

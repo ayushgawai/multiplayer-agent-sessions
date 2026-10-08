@@ -5,6 +5,7 @@ Linear: DAT-34 (MAST 10). Owner: Shriram Dundigalla.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -20,6 +21,7 @@ from models.baseline_mast.run_batch import (
     JudgeCall,
     StubJudge,
     completed_record_ids,
+    existing_run_id,
     failed_record_ids,
     load_eval_records,
     make_record_id,
@@ -51,8 +53,8 @@ def make_runner(result_dir: Path, judge: Any = None, **kw: Any) -> BatchRunner:
     return BatchRunner(
         judge=judge or StubJudge(),
         result_dir=result_dir,
-        dataset_version="test-v1",
-        dataset_sha256=DATASET_SHA,
+        dataset_version=kw.pop("dataset_version", "test-v1"),
+        dataset_sha256=kw.pop("dataset_sha256", DATASET_SHA),
         run_id=kw.pop("run_id", "run-test-001"),
         log=lambda _msg: None,
         **kw,
@@ -271,7 +273,7 @@ def test_failed_items_are_retryable_without_redoing_successes(tmp_path: Path) ->
     make_runner(tmp_path, judge=judge).run(make_records(4))
     assert failed_record_ids(tmp_path) == [make_record_id("AG2_GSM_Plus_Claude", 2)]
 
-    healthy = make_runner(tmp_path, judge=StubJudge())
+    healthy = make_runner(tmp_path, judge=FlakyJudge(set()))
     summary = healthy.run(make_records(4), only=failed_record_ids(tmp_path))
 
     assert summary.attempted == 1
@@ -313,7 +315,7 @@ def test_record_carries_full_version_provenance(tmp_path: Path) -> None:
     record = next(iter(read_jsonl(tmp_path / PREDICTIONS_FILE)))
 
     assert record["prompt_version"] == "mast-judge-v1"
-    assert record["parser_version"] == "mast-parser-v1"
+    assert record["parser_version"] == "mast-parser-v1.1"
     assert record["dataset_sha256"] == DATASET_SHA
     assert record["model_id"] == "stub-judge-v1"
     assert record["run_id"] == "run-test-001"
@@ -328,13 +330,94 @@ def test_reference_source_is_recorded_on_every_prediction(tmp_path: Path) -> Non
     assert set(record["human_labels"]) == set(MAST_CODES)
 
 
+def test_prediction_model_settings_are_redacted(tmp_path: Path) -> None:
+    class LeakyJudge(StubJudge):
+        @property
+        def model_settings(self) -> dict[str, Any]:
+            return {
+                "api_key": "secret-value-that-must-not-leak",
+                "temperature": 1.0,
+                "nested": {"max_tokens": 4096},
+            }
+
+    make_runner(tmp_path, judge=LeakyJudge()).run(make_records(1))
+    serialized = (tmp_path / PREDICTIONS_FILE).read_text(encoding="utf-8")
+    record = next(read_jsonl(tmp_path / PREDICTIONS_FILE))
+
+    assert "secret-value-that-must-not-leak" not in serialized
+    assert record["model_settings"]["api_key"] == "[REDACTED]"
+    assert record["model_settings"]["nested"]["max_tokens"] == 4096
+
+
+def test_resume_rejects_a_different_run_id(tmp_path: Path) -> None:
+    make_runner(tmp_path, run_id="run-original").run(make_records(1))
+
+    with pytest.raises(ValueError, match="run_id"):
+        make_runner(tmp_path, run_id="run-different").run(make_records(1))
+
+
+def test_resume_rejects_a_different_dataset(tmp_path: Path) -> None:
+    make_runner(tmp_path).run(make_records(1))
+
+    with pytest.raises(ValueError, match="dataset_sha256"):
+        make_runner(tmp_path, dataset_sha256="b" * 64).run(make_records(1))
+
+
+def test_resume_rejects_a_different_model(tmp_path: Path) -> None:
+    make_runner(tmp_path).run(make_records(1))
+
+    with pytest.raises(ValueError, match="model_id"):
+        make_runner(tmp_path, judge=StubJudge(model_id="different-model")).run(
+            make_records(1)
+        )
+
+
+@pytest.mark.parametrize("field", ["prompt_version", "prompt_sha256", "parser_version"])
+def test_resume_rejects_changed_prompt_or_parser_identity(
+    tmp_path: Path, field: str
+) -> None:
+    make_runner(tmp_path).run(make_records(1))
+    path = tmp_path / PREDICTIONS_FILE
+    record = next(read_jsonl(path))
+    record[field] = "different"
+    path.write_text(json.dumps(record) + "\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match=field):
+        make_runner(tmp_path).run(make_records(1))
+
+
+def test_existing_run_id_rejects_a_mixed_result_directory(tmp_path: Path) -> None:
+    (tmp_path / PREDICTIONS_FILE).write_text(
+        json.dumps({"run_id": "run-a", "trace_id": "a"}) + "\n",
+        encoding="utf-8",
+    )
+    (tmp_path / FAILURES_FILE).write_text(
+        json.dumps({"run_id": "run-b", "trace_id": "b"}) + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="multiple run_ids"):
+        existing_run_id(tmp_path)
+
+
 def _write_manifest(tmp_path: Path, scorable: int, excluded: list[dict[str, Any]]) -> Path:
+    dataset_path = tmp_path / "ds.json"
+    dataset_sha256 = hashlib.sha256(dataset_path.read_bytes()).hexdigest()
     manifest = {
         "manifest_version": "1.0.0",
-        "dataset": {"files": [{"filename": "ds.json", "sha256": DATASET_SHA}]},
+        "dataset": {
+            "files": [
+                {
+                    "filename": "ds.json",
+                    "relative_path": "ds.json",
+                    "sha256": dataset_sha256,
+                }
+            ]
+        },
         "reference_sources": [
             {
                 "reference_type": "released_llm_annotation",
+                "source_file": "ds.json",
                 "label_field": "mast_annotation",
                 "excluded_records": excluded,
                 "scorable_record_count": scorable,
@@ -396,3 +479,23 @@ def test_loader_rejects_an_unknown_reference_type(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="reference_type"):
         load_eval_records(manifest, dataset, reference_type="human_consensus")
+
+
+def test_loader_rejects_a_dataset_checksum_mismatch(tmp_path: Path) -> None:
+    dataset = _write_dataset(tmp_path, [_row("k", 0)])
+    manifest = _write_manifest(tmp_path, scorable=1, excluded=[])
+    dataset.write_text(json.dumps([_row("changed", 0)]), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="SHA-256 mismatch"):
+        load_eval_records(manifest, dataset)
+
+
+def test_loader_rejects_a_dataset_not_listed_in_the_manifest(tmp_path: Path) -> None:
+    dataset = _write_dataset(tmp_path, [_row("k", 0)])
+    manifest = _write_manifest(tmp_path, scorable=1, excluded=[])
+    manifest_data = json.loads(manifest.read_text(encoding="utf-8"))
+    manifest_data["dataset"]["files"] = []
+    manifest.write_text(json.dumps(manifest_data), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="not listed"):
+        load_eval_records(manifest, dataset)
