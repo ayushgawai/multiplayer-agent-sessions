@@ -1,0 +1,20 @@
+{
+  "run_id": "sample-run-test-001",
+  "git_sha": "deadbeef",
+  "dataset_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "prompt_version": "mast-judge-v1",
+  "prompt_sha256": "6a73fd53d0e559cd0ee131adec530cf11f687f008132ae8c29a3eedff81bca7c",
+  "parser_version": "mast-parser-v1",
+  "model_id": "test-judge-stub",
+  "model_settings": {
+    "temperature": 1.0,
+    "note": "fixture only"
+  },
+  "start_time_utc": "2026-09-23T19:59:00Z",
+  "end_time_utc": "2026-09-23T20:01:00Z",
+  "parse_status_counts": {
+    "ok": 4,
+    "empty": 1,
+    "malformed": 1
+  }
+}

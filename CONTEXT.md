@@ -31,10 +31,10 @@ Shared live sessions where several humans and several agents work in one workspa
 | Person | Build | Do not touch |
 |--------|-------|--------------|
 | **Ayush Gawai** | `session-service/`, `serving/`, `models/common/`, `models/m1_catchup/`, `infra/`, `.github/workflows/`, `requirements*.txt`, `eval/configs/m1-*.yaml`, `docs/decisions/` | `client/`, `agent-runtime/`, `data/`, `eval/harness.py`, `tests/` |
-| **Manav** | `client/`, `crdt-server/`, `models/m3_arbitration/`, `eval/configs/m3-*.yaml`, `docs/slides/` | session-service internals, `agent-runtime/`, `data/`, `eval/harness.py` |
+| **Manav** | `client/`, `crdt-server/`, `models/m3_arbitration/`, `eval/configs/m3-*.yaml`, `docs/slides/`, `models/baseline_mast/` prompt, parser, viewer files (DAT-31/32/33) | session-service internals, `agent-runtime/`, `data/`, `eval/harness.py` |
 | **Naman Chheda** | `data/`, `tools/annotator/`, `models/m2_intent/`, `eval/configs/m2-*.yaml`, `docs/reports/` | `session-service/`, `client/`, `agent-runtime/`, `eval/harness.py` |
 | **Shriram** | `agent-runtime/`, `tests/`, `models/m4_routing/`, `eval/configs/m4-*.yaml`, `docs/verification/` | `client/`, session-service internals, `data/`, `eval/harness.py` |
-| **Pramod** | `eval/` (exclusive except each person's configs), `models/baseline_mast/`, `docs/protocol.md`, `docs/failure-analysis.md` | other training scripts, services, `client/` |
+| **Pramod** | `eval/` (exclusive except each person's configs), `models/baseline_mast/` (run_judge.py, MODEL_CARD.md), `docs/protocol.md`, `docs/failure-analysis.md` | other training scripts, services, `client/` |
 
 Cross-boundary work is a **network call** or a **committed file format**. No shared process memory between owners.
 
@@ -74,11 +74,17 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 | Serving stubs m1–m4 | Ayush | Done |
 | M1 configs `m1-a`…`m1-d` | Ayush | Done |
 | Docker Compose skeleton | Ayush | Done |
-| Progress Report draft Parts A–D | Ayush (scaffold) | Done — teammates fill `[TBD]` |
-| MAST + QMSum downloaded + STATS.md row counts | Naman | Open |
-| Harness runs one candidate end to end | Pramod | Open |
-| Configs m2 / m3 / m4 / baseline (16 files) | Naman, Manav, Shriram, Pramod | Open |
-| Meeting minutes times / attendance | Team | Open — fill Part B `[TBD]` |
+| Progress Report 1 (`T4.A3`) | Team | Submitted / past due |
+| Workbook 1 (`T4.A4-v2`) | Team review | Draft ready — each owner review sections (see `tmp/team-message.md` locally) |
+| MAST download script + `data/mast/STATS.md` | Naman (merged DAT-28) | Done on `main` |
+| QMSum download + STATS.md | Naman | Open |
+| Harness runs one candidate end to end | Pramod | Open (branch/PR work in flight) |
+| Configs m2 / m3 / m4 / baseline | Naman, Manav, Shriram, Pramod | Partial — m3 on branch `dat-40-m3-configs` (no PR yet) |
+| Client / CRDT for integration gate | Manav | Open — `client/` still empty on `main` |
+| Agent runtime on fixture | Shriram | Open PR #6 (DAT-18) |
+| MAST judge prompt / parser / viewer | Manav | Branches only — need stacked PRs |
+| MAST batch + provenance | Shriram | Open PR #5 (DAT-34/35) |
+| MAST metrics | Pramod | Draft PR #3 (DAT-37) |
 
 ### Part C — fill your row in the report
 
@@ -94,41 +100,54 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 
 ## Current status (update on pull / after each feature)
 
-**Last updated:** 2026-09-23 (Manav)
+**Last updated:** 2026-10-07 (Manav)
 
-- `main` has repository skeleton, requirements + lock, CI, session service (in-memory) + OpenAPI, serving stubs, M1 configs, checkpointing helper, Compose files, ADR-001, Progress Report draft.
-- Session persistence is still **in-memory** (Postgres/Redis next for Ayush).
-- No training runs yet (needs QMSum/split + harness + GPU).
-- No client, agent-runtime, harness, or public data downloads in repo yet.
+- Ayush foundation plus **durable event log** (SQLAlchemy; SQLite in CI, Postgres in Compose) and **Redis/in-process fan-out** (ADR-002). OpenAPI routes unchanged.
+- **Merged earlier:** DAT-28 MAST download + `data/mast/STATS.md`.
+- **Not on `main` yet:** client, agent-runtime, harness, QMSum, m2/m3/m4 configs, MAST judge/parser/viewer/batch.
+- No M1 training yet (needs QMSum split + harness + GPU).
+
+**Open PRs (as of earlier pull):** #2 DAT-29, #3 DAT-37 (draft), #4 DAT-30, #5 DAT-34/35, #6 DAT-18.
+
+**Branches without PRs (Manav):** `dat-31-mast-judge-prompt` → `dat-32-mast-judge-parser` → `dat-33-mast-result-viewer`; `dat-40-m3-configs`.
 
 When you finish a feature, add one bullet here under your name and bump **Last updated**.
 
 ### Ayush
-- Foundation through Progress Report scaffold (see git log DAT-1…).
+- Foundation, ADR-001/002, durable event log + fan-out on main; DAT-9 marked Done with commit link.
+- Workbook 1 figures regenerated (Gantt/PERT) for four-candidate bake-offs; MAST parallel, not critical path.
+- Next: MAST-01/02/03 (DAT-25–27) and M1 QMSum/split once data tickets move.
 
 ### Naman
-- (none yet)
+- DAT-28 merged: MAST download + checksums + STATS.md.
+- Still open: QMSum download/STATS, data dictionary (DAT-29 PR), eval manifest (DAT-30 PR).
 
 ### Manav
-- MAST 07 (DAT-31): Locked the judge prompt (mast-judge-v1) so it matches the upstream
-  MAST file exactly. Branch: dat-31-mast-judge-prompt.
-- MAST 08 (DAT-32): Built a parser (mast-parser-v1) that reads the judge reply, marks
-  whether parsing worked, and keeps the raw text. Branch: dat-32-mast-judge-parser.
-- MAST 09 (DAT-33): Built a local HTML viewer to spot disagreements and parse problems.
-  Branch: dat-33-mast-result-viewer.
-- M3 configs (DAT-40): Drafted four config files (m3-a through m3-d) for the bake-off.
-  Branch: dat-40-m3-configs.
-- Still open: Need approval to keep files under models/baseline_mast/, agreement on the
-  ADR-002 prediction record shape, and clarity on labels 3.2 / 3.3. Client work not
-  started yet.
+- MAST 07 to 09 (DAT-31/32/33) merged to main (#7, #8, #9): judge prompt mast-judge-v1, parser mast-parser-v1.1, result viewer. Integration-tested with the data manifest and batch runner.
+- M3 configs (DAT-40) merged (#10). Stub label fix escalate_human to escalate in #11 (serving owner reviewing).
+- Client scaffold (DAT-15) in progress on dat-15-client-scaffold. Next: Yjs editor (DAT-16), presence (DAT-17).
+- Open: ADR-003 MAST prediction record with execution owner; m3-d prompt_fewshot.txt after M3 seed set.
 
 ### Shriram
-- (none yet)
+- DAT-18 LangGraph loop: PR #6 open.
+- DAT-34/35 MAST batch + provenance: PR #5 open.
 
 ### Pramod
-- (none yet)
+- DAT-37 MAST metrics: draft PR #3.
+- Still open: harness one-candidate E2E; protocol lock.
 
 ---
+
+## Compute (team truth)
+
+Do **not** budget paid cloud GPU for 298A unless the GPU lab is unavailable.
+
+| Resource | Detail | Cost |
+|----------|--------|------|
+| GPU lab | University GPU lab access (team has ongoing free access) | $0 |
+| LLM APIs | OpenRouter and/or OpenAI / Anthropic / Kiro CLI as needed for MAST judge and prompted arms | pay-as-you-go; keep receipts; no fixed $100–$250 commitment |
+
+Workbook section 2.3 should say training runs in the GPU lab at $0, not invented cloud GPU spend. Colab is fallback only if the GPU lab is unavailable.
 
 ## Local commands
 
@@ -148,7 +167,7 @@ cd session-service && pytest -q
 cd serving && pytest -q
 ```
 
-Training extras (GPU hosts only): `pip install -r requirements-models.txt`
+Training extras (on the lab GPU host): `pip install -r requirements-models.txt`
 
 ---
 
