@@ -12,6 +12,9 @@ redis>=5.0.0,<6
 python-ulid>=2.7.0,<3
 httpx>=0.27.0,<0.28
 
+# Runtime (build plan section 2; agent-runtime)
+langgraph>=0.2.0,<0.3
+
 # Evaluation (used by harness owners; listed for shared env)
 rouge-score==0.1.2
 bert-score==0.3.13
