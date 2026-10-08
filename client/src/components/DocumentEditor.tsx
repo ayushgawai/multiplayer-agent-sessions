@@ -1,11 +1,12 @@
-import Collaboration from "@tiptap/extension-collaboration";
 import { EditorContent, useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
 import type { ApiClient } from "../lib/api";
 import type { CollabDoc, CollabStatus } from "../lib/crdt";
-import { BODY_FIELD } from "../lib/crdt";
+import { buildEditorOptions } from "../lib/editorConfig";
+import type { PresenceState } from "../lib/presence";
 import { canWrite, type Identity } from "../lib/session";
 import { useCollab } from "../lib/useCollab";
+import { usePresence } from "../lib/usePresence";
+import { PresenceBar } from "./PresenceBar";
 
 const STATUS_TEXT: Record<CollabStatus, string> = {
   local: "local only (mock)",
@@ -14,18 +15,18 @@ const STATUS_TEXT: Record<CollabStatus, string> = {
   offline: "offline, edits kept locally",
 };
 
-function Editor({ collab, editable }: { collab: CollabDoc; editable: boolean }): JSX.Element {
-  const editor = useEditor(
-    {
-      extensions: [
-        // History is off: undo/redo must come from Yjs, not the local stack.
-        StarterKit.configure({ history: false }),
-        Collaboration.configure({ document: collab.doc, field: BODY_FIELD }),
-      ],
-      editable,
-    },
-    [collab, editable],
-  );
+interface EditorProps {
+  collab: CollabDoc;
+  presence: PresenceState;
+  identity: Identity;
+}
+
+function Editor({ collab, presence, identity }: EditorProps): JSX.Element {
+  const editor = useEditor(buildEditorOptions(collab, presence, identity.role), [
+    collab,
+    presence,
+    identity.role,
+  ]);
   return <EditorContent editor={editor} className="editor" />;
 }
 
@@ -35,7 +36,8 @@ interface Props {
 }
 
 export function DocumentEditor({ client, identity }: Props): JSX.Element {
-  const { doc, status, error } = useCollab(client, identity);
+  const { doc, presence, status, error } = useCollab(client, identity);
+  const entries = usePresence(doc?.awareness ?? null);
   const editable = canWrite(identity.role);
 
   return (
@@ -43,8 +45,11 @@ export function DocumentEditor({ client, identity }: Props): JSX.Element {
       <h2>
         Document <span className={`badge badge-collab-${status}`}>{STATUS_TEXT[status]}</span>
       </h2>
+      <PresenceBar entries={entries} />
       {!editable && <p className="muted">Observers can read the document but not edit it.</p>}
-      {doc !== null && <Editor collab={doc} editable={editable} />}
+      {doc !== null && presence !== null && (
+        <Editor collab={doc} presence={presence} identity={identity} />
+      )}
       {error !== null && (
         <p className="error" role="alert">
           {error}
