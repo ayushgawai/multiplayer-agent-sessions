@@ -443,13 +443,41 @@ Schema, integration, sessions, frozen splits, study, defence.
 - A paid cloud GPU price, or a specific lab GPU model, unless the workbook on the table says it.
 - That synthetic data is in any test split.
 
+## Team Meeting 1 (8 Oct 2026)
+
+Professor: 10 slides, 17 minutes, then 3 minutes of questions. Deck: `docs/meeting1/index.html`. Spoken notes: `docs/meeting1/presenter.html`. Arrow keys stay in sync across the two windows.
+
+ISA: a live pipeline, not slides. Screen guide: `docs/meeting1/isa.html`. Paste-ready answer sheet with function names: `docs/ai/team-meeting-1-brief.md`. Runbook: `docs/demo1-data-pipeline.md`.
+
+```bash
+source .venv/bin/activate
+python data/scripts/download_mast.py
+python data/scripts/eda_mast.py
+```
+
+The success line is `QUALITY GATE: all checks passed`.
+
+| Stage | Function | File |
+|-------|----------|------|
+| Pin and download | `download_hf_release`, `download_github_taxonomy`, `verify_checksum`, `inspect_dataset`, `write_stats_md` | `data/scripts/download_mast.py` |
+| Load | `stage1_extract` | `data/scripts/eda_mast.py` |
+| Clean | `stage2_clean` | same file |
+| Flatten | `stage3_preprocess` | writes `data/mast/processed/mast_clean_summary.csv` |
+| Gate and EDA | `stage4_quality` | same file |
+
+Cleaning keeps all 1,642 rows. 56 null label cells become 0. Zero rows dropped on the pinned file. `trace_id` is not unique (206 distinct values; composite key 1,552 of 1,642), so the id is `row_id`. Preprocessing adds `fail_1_1` through `fail_3_3`, `failure_codes`, and three category counts. The gate checks count, unique `row_id`, schema, binary labels, the taxonomy file, and 19 human rows.
+
+EDA on that file: 1,237 traces (75.3%) have at least one failure. Top positive labels are 1.3 (664), 3.3 (658), 2.6 (610). Trace length min 1,262, median 9,746, max 2,004,123 characters. This null-to-zero step is only in `stage2_clean`. `parse_judge_response` in `models/baseline_mast/parse_judge.py` leaves missing codes null.
+
+There is no train split and no augmentation in this demo. QMSum is still DAT-11.
+
 ## Compute (team truth)
 
 Do **not** budget paid cloud GPU for 298A unless the GPU lab is unavailable.
 
 | Resource | Detail | Cost |
 |----------|--------|------|
-| GPU lab | University GPU lab access (team has ongoing free access) | $0 |
+| GPU lab | NVIDIA GeForce RTX 5080 Laptop, 16 GB. Model settings come from `eval/configs/m1-b.yaml`. | $0 |
 | LLM APIs | OpenRouter and/or OpenAI / Anthropic / Kiro CLI as needed for MAST judge and prompted arms | pay-as-you-go; keep receipts; no fixed $100–$250 commitment |
 
 Workbook section 2.3 should say training runs in the GPU lab at $0, not invented cloud GPU spend. Colab is fallback only if the GPU lab is unavailable.
@@ -462,7 +490,7 @@ Workbook section 2.3 should say training runs in the GPU lab at $0, not invented
 
 **Candidate covered:** current legacy config `m1-b`, `Qwen/Qwen3-1.7B` with QLoRA; infrastructure validation only, not a final DAT-55 candidate
 
-**Status:** notebook prepared and statically validated; a real GPU run is still required before M1-04 can be marked Done.
+**Status:** ran on 2026-10-21 on an RTX 5080 Laptop, 16 GB, using `eval/configs/m1-b.yaml`. `smoke_passed` is true. Weights were not committed. The manifest and executed notebook stay outside the repo. Linear M1-04 still needs that evidence attached before it can be marked Done.
 
 This is an infrastructure smoke test, not a benchmark and not the four-candidate M1 bake-off. It uses the smallest generative candidate in the current on-disk configs to validate QLoRA, checkpoint, resume, inference, and 4,096-token execution. The notebook reads the model repo, full model revision, learning rate, and LoRA settings directly from `eval/configs/m1-b.yaml` so the smoke run cannot silently drift from that committed feasibility configuration. DAT-55 will replace the legacy candidate mapping before comparative runs.
 
@@ -474,7 +502,7 @@ Before starting Jupyter, set `HF_HOME` and `M1_SMOKE_ARTIFACT_ROOT` to lab scrat
 
 ### What the notebook verifies
 
-1. CUDA is available, the GPU has at least 20 GiB VRAM, and a real CUDA matrix operation succeeds.
+1. CUDA is available on the lab RTX 5080 Laptop (16 GB, at least 12 GiB free), and a real CUDA matrix operation succeeds.
 2. The pinned Hugging Face revision resolves exactly.
 3. Qwen3-1.7B loads in 4-bit NF4 mode with the configured `q_proj` and `v_proj` LoRA targets.
 4. Short backward training produces a finite loss.
@@ -489,7 +517,7 @@ Response-contract validity is recorded as a quality signal but is not an infrast
 
 ### Ayush run procedure
 
-From a clean repository checkout on an RTX 4090 or RTX 5090:
+From a clean repository checkout on the RTX 5080 Laptop (16 GB), using `eval/configs/m1-b.yaml`:
 
 ```bash
 jupyter lab models/m1_catchup/notebooks/m1_qwen3_gpu_smoke_test.ipynb
