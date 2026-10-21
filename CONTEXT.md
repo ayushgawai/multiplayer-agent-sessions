@@ -74,7 +74,7 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 | Repo, pins, CI live | Ayush | Done |
 | SessionEvent frozen + OpenAPI committed | Ayush | Done |
 | Serving stubs m1–m4 | Ayush | Done |
-| M1 configs `m1-a`…`m1-d` | Ayush | Done |
+| Legacy M1 configs `m1-a`…`m1-d` | Ayush | On `main`; DAT-55 must migrate them to the approved target matrix before the bake-off |
 | Docker Compose skeleton | Ayush | Done |
 | Progress Report 1 (`T4.A3`) | Team | Submitted / past due |
 | Workbook 1 (`T4.A4.docx`) | Team | On `main` at `docs/reports/T4.A4.docx`. Canvas upload is the team's copy of that file. |
@@ -106,11 +106,11 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 
 ## Current status (update on pull / after each feature)
 
-**Last updated:** 2026-10-08 (Ayush)
+**Last updated:** 2026-10-21 (Pramod)
 
 - Session service on `main`: durable event log (SQLAlchemy; SQLite in CI, Postgres in Compose) and Redis or in-process fan-out (ADR-002). OpenAPI routes unchanged.
 - MAST track on `main` through download, dictionary, manifest, prompt, parser, viewer, batch, provenance, and classification metrics. No reproduction score has been posted.
-- M1 configs and M3 configs are on `main`. M2 and M4 configs are not. No model has been trained.
+- Legacy M1 configs and current M3 configs are on `main`. DAT-55 must migrate M1 before the bake-off. M2 and M4 configs are not written. No model has been trained.
 - **Not on `main` yet:** React client and Yjs (PRs #12, #13, #14), LangGraph runtime (PR #6), `eval/harness.py`, QMSum, M2/M4 configs, ADR-003.
 
 **Open PRs:** #6 DAT-18 (Shriram), #11 stub label rename (Manav), #12 DAT-15, #13 DAT-16, #14 DAT-17 (Manav).
@@ -118,7 +118,7 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 When you finish a feature, add one bullet here under your name and bump **Last updated**.
 
 ### Ayush
-- Foundation, ADR-001/002, durable event log and fan-out, serving stubs, M1 configs, Compose, CI.
+- Foundation, ADR-001/002, durable event log and fan-out, serving stubs, legacy M1 configs, Compose, CI.
 - Workbook 1 figures: Gantt and PERT. MAST is parallel to the critical path, not on it.
 - Next: pin the MAST judge environment (DAT-25), judge metadata (DAT-26), clean-environment smoke test (DAT-27). Branch protection (DAT-10) is still open.
 
@@ -222,13 +222,67 @@ ADRs:
 - **ADR-002** (6 Oct 2026, accepted). Persists the log in SQL and fans events out over Redis. Public routes stay the same as ADR-001.
 - **ADR-003** (DAT-52, in progress, Manav). Proposed format for a MAST prediction record. The viewer already reads that shape. It is not accepted yet.
 
+## Research plan: reproduction, contribution, and self-improvement
+
+The project has two experimentally separate lanes. Keep them separate in code, results, reports, and presentations.
+
+### Lane 1: published MAST reproduction
+
+Reproduce the published MAST result first, without adding team-specific memory, prompt changes, automatic correction, or new training. The reference condition is the frozen MAST dataset, the committed `mast-judge-v1` prompt, the `o1 (few shot)` judge, the versioned parser, and the agreed scoring convention. This lane answers whether the team can reproduce the published baseline. Any deviation must be reported as a deviation, not silently treated as reproduction.
+
+### Lane 2: the team's original contribution
+
+The original contribution is a multiplayer human-agent session platform with an ordered event log, concurrent document state, interrupt, hand-off, rollback, four task-specific learned models, evidence-linked outputs, and a human-governed improvement layer. MAST supplies an external failure taxonomy and judge; it is not the product and it is not one of M1 through M4.
+
+The additional research contribution is to reuse verified failures as structured learning evidence. MAST failure codes can become part of the failure vocabulary for `LearningEvent` records, while task-specific verifiers add errors such as unsupported summary claims, incorrect addressee, harmful conflict resolution, or invalid routing. Compare memory disabled against approved-memory retrieval on the same frozen evaluation split. Never write test-set feedback into memory.
+
+An exact MAST reproduction result and a memory-assisted extension result must be reported as different experimental conditions. The self-improvement layer must never alter the frozen MAST reproduction artifacts.
+
+### M1 best-of-four decision
+
+The intended M1 matrix below is the approved direction for DAT-55. DAT-55 must freeze its schemas, metrics, split rules, and candidate-selection rule before comparative runs begin.
+
+| Candidate | Approach | Why it is included |
+|-----------|----------|--------------------|
+| `m1-a` | BM25 or TF-IDF event ranking plus a fixed structured template | Transparent CPU-only non-neural floor. Shows whether learned models are needed. |
+| `m1-b` | ModernBERT-base extractive event selector plus the same structured template | Measures the gain from a learned encoder while keeping generation out of the comparison. |
+| `m1-c` | Phi-4-mini-instruct with QLoRA | Compact generative model from a different family; tests evidence-linked abstractive summarization at moderate GPU cost. |
+| `m1-d` | Qwen3.5-4B with QLoRA | Larger generative candidate; tests whether added capacity and model family improve grounded catch-up quality enough to justify latency and VRAM. |
+
+Selection is not ROUGE-only. Freeze the rule before running experiments, then compare critical-fact recall, unsupported-claim rate, attribution accuracy, ROUGE-L, BERTScore-F1, latency, and peak VRAM over seeds 13, 29, and 47. A candidate that improves ROUGE but increases unsupported claims cannot win on ROUGE alone. Learned candidates use the same frozen split and shared training settings wherever the model class permits. The extractive CPU control has no epochs or GPU batch size and must be identified as non-neural.
+
+**Migration warning:** the current `eval/configs/m1-*.yaml` files still contain the earlier ModernBERT, Qwen3-1.7B, Qwen3.5-4B, and Gemma 4 mapping. Do not run or report the final M1 bake-off until DAT-55 updates and reviews those configs. The DAT-57 Qwen3-1.7B notebook is an infrastructure-only QLoRA, checkpoint, resume, and GPU feasibility test. It is not evidence that Qwen3-1.7B is a final M1 candidate, and its temporary `m1-b` identifier must not be used in comparative results after the contract migration.
+
+### Human-governed self-improvement loop
+
+```text
+model output -> verifier or human feedback -> proposed LearningEvent
+             -> human approve or reject -> approved memory
+             -> retrieval for a later run -> new versioned output and evaluation
+```
+
+Every `LearningEvent` records the task, candidate ID, run ID, model output, source-event IDs, verifier or human feedback, task-specific failure code, timestamps, schema version, and provenance. Its state is `proposed`, `approved`, or `rejected`. Only approved lessons are retrievable. Approval and rejection are auditable, and memory versions support rollback.
+
+For M1, the verifier checks output schema, source-event references, critical-fact coverage, attribution, and unsupported claims. M2 later checks addressee attribution. M3 checks the selected winner, escalation behavior, and harmful merges. M4 checks DAG validity, tool eligibility, and route outcome. The same governance pattern is integral to M1 through M4, but each model retains task-specific verifiers and failure codes.
+
+Self-improvement in 298A means approved-memory retrieval and measured behavior change, not autonomous online weight updates. Proposed lessons cannot change a frozen test run. Weight updates, if used later, happen offline from versioned training data, create a new model version, and must pass the complete frozen evaluation before promotion.
+
+### 298A and 298B boundary
+
+| Phase | Required implementation |
+|-------|-------------------------|
+| 298A, through December 2026 | Complete and report the exact MAST reproduction; freeze the revised M1 contract; build the M1 dataset adapter and CPU control; validate the GPU/checkpoint path; run the four M1 candidates and select a winner if data and compute gates pass; implement the minimal `LearningEvent`, approval, rejection, approved retrieval, provenance, and M1 verifier path; demonstrate memory disabled versus approved-memory retrieval without test leakage. |
+| 298B | Integrate the selected M1 model into the full product; build and evaluate M2 through M4; add their task-specific verifiers to the same approved-memory framework; conduct the controlled multiplayer study; evaluate longitudinal improvement and any offline retraining under versioned promotion and rollback rules. |
+
+M2 through M4 may have contracts and interfaces documented in 298A, but their training, bake-offs, and claimed results belong to 298B. Planning documents are not substitutes for working MAST, M1, and minimal approved-memory artifacts in 298A.
+
 ## Models
 
 No winner. No training run. Numbers below are acceptance targets.
 
-| ID | Task | Candidates on disk | Target | When |
+| ID | Task | Plan / implementation state | Target | When |
 |----|------|--------------------|--------|------|
-| M1 | Catch-up summary for a late joiner | `m1-a` ModernBERT-base extractive control. `m1-b` Qwen3-1.7B + LoRA. `m1-c` Qwen3.5-4B + LoRA. `m1-d` Gemma 4 E4B Instruct + LoRA. Configs in `eval/configs/m1-*.yaml`. | Held-out mean ROUGE-L at least 28.2 over three seeds, 95% CI. Also report ROUGE-1, ROUGE-2, BERTScore-F1. 28.2 is a QMSum reference floor, not a result we posted. | 298A |
+| M1 | Catch-up summary for a late joiner | Target matrix: BM25 or TF-IDF, ModernBERT-base, Phi-4-mini-instruct with QLoRA, and Qwen3.5-4B with QLoRA. The on-disk configs still contain the earlier mapping and must be migrated under DAT-55 before the bake-off. | Held-out mean ROUGE-L at least 28.2 over three seeds, 95% CI. Also report grounding, attribution, unsupported claims, ROUGE-1, ROUGE-2, BERTScore-F1, latency, and VRAM. 28.2 is a QMSum reference floor, not a result we posted. | 298A |
 | M2 | Which participant an instruction addresses | Configs not written. Plan: TF-IDF control, DeBERTa and ModernBERT cross-encoders, Qwen classification head. | macro-F1 at least 0.75 | 298B |
 | M3 | Accept A, accept B, merge, or escalate | `m3-a` last-writer-wins. `m3-b` ModernBERT-base pairwise. `m3-c` Qwen3.5-4B + LoRA. `m3-d` few-shot Qwen3.5-4B. Configs in `eval/configs/m3-*.yaml`. | macro-F1 at least 0.70 and safer than last-writer-wins | 298B |
 | M4 | Decompose and route | Configs not written. Plan: rules-only control, then planner and router arms. | Must emit a valid DAG before accuracy, latency, and cost count | 298B |
@@ -406,11 +460,11 @@ Workbook section 2.3 should say training runs in the GPU lab at $0, not invented
 
 **Runner / evidence owner:** Ayush
 
-**Candidate covered:** `m1-b`, `Qwen/Qwen3-1.7B` with QLoRA
+**Candidate covered:** current legacy config `m1-b`, `Qwen/Qwen3-1.7B` with QLoRA; infrastructure validation only, not a final DAT-55 candidate
 
 **Status:** notebook prepared and statically validated; a real GPU run is still required before M1-04 can be marked Done.
 
-This is an infrastructure smoke test, not a benchmark and not the four-candidate M1 bake-off. It deliberately starts with M1-B because it is the smallest generative M1 candidate. The notebook reads the model repo, full model revision, learning rate, and LoRA settings directly from `eval/configs/m1-b.yaml` so the run cannot silently drift from the committed candidate definition.
+This is an infrastructure smoke test, not a benchmark and not the four-candidate M1 bake-off. It uses the smallest generative candidate in the current on-disk configs to validate QLoRA, checkpoint, resume, inference, and 4,096-token execution. The notebook reads the model repo, full model revision, learning rate, and LoRA settings directly from `eval/configs/m1-b.yaml` so the smoke run cannot silently drift from that committed feasibility configuration. DAT-55 will replace the legacy candidate mapping before comparative runs.
 
 ### Important environment exception
 
@@ -447,7 +501,7 @@ The default output is outside the repository under `~/.cache/multiplayer-agent-s
 
 ### Scope for later work
 
-M1-A uses an extractive encoder and needs a different training path. M1-C uses Qwen3.5-4B and M1-D uses Gemma 4 E4B; each needs its own loader feasibility check before the full bake-off. Do not present the M1-B smoke loss, generated text, or 4,096-token forward pass as comparative model performance.
+The target DAT-55 matrix gives the CPU ranking control, ModernBERT selector, Phi-4-mini generator, and Qwen3.5-4B generator separate implementation paths. Each needs its own candidate-specific feasibility and contract tests before the full bake-off. Do not present the legacy Qwen3-1.7B smoke loss, generated text, or 4,096-token forward pass as comparative model performance.
 
 ## Local commands
 
@@ -467,7 +521,7 @@ cd session-service && pytest -q
 cd serving && pytest -q
 ```
 
-General training extras (on the lab GPU host): `pip install -r requirements-models.txt`. Exception: do not use that requirements file for the M1-B Qwen3 smoke notebook until Ayush updates its old Transformers pin; use the notebook package cell in an isolated environment instead.
+General training extras (on the lab GPU host): `pip install -r requirements-models.txt`. Exception: do not use that requirements file for the legacy Qwen3 GPU smoke notebook until Ayush updates its old Transformers pin; use the notebook package cell in an isolated environment instead.
 
 ---
 
