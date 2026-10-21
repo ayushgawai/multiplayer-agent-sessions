@@ -400,6 +400,55 @@ Do **not** budget paid cloud GPU for 298A unless the GPU lab is unavailable.
 
 Workbook section 2.3 should say training runs in the GPU lab at $0, not invented cloud GPU spend. Colab is fallback only if the GPU lab is unavailable.
 
+## M1 GPU smoke test (M1-04)
+
+**Notebook:** [models/m1_catchup/notebooks/m1_qwen3_gpu_smoke_test.ipynb](models/m1_catchup/notebooks/m1_qwen3_gpu_smoke_test.ipynb)
+
+**Runner / evidence owner:** Ayush
+
+**Candidate covered:** `m1-b`, `Qwen/Qwen3-1.7B` with QLoRA
+
+**Status:** notebook prepared and statically validated; a real GPU run is still required before M1-04 can be marked Done.
+
+This is an infrastructure smoke test, not a benchmark and not the four-candidate M1 bake-off. It deliberately starts with M1-B because it is the smallest generative M1 candidate. The notebook reads the model repo, full model revision, learning rate, and LoRA settings directly from `eval/configs/m1-b.yaml` so the run cannot silently drift from the committed candidate definition.
+
+### Important environment exception
+
+Do not install `requirements-models.txt` into the notebook environment after running its package cell. That file currently pins Transformers 4.44, which cannot load Qwen3. Updating the shared requirements belongs to Ayush because he owns `requirements*.txt`; handle that in a separate issue or PR. For this smoke run, use a fresh Python 3.10+ environment with the lab's CUDA-compatible PyTorch 2.6+ build, then run the notebook package cell. The notebook bounds Transformers below version 5 to avoid major-version API drift.
+
+Before starting Jupyter, set `HF_HOME` and `M1_SMOKE_ARTIFACT_ROOT` to lab scratch storage if the home-directory quota is limited. Never put a Hugging Face token in the notebook. Checkpoints, model caches, and generated adapters must not be committed to Git.
+
+### What the notebook verifies
+
+1. CUDA is available, the GPU has at least 20 GiB VRAM, and a real CUDA matrix operation succeeds.
+2. The pinned Hugging Face revision resolves exactly.
+3. Qwen3-1.7B loads in 4-bit NF4 mode with the configured `q_proj` and `v_proj` LoRA targets.
+4. Short backward training produces a finite loss.
+5. The checkpoint contains adapter weights, optimizer state, scheduler state, and Trainer state.
+6. A new Trainer resumes the checkpoint and reaches the expected next global step.
+7. The saved adapter and tokenizer files exist.
+8. Inference completes and reports whether the output satisfies the structured M1 response contract.
+9. A separate 4,096-token forward pass succeeds.
+10. `run_manifest.json` records the repo commit, dirty state, exact model revision, package versions, hardware, timings, VRAM, checkpoint files, and pass/fail flags.
+
+Response-contract validity is recorded as a quality signal but is not an infrastructure gate because three smoke-training steps are not a meaningful quality run. The CUDA, model-load, train, checkpoint, resume, inference, and 4,096-token checks are infrastructure gates.
+
+### Ayush run procedure
+
+From a clean repository checkout on an RTX 4090 or RTX 5090:
+
+```bash
+jupyter lab models/m1_catchup/notebooks/m1_qwen3_gpu_smoke_test.ipynb
+```
+
+Run every cell from top to bottom without skipping cells. If the package cell changes installed libraries, restart the kernel and run from the top. Do not manually change the candidate id, model revision, LoRA values, or 4,096-token setting in the notebook.
+
+The default output is outside the repository under `~/.cache/multiplayer-agent-sessions/m1_gpu_smoke/<run-id>/`. Attach the completed notebook and `run_manifest.json` to M1-04. Record the artifact/checkpoint location in Linear, but do not upload model weights to Git. M1-04 is complete only when `smoke_passed` is `true` in the manifest and the evidence is attached.
+
+### Scope for later work
+
+M1-A uses an extractive encoder and needs a different training path. M1-C uses Qwen3.5-4B and M1-D uses Gemma 4 E4B; each needs its own loader feasibility check before the full bake-off. Do not present the M1-B smoke loss, generated text, or 4,096-token forward pass as comparative model performance.
+
 ## Local commands
 
 ```bash
@@ -418,7 +467,7 @@ cd session-service && pytest -q
 cd serving && pytest -q
 ```
 
-Training extras (on the lab GPU host): `pip install -r requirements-models.txt`
+General training extras (on the lab GPU host): `pip install -r requirements-models.txt`. Exception: do not use that requirements file for the M1-B Qwen3 smoke notebook until Ayush updates its old Transformers pin; use the notebook package cell in an isolated environment instead.
 
 ---
 
