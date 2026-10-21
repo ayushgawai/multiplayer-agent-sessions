@@ -1,0 +1,137 @@
+{
+  "schema_version": "1.0",
+  "run_id": "m1-b-qwen3-smoke-20261021T232844332184Z",
+  "purpose": "M1-B Qwen3-1.7B QLoRA GPU and checkpoint-resume smoke test",
+  "candidate_id": "m1-b",
+  "is_benchmark_result": false,
+  "repository_commit": "8944893c4fc28e5aec740b6fa8d3c36b1b475111",
+  "repository_dirty_at_start": true,
+  "model_id": "Qwen/Qwen3-1.7B",
+  "requested_revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+  "resolved_revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+  "candidate_config": "eval\\configs\\m1-b.yaml",
+  "environment": {
+    "captured_at_utc": "2026-10-21T23:28:44.214551+00:00",
+    "python": "3.12.10",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "torch": "2.11.0+cu128",
+    "torch_cuda": "12.8",
+    "cudnn": 91900,
+    "transformers": "4.57.6",
+    "peft": "0.21.2",
+    "accelerate": "1.15.0",
+    "bitsandbytes": "0.50.2",
+    "pyyaml": "6.0.3",
+    "gpu_name": "NVIDIA GeForce RTX 5080 Laptop GPU",
+    "gpu_total_gib": 15.92,
+    "gpu_free_gib_at_start": 14.69,
+    "gpu_compute_capability": [
+      12,
+      0
+    ],
+    "torch_compiled_cuda_arches": [
+      "sm_75",
+      "sm_80",
+      "sm_86",
+      "sm_90",
+      "sm_100",
+      "sm_120"
+    ],
+    "cuda_probe_checksum": 9.054688,
+    "bf16_supported": true,
+    "nvidia_smi": "NVIDIA GeForce RTX 5080 Laptop GPU, 592.02, 16303 MiB, 15510 MiB"
+  },
+  "storage": {
+    "artifact_root": "C:\\Users\\ADS-Admin\\.cache\\multiplayer-agent-sessions\\m1_gpu_smoke",
+    "huggingface_home": "C:\\Users\\ADS-Admin\\.cache\\huggingface"
+  },
+  "config": {
+    "seed": 298,
+    "train_max_seq_len": 1024,
+    "full_config_max_seq_len": 4096,
+    "context_feasibility_tokens": 4096,
+    "phase1_steps": 2,
+    "resumed_total_steps": 3,
+    "learning_rate": 0.0002,
+    "lora_r": 16,
+    "lora_alpha": 32,
+    "lora_dropout": 0.05
+  },
+  "model_load": {
+    "seconds": 8.698,
+    "peak_allocated_gib": 2.425,
+    "target_modules": [
+      "q_proj",
+      "v_proj"
+    ],
+    "trainable_parameters": 3211264,
+    "total_parameters": 1723786240,
+    "trainable_percent": 0.186291
+  },
+  "phase1_training": {
+    "seconds": 3.58,
+    "peak_allocated_gib": 4.42,
+    "checkpoint": "C:\\Users\\ADS-Admin\\.cache\\multiplayer-agent-sessions\\m1_gpu_smoke\\m1-b-qwen3-smoke-20261021T232844332184Z\\trainer\\checkpoint-2",
+    "checkpoint_files": [
+      "README.md",
+      "adapter_config.json",
+      "adapter_model.safetensors",
+      "optimizer.pt",
+      "rng_state.pth",
+      "scheduler.pt",
+      "trainer_state.json",
+      "training_args.bin"
+    ],
+    "metrics": {
+      "train_runtime": 3.2157,
+      "train_samples_per_second": 0.622,
+      "train_steps_per_second": 0.622,
+      "total_flos": 17358290681856.0,
+      "train_loss": 1.6337602138519287,
+      "epoch": 0.6666666666666666
+    }
+  },
+  "resume_training": {
+    "resumed_from": "C:\\Users\\ADS-Admin\\.cache\\multiplayer-agent-sessions\\m1_gpu_smoke\\m1-b-qwen3-smoke-20261021T232844332184Z\\trainer\\checkpoint-2",
+    "final_global_step": 3,
+    "seconds": 1.961,
+    "peak_allocated_gib": 4.421,
+    "adapter_dir": "C:\\Users\\ADS-Admin\\.cache\\multiplayer-agent-sessions\\m1_gpu_smoke\\m1-b-qwen3-smoke-20261021T232844332184Z\\adapter",
+    "metrics": {
+      "train_runtime": 1.2508,
+      "train_samples_per_second": 2.398,
+      "train_steps_per_second": 2.398,
+      "total_flos": 26037436022784.0,
+      "train_loss": 0.35621265570322674,
+      "epoch": 1.0
+    }
+  },
+  "inference": {
+    "seconds": 21.469,
+    "generated_tokens": 136,
+    "peak_allocated_gib": 1.974,
+    "valid_json_object": true,
+    "response_contract_valid": true,
+    "response": "{\n  \"completed\": [\n    {\n      \"text\": \"The MAST manifest validation tests passed.\",\n      \"source_event_ids\": [\"demo-1\"]\n    }\n  ],\n  \"in_progress\": [\n    {\n      \"text\": \"The M1-B Qwen3 smoke run is in progress on the RTX 4090.\",\n      \"source_event_ids\": [\"demo-2\"]\n    }\n  ],\n  \"blocked\": [],\n  \"decisions\": [\n    {\n      \"text\": \"The team decided that lessons require human approval.\",\n      \"source_event_ids\": [\"demo-3\"]\n    }\n  ],\n  \"pending_actions\": []\n}"
+  },
+  "context_feasibility": {
+    "tokens": 4096,
+    "passed": true,
+    "seconds": 1.179,
+    "peak_allocated_gib": 5.351,
+    "error": null
+  },
+  "completed_at_utc": "2026-10-21T23:29:49.417138+00:00",
+  "acceptance": {
+    "cuda_available": true,
+    "model_loaded_4bit": true,
+    "backward_steps_completed": 3,
+    "checkpoint_created": true,
+    "checkpoint_resumed": true,
+    "adapter_saved": true,
+    "inference_completed": true,
+    "response_contract_valid": true,
+    "context_4096_forward_passed": true
+  },
+  "smoke_passed": true
+}
