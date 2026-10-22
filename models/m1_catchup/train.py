@@ -168,11 +168,13 @@ def train(config_path: Path, resume: bool = False, max_steps: int | None = None)
     print(f"  Trainable Parameters: {trainable:,} / {total:,} ({100*trainable/total:.2f}%)")
 
     # Training arguments
-    batch_size = 1
-    gradient_accumulation_steps = max(1, int(train_cfg.get("effective_batch_size", 16)) // batch_size)
-    epochs = int(train_cfg.get("epochs", 3))
-    learning_rate = float(train_cfg.get("lr", 2e-4))
+    batch_size = int(train_cfg.get("per_device_train_batch_size", 4))
+    effective_bs = int(train_cfg.get("effective_batch_size", 16))
+    gradient_accumulation_steps = max(1, effective_bs // batch_size)
+    epochs = int(train_cfg.get("epochs", 5))
+    learning_rate = float(train_cfg.get("lr", 3e-4))
     save_steps = int(train_cfg.get("save_steps", 50))
+    num_workers = int(train_cfg.get("dataloader_num_workers", 2))
 
     training_args = TrainingArguments(
         output_dir=str(output_dir),
@@ -195,7 +197,7 @@ def train(config_path: Path, resume: bool = False, max_steps: int | None = None)
         fp16=not torch.cuda.is_bf16_supported(),
         gradient_checkpointing=True,
         remove_unused_columns=False,
-        dataloader_num_workers=0,
+        dataloader_num_workers=num_workers,
         report_to=[],
         seed=298,
     )

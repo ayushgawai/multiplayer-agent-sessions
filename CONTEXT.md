@@ -81,7 +81,7 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 | MAST download script + `data/mast/STATS.md` | Naman (DAT-28, PR #1) | Done on `main` |
 | MAST dictionary + taxonomy | Naman (DAT-29, PR #2) | Done on `main`: `data/mast/DATA_DICTIONARY.md`, `data/mast/TAXONOMY.md` |
 | Frozen eval manifest | Naman (DAT-30, PR #4) | Done on `main`: `data/mast/eval_manifest.json` |
-| QMSum download + STATS.md | Naman (DAT-11) | Open |
+| QMSum download + STATS.md | Ayush / Naman (DAT-11) | Done on `main`: `data/qmsum/STATS.md`, frozen splits in `data/splits/m1_v1/` |
 | MAST classification metrics | Pramod (DAT-37, PR #3) | Done on `main`: `eval/metrics/classification.py`. Convention `mast_binary_label_cells_v1` is provisional until checked against the paper. |
 | Harness runs one candidate end to end | Pramod | Open. `eval/harness.py` is not on `main`. |
 | M3 configs `m3-a`…`m3-d` | Manav (DAT-40, PR #10) | Done on `main` |
@@ -106,19 +106,26 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 
 ## Current status (update on pull / after each feature)
 
-**Last updated:** 2026-10-21 (Manav)
+**Last updated:** 2026-10-21 (Ayush)
 
 - Session service on `main`: durable event log (SQLAlchemy; SQLite in CI, Postgres in Compose) and Redis or in-process fan-out (ADR-002). OpenAPI routes unchanged.
-- MAST track on `main` through download, dictionary, manifest, prompt, parser, viewer, batch, provenance, and classification metrics. No reproduction score has been posted.
-- Legacy M1 configs and current M3 configs are on `main`. DAT-55 must migrate M1 before the bake-off. M2 and M4 configs are not written. No model has been trained.
-- **Not on `main` yet:** React client and Yjs (PRs #12, #13, #14), LangGraph runtime (PR #6), `eval/harness.py`, QMSum, M2/M4 configs, ADR-003.
+- React 18 client, CRDT server, and presence on `main` (DAT-15, DAT-16, DAT-17 / PRs #12, #13, #14).
+- ADR-003 MAST prediction record on `main` (DAT-52 / PR #16).
+- M3 stub label fix on `main` (DAT-40 / PR #11).
+- MAST track on `main` through download, dictionary, manifest, prompt, parser, viewer, batch, provenance, and classification metrics.
+- QMSum downloaded and verified (DAT-11, 232 meetings, 1,810 query pairs, `STATS.md`); frozen `m1_v1` dataset splits committed (`MANIFEST.json`).
+- M1 full training pipeline and baseline 3-epoch QLoRA run completed (DAT-55); trained weights and checkpoints saved.
+- **Not on `main` yet:** LangGraph runtime (PR #6), `eval/harness.py`, M2/M4 configs.
 
-**Open PRs:** #6 DAT-18 (Shriram), #11 stub label rename (Manav), #12 DAT-15, #13 DAT-16, #14 DAT-17 (Manav), #15 DAT-56 (Shriram), #16 ADR-003 (Manav).
+**Open PRs:** #6 DAT-18 (Shriram), #15 DAT-56 (Shriram).
 
 When you finish a feature, add one bullet here under your name and bump **Last updated**.
 
 ### Ayush
 - Foundation, ADR-001/002, durable event log and fan-out, serving stubs, legacy M1 configs, Compose, CI.
+- QMSum download + verification (DAT-11) and frozen m1_v1 split generation (`data/splits/m1_v1/`).
+- M1 GPU smoke test (M1-04) and full 3-epoch QLoRA training pipeline (DAT-55).
+- Reviewed and merged client scaffold, CRDT server, presence, and ADR-003 PRs (#11, #12, #13, #14, #16).
 - Workbook 1 figures: Gantt and PERT. MAST is parallel to the critical path, not on it.
 - Next: pin the MAST judge environment (DAT-25), judge metadata (DAT-26), clean-environment smoke test (DAT-27). Branch protection (DAT-10) is still open.
 
@@ -334,7 +341,7 @@ Full IEEE list is at the end of `docs/reports/T4.A4.docx`, references [1] throug
 | MAST human file | 19 rows, inter-annotator sample. Rounds 1 to 3 use older taxonomies (18, 17, 17 modes). Only 4 rows (`Generlazability`, spelled that way in the file) use the current 14 codes. Do not pool rounds. | `MAD_human_labelled_dataset.json` | Same download |
 | Dictionary and taxonomy | Field counts and the 14 definitions | `data/mast/DATA_DICTIONARY.md`, `data/mast/TAXONOMY.md` | On `main` |
 | Eval manifest | Frozen link from download to eval | `data/mast/eval_manifest.json` | On `main` |
-| QMSum | M1 supervision only | Not downloaded. DAT-11 | Open |
+| QMSum | M1 supervision only | Downloaded & verified; 232 meetings, 1,810 query pairs. DAT-11 | Done |
 | Pilot sessions | About 30 in-house sessions, event logs only, double annotated, for M2 to M4 | Not collected | After the integration gate |
 
 Observed on the full MAST file (dictionary, not a model result): 7 frameworks (AG2 597, MetaGPT 430, ChatDev 330, Magentic 195, OpenManus 30, AppWorld 30, HyperAgent 30), 5 LLM names (GPT-4o, Claude, Qwen, CodeLlama, GPT-4o-mini), 8 benchmarks. `trace_id` is not unique across frameworks. Top-level keys are `mas_name`, `llm_name`, `benchmark_name`, `trace_id`, `trace`, `mast_annotation`.
@@ -368,7 +375,7 @@ Success line: `QUALITY GATE: all checks passed`. The cleaner keeps all 1,642 row
 | AI-4 | M2 | macro-F1 at least 0.75 |
 | AI-5 | M3 | macro-F1 at least 0.70 and safer than last-writer-wins |
 | AI-8 | Failure analysis | At least 50 failures tagged with the MAST taxonomy |
-| DR-1 | QMSum counts match the paper | After DAT-11 |
+| DR-1 | QMSum counts match the paper | Done on `main` (232 meetings, 1,810 pairs verified in `data/qmsum/STATS.md`) |
 | DR-4 | Splits by session | No row from a test session in train |
 
 Workbook section map: 1.1 background (Ayush), 1.2 requirements and 1.3 deliverables (Pramod), 1.4 technology survey (Manav), 1.5 literature (Pramod), 2.1 data (Naman), 2.2 methodology and 2.3 organization (Shriram; the template numbers WBS as 2.2.4), 2.4 resources (Ayush; template section 2.3), 2.5 schedule (Pramod; template section 2.4). Abstract presentation is 2 points. The pipeline demo is 3 points. Total 15.

@@ -14,7 +14,7 @@ import argparse
 import hashlib
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from urllib.request import urlopen
 
@@ -104,7 +104,7 @@ def main() -> int:
     assert total_queries in (1808, 1810), f"Expected 1,808 or 1,810 query-summary pairs; found {total_queries}"
 
     # Write STATS.md
-    now_utc = datetime.now(timezone.utc).isoformat()
+    now_utc = datetime.now(UTC).isoformat()
     lines = [
         "# QMSum Dataset Statistics",
         "",

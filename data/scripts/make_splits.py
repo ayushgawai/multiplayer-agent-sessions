@@ -25,7 +25,7 @@ import hashlib
 import json
 import random
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -104,7 +104,7 @@ def build_m1_splits(out_dir: Path, seed: int) -> dict[str, Any]:
     manifest: dict[str, Any] = {
         "task": "m1_catchup",
         "contract": "CatchupExample",
-        "created_at_utc": datetime.now(timezone.utc).isoformat(),
+        "created_at_utc": datetime.now(UTC).isoformat(),
         "seed": seed,
         "splits": {},
     }
