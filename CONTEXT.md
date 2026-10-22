@@ -145,6 +145,7 @@ When you finish a feature, add one bullet here under your name and bump **Last u
 ### Shriram
 - On `main`: resumable MAST batch and run provenance (DAT-34/35, PR #5). Notes in `docs/verification/dat-34-dat-35-batch-execution.md`.
 - In review: LangGraph plan, act, observe loop (DAT-18, PR #6). `agent-runtime/` on `main` is still the scaffold.
+- In review: learning-event and approved-memory foundation (DAT-56) in a new `memory/` package. Schema `learning-event-v1`, proposed/approved/rejected states, approved-only retrieval, append-only audit log, rollback by memory version. CI does not exercise `memory/` yet.
 - Still open: final MAST runs (DAT-36), `doc_read` and `calc` (DAT-19), end-to-end loop on a fixture (DAT-20).
 
 ### Pramod
