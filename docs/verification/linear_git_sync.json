@@ -1,0 +1,211 @@
+[
+  {
+    "id": "DAT-55",
+    "title": "M1 Full Training Pipeline & Checkpointing with QLoRA",
+    "owner": "Ayush Gawai",
+    "status": "Done",
+    "prs": [],
+    "commits": [
+      "8704c3b feat(m1): DAT-55 add full training script with checkpointing and QLoRA",
+      "d214437 DAT-55: document M1 and self-improvement plan",
+      "2318d8f fix(m1): ensure utf-8 stdout encoding for Windows console in train.py",
+      "5acff8c fix(m1): resolve 7 ruff lint errors in notebook and train.py",
+      "ee9f28f feat(m1): configure full GPU power training (batch size 4, all-linear LoRA r=32, 5 epochs) and update CONTEXT.md"
+    ],
+    "notes": "Full 4-bit NF4 QLoRA training script implemented and tested. Completed 50-step high power training run on RTX 5080 with loss reduced from 3.90 to 2.14; checkpoint-50 saved and verified."
+  },
+  {
+    "id": "DAT-57",
+    "title": "M1 GPU Smoke Test & Feasibility Verification",
+    "owner": "Ayush Gawai",
+    "status": "Done",
+    "prs": [],
+    "commits": [
+      "ec4a7de DAT-57: add M1 GPU smoke notebook",
+      "8944893 format(notebook): add clean presentation banners, structured tables, and checkpoint reporting",
+      "7cdaf46 docs(m1): attach verified executed notebook outputs and run manifest for M1-04"
+    ],
+    "notes": "Executed and verified all 9 GPU infrastructure assertions on RTX 5080 Laptop GPU. Run manifest committed to docs/verification/m1_smoke/run_manifest.json."
+  },
+  {
+    "id": "DAT-11",
+    "title": "Download QMSum Dataset and Freeze m1_v1 Splits",
+    "owner": "Naman Chheda / Ayush Gawai",
+    "status": "Done",
+    "prs": [],
+    "commits": [
+      "330603f feat(data): DAT-11 download QMSum, generate and freeze m1_v1 splits"
+    ],
+    "notes": "Downloaded Yale-LILY QMSum (232 meetings, 1,810 query-summary pairs). Generated and froze splits: train (1,257), val (272), test (281) with SHA-256 manifest."
+  },
+  {
+    "id": "DAT-40",
+    "title": "M3 Stub Label Renamed to Escalate",
+    "owner": "Manav Patel",
+    "status": "Done",
+    "prs": [
+      11
+    ],
+    "commits": [
+      "2f5b531 DAT-40: use build-plan label escalate in m3 serving stub (#11)"
+    ],
+    "notes": "Replaced escalate_human with escalate in M3 serving stub to match the candidate matrix."
+  },
+  {
+    "id": "DAT-15",
+    "title": "Client Scaffold (Mock + Real Session API)",
+    "owner": "Manav Patel",
+    "status": "Done",
+    "prs": [
+      12
+    ],
+    "commits": [
+      "380a496 DAT-15: client scaffold (mock + real session API) (#12)"
+    ],
+    "notes": "React 18 + Vite client scaffold supporting both mock and live session-service environments."
+  },
+  {
+    "id": "DAT-16",
+    "title": "Yjs CRDT Editor Binding & y-websocket Server",
+    "owner": "Manav Patel",
+    "status": "Done",
+    "prs": [
+      13
+    ],
+    "commits": [
+      "b64b1b9 DAT-16: add y-websocket CRDT server",
+      "8b4a65e DAT-16: bind TipTap editor to Yjs with session event bridge",
+      "86f93fa DAT-16: add convergence and bridge dedup tests"
+    ],
+    "notes": "TipTap editor bound to shared Yjs document with automatic bridge to session-service event log."
+  },
+  {
+    "id": "DAT-17",
+    "title": "Live Presence, Carets, and Participant Colour Registry",
+    "owner": "Manav Patel",
+    "status": "Done",
+    "prs": [
+      14
+    ],
+    "commits": [
+      "186a5cb DAT-17: add awareness presence with stable participant colours",
+      "2ae43df DAT-17: show collaborator cursors and presence bar",
+      "12e771a DAT-17: keep participant colour stable across rejoins"
+    ],
+    "notes": "Presence bar, cursor tracking, and deterministic user color assignment."
+  },
+  {
+    "id": "DAT-52",
+    "title": "ADR-003: MAST Prediction Record",
+    "owner": "Manav Patel",
+    "status": "Done",
+    "prs": [
+      16
+    ],
+    "commits": [
+      "19a115c DAT-52: add ADR-003 MAST prediction record",
+      "955e7b3 DAT-52: update Manav status with ADR-003 PR"
+    ],
+    "notes": "Decision record freezing predictions.jsonl, failures.jsonl, and run_manifest.json formats."
+  },
+  {
+    "id": "DAT-37",
+    "title": "MAST Classification Evaluation Metrics",
+    "owner": "Pramod Dindukurthi",
+    "status": "Done",
+    "prs": [
+      3
+    ],
+    "commits": [
+      "791b3de DAT-37: fix single-label metrics and add eval CI",
+      "0741883 Merge pull request #3 from ayushgawai/pramodsatyadindukurthi/dat-37-mast-13-implement-and-test-baseline-evaluation-metrics"
+    ],
+    "notes": "Accuracy, macro/micro F1, Cohen kappa, and CI workflow for eval/tests."
+  },
+  {
+    "id": "DAT-34",
+    "title": "Resumable MAST Batch Execution",
+    "owner": "Shriram Dundigalla",
+    "status": "Done",
+    "prs": [
+      5
+    ],
+    "commits": [
+      "caa174f DAT-34/DAT-35: validate resumable run provenance",
+      "3ff7ced Merge pull request #5 from ayushgawai/shriramdundigalla/dat-34-dat-35-mast-batch-execution-and-provenance"
+    ],
+    "notes": "Resumable batch loop over MAST evaluation traces."
+  },
+  {
+    "id": "DAT-35",
+    "title": "MAST Run Manifest Provenance & Redaction",
+    "owner": "Shriram Dundigalla",
+    "status": "Done",
+    "prs": [
+      5
+    ],
+    "commits": [
+      "caa174f DAT-34/DAT-35: validate resumable run provenance"
+    ],
+    "notes": "Run provenance metadata generator and secret redaction."
+  },
+  {
+    "id": "DAT-28",
+    "title": "Download and Extract MAST Dataset from Hugging Face",
+    "owner": "Naman Chheda",
+    "status": "Done",
+    "prs": [
+      1
+    ],
+    "commits": [
+      "eb8a5f9 Merge pull request #1 from ayushgawai/dat-28-mast04-download-mast"
+    ],
+    "notes": "Download script for mcemri/MAD with checksum verification (1,642 traces)."
+  },
+  {
+    "id": "DAT-29",
+    "title": "MAST Dataset Schema and Data Dictionary",
+    "owner": "Naman Chheda",
+    "status": "Done",
+    "prs": [
+      2
+    ],
+    "commits": [],
+    "notes": "Committed data dictionary and taxonomy documentation for MAST baseline."
+  },
+  {
+    "id": "DAT-30",
+    "title": "MAST Frozen Evaluation Manifest",
+    "owner": "Naman Chheda",
+    "status": "Done",
+    "prs": [
+      4
+    ],
+    "commits": [],
+    "notes": "Evaluation manifest linking frozen dataset to benchmark expectations."
+  },
+  {
+    "id": "DAT-18",
+    "title": "LangGraph Plan-Act-Observe Loop Runtime",
+    "owner": "Shriram Dundigalla",
+    "status": "In Review",
+    "prs": [
+      6
+    ],
+    "commits": [
+      "bafdab4 DAT-18: LangGraph plan, act, observe loop"
+    ],
+    "notes": "Agent runtime loop on fixture. Open in PR #6."
+  },
+  {
+    "id": "DAT-56",
+    "title": "Learning-Event Contract & Approved-Memory Store",
+    "owner": "Shriram Dundigalla",
+    "status": "In Review",
+    "prs": [
+      15
+    ],
+    "commits": [],
+    "notes": "Learning event schema and memory persistence. Open in PR #15."
+  }
+]
