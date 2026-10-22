@@ -38,16 +38,16 @@ TASKS_SYNC: list[dict[str, Any]] = [
     },
     {
         "id": "DAT-57",
-        "title": "M1 GPU Smoke Test & Feasibility Verification",
+        "title": "M1 GPU Feasibility Verification",
         "owner": "Ayush Gawai",
         "status": "Done",
         "prs": [],
         "commits": [
-            "ec4a7de DAT-57: add M1 GPU smoke notebook",
+            "ec4a7de DAT-57: add M1 GPU feasibility notebook",
             "8944893 format(notebook): add clean presentation banners, structured tables, and checkpoint reporting",
             "7cdaf46 docs(m1): attach verified executed notebook outputs and run manifest for M1-04",
         ],
-        "notes": "Executed and verified all 9 GPU infrastructure assertions on RTX 5080 Laptop GPU. Run manifest committed to docs/verification/m1_smoke/run_manifest.json."
+        "notes": "Executed and verified all 9 GPU infrastructure assertions on RTX 5080 Laptop GPU. Run manifest committed to docs/verification/m1_verification/run_manifest.json."
     },
     {
         "id": "DAT-11",
