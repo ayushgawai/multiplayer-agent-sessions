@@ -1,0 +1,23 @@
+{
+  "task": "m1_catchup",
+  "contract": "CatchupExample",
+  "created_at_utc": "2026-10-22T00:41:58.498115+00:00",
+  "seed": 13,
+  "splits": {
+    "train": {
+      "count": 1257,
+      "sha256": "bc44fd4bfd13a48b02cb3ef64c1f034320a3a921b32cfa49e7ef27d931e54046",
+      "bytes": 15400917
+    },
+    "val": {
+      "count": 272,
+      "sha256": "4b622ee535da4da71587f13d4c8884003444fe289dbbfe8ffb605c30fb27e678",
+      "bytes": 3442876
+    },
+    "test": {
+      "count": 281,
+      "sha256": "64d89302edbcbbe047d06932fde53108b4cea5c4e7a0df7dd1355e96174f2a71",
+      "bytes": 3616185
+    }
+  }
+}

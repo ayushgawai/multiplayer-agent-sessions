@@ -45,6 +45,7 @@ data/mast/**
 !data/mast/eval_manifest.json
 data/qmsum/**
 !data/qmsum/README.md
+!data/qmsum/STATS.md
 data/sessions/raw/
 checkpoints/
 wandb/
