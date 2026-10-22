@@ -106,37 +106,41 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 
 ## Current status (update on pull / after each feature)
 
-**Last updated:** 2026-10-21 (Manav)
+**Last updated:** 2026-10-22 (Ayush)
 
 - Session service on `main`: durable event log (SQLAlchemy; SQLite in CI, Postgres in Compose) and Redis or in-process fan-out (ADR-002). OpenAPI routes unchanged.
 - React 18 client, CRDT server, and presence on `main` (DAT-15, DAT-16, DAT-17 / PRs #12, #13, #14).
-- ADR-003 MAST prediction record on `main` as Proposed (DAT-52); review changes in PR #16.
-- M3 stub label fix on `main` (DAT-40 / PR #11).
+- ADR-003 MAST prediction record on `main` (DAT-52 / PR #16 merged).
+- M3 stub label fix on `main` (DAT-40 / PR #11 merged).
 - MAST track on `main` through download, dictionary, manifest, prompt, parser, viewer, batch, provenance, and classification metrics.
 - QMSum downloaded and verified (DAT-11, 232 meetings, 1,810 query pairs, `STATS.md`); frozen `m1_v1` dataset splits committed (`MANIFEST.json`).
-- M1 full training pipeline and baseline 3-epoch QLoRA run completed (DAT-55); trained weights and checkpoints saved.
+- M1 full training pipeline and 4-bit NF4 QLoRA completed (DAT-55); 50-step high power training run dropped loss from 3.90 to 2.14 with verified checkpoint-50.
+- Linear tasks and git commits synced across the team (`docs/verification/linear_git_sync.md`).
 - **Not on `main` yet:** LangGraph runtime (PR #6), `eval/harness.py`, M2/M4 configs.
 
-**Open PRs:** #6 DAT-18 (Shriram), #15 DAT-56 (Shriram), #16 ADR-003 review changes (Manav).
+**Open PRs:** #6 DAT-18 (Shriram), #15 DAT-56 (Shriram).
 
 When you finish a feature, add one bullet here under your name and bump **Last updated**.
 
 ### Ayush
 - Foundation, ADR-001/002, durable event log and fan-out, serving stubs, legacy M1 configs, Compose, CI.
 - QMSum download + verification (DAT-11) and frozen m1_v1 split generation (`data/splits/m1_v1/`).
-- M1 GPU smoke test (M1-04) and full 3-epoch QLoRA training pipeline (DAT-55).
+- M1 GPU smoke test (M1-04) and full QLoRA training pipeline (DAT-55); 50-step run reached loss 2.14, verified checkpoint-50 saved.
 - Reviewed and merged client scaffold, CRDT server, presence, and ADR-003 PRs (#11, #12, #13, #14, #16).
+- Synchronized Linear board with git commits and automated tracking (`docs/verification/linear_git_sync.md`).
 - Workbook 1 figures: Gantt and PERT. MAST is parallel to the critical path, not on it.
 - Next: pin the MAST judge environment (DAT-25), judge metadata (DAT-26), clean-environment smoke test (DAT-27). Branch protection (DAT-10) is still open.
 
 ### Naman
 - On `main`: DAT-28 download and checksums, DAT-29 dictionary and taxonomy, DAT-30 eval manifest.
-- Still open: QMSum download (DAT-11), six scenario briefs (DAT-21), team sign-off (DAT-22).
+- Done on `main`: QMSum download (DAT-11, 232 meetings, 1,810 query pairs in `data/qmsum/STATS.md`, splits frozen in `data/splits/m1_v1/`).
+- Still open: six scenario briefs (DAT-21), team sign-off (DAT-22).
 
 ### Manav
 - On `main`: judge prompt `mast-judge-v1`, parser `mast-parser-v1.1`, result viewer, M3 configs `m3-a` through `m3-d`, serving stub label `escalate` (DAT-40, PR #11).
-- On `main`: client scaffold (DAT-15, PR #12), Yjs editor and crdt-server (DAT-16), presence (DAT-17). DAT-16 and DAT-17 were applied to main directly, so PR #13 closed and PR #14 was closed as superseded. Browser-tested with up to three participants.
-- ADR-003 (DAT-52): first version on `main`; the runner owner's review changes are in PR #16. Next: M1-03 extractive CPU baseline (DAT-58, due Nov 4); location of M1-A code to be agreed with the M1 and evaluation owners first.
+- On `main`: client scaffold (DAT-15, PR #12), Yjs editor and crdt-server (DAT-16), presence (DAT-17). Browser-tested with up to three participants.
+- ADR-003 (DAT-52): merged to `main` with runner owner review changes incorporated (PR #16).
+- Next: M1-03 extractive CPU baseline (DAT-58, due Nov 4); location of M1-A code to be agreed with the M1 and evaluation owners first.
 
 ### Shriram
 - On `main`: resumable MAST batch and run provenance (DAT-34/35, PR #5). Notes in `docs/verification/dat-34-dat-35-batch-execution.md`.
