@@ -11,8 +11,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
-import os
 import sys
 import time
 from pathlib import Path
@@ -20,7 +18,6 @@ from typing import Any
 
 import torch
 import yaml
-from packaging.version import Version
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from torch.utils.data import Dataset
 from transformers import (
@@ -75,7 +72,7 @@ class CatchupDataset(Dataset):
                     full_text = tokenizer.apply_chat_template(
                         full_messages, tokenize=False, add_generation_prompt=False, enable_thinking=False
                     )
-                except Exception:
+                except Exception:  # noqa: BLE001
                     prompt_text = f"<system>\n{SYSTEM_PROMPT}\n<user>\n{user_content}\n<assistant>\n"
                     full_text = f"{prompt_text}{reference}"
 
