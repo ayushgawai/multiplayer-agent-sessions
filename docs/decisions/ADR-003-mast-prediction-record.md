@@ -23,8 +23,8 @@ disagree, the code is right and this ADR needs a revision.
 
 ## Decision
 
-All files are UTF-8. The two `.jsonl` files are JSON Lines, append-only, and flushed to disk
-after every line. A partial final line left by a killed run is closed off on restart and
+All files are UTF-8. The two `.jsonl` files are JSON Lines, append-only, and flushed and
+fsynced after every line, so a resume is safe after a killed process or a machine crash. A partial final line left by a killed run is closed off on restart and
 ignored by readers. `run_manifest.json` is written atomically.
 
 ### 1. predictions.jsonl
@@ -49,7 +49,7 @@ Versions
 
 | field | type | meaning | written by |
 |---|---|---|---|
-| dataset_version | string | `manifest_version` of the frozen evaluation manifest, or `"unknown"`. It names the manifest, not the Hugging Face revision. | runner |
+| dataset_version | string | `manifest_version` of the frozen evaluation manifest, or `"unknown"`. It names the manifest, not the Hugging Face revision. Planned rename to `eval_manifest_version` in a runner follow-up before the first judge run. No judge artifacts exist yet, so the rename does not need a record version bump under rule (f). | runner |
 | dataset_sha256 | string | SHA-256 of the dataset file named by the evaluation manifest. | runner |
 | prompt_version | string | Prompt version, `mast-judge-v1`. Repeated in the parsed block. | runner, parser |
 | prompt_sha256 | string | SHA-256 of `judge_prompt.txt`. | runner |
@@ -119,9 +119,8 @@ line in `predictions.jsonl`, so a resumed run retries every trace that only has 
 
 ### 3. run_manifest.json
 
-One JSON object per result directory, rewritten at the end of every runner invocation. The
-counts describe the last invocation, not the whole directory. Names are exactly those of
-`build_run_manifest`.
+One JSON object per result directory, rewritten at the end of every runner invocation. Names
+are exactly those of `build_run_manifest`.
 
 | group | fields | written by |
 |---|---|---|
@@ -132,7 +131,7 @@ counts describe the last invocation, not the whole directory. Names are exactly 
 | Evaluation manifest | eval_manifest_path, eval_manifest_version, eval_manifest_status, eval_manifest_linear (the last only when the evaluation manifest could be read) | runner |
 | Prompt and parser | prompt_version, prompt_sha256, prompt_upstream_commit, parser_version | runner (values from the prompt and parser modules) |
 | Model | model_id, model_settings (redacted) | runner |
-| Outcome | start_time_utc, end_time_utc, attempted, succeeded, failed, skipped, parse_status_counts, prompt_tokens, completion_tokens | runner |
+| Outcome | start_time_utc, end_time_utc, attempted, succeeded, failed, skipped, parse_status_counts, prompt_tokens, completion_tokens. Counts cover the last runner invocation only. Directory totals are the line counts of `predictions.jsonl` and `failures.jsonl`. | runner |
 | Where outputs live | result_dir, predictions_file, failures_file, raw_response_field, parsed_labels_field, record_key_field, record_key_note | runner |
 
 `provenance.REQUIRED_MANIFEST_FIELDS` lists the fields that must be present and non-null:
@@ -148,8 +147,10 @@ prompt_sha256, parser_version, model_id or model_settings. The remedy is a new r
 
 ### 4. Rules
 
-a. `raw_response` is mandatory on every predictions line and is never rewritten or truncated
-   after the call.
+a. The `raw_response` key is present on every predictions line. Its value is the judge reply
+   exactly as returned, or null if the adapter returned neither text nor an error. It is never
+   rewritten or truncated after the call. The `truncated` field refers to the input trace, not
+   the response.
 b. Re-parsing an existing run writes a new predictions file with a new `parser_version`. It
    never edits the old lines in place.
 c. A label that the parser cannot read is null, never false. Null is not a negative label.
@@ -173,7 +174,9 @@ g. Adding a field is allowed if every reader ignores unknown fields. Renaming or
 - The prompt is frozen: version `mast-judge-v1`, sha256
   `6a73fd53d0e559cd0ee131adec530cf11f687f008132ae8c29a3eedff81bca7c`. A change creates a new
   prompt version and a new protocol version.
-- Because manifest counts describe the last invocation, a resumed run's manifest does not show
-  directory totals. Readers that need totals count lines in `predictions.jsonl` and
-  `failures.jsonl`. Whether the manifest should accumulate is a question for the execution owner.
+- Manifest counts are not accumulated across invocations, because accumulating would double
+  count on resume without per-invocation history. Readers that need totals count lines.
+- The record does not carry trajectory text. The viewer's optional `trace_text` field will be
+  removed in a viewer follow-up; a reader that needs the text joins on `trace_key` and
+  `trace_index` against the dataset file pinned by `dataset_sha256`.
 - Status stays Proposed until the execution owner and the environment owner have reviewed it.
