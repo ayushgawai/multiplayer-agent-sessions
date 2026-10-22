@@ -12,7 +12,7 @@
       "5acff8c fix(m1): resolve 7 ruff lint errors in notebook and train.py",
       "ee9f28f feat(m1): configure full GPU power training (batch size 4, all-linear LoRA r=32, 5 epochs) and update CONTEXT.md"
     ],
-    "notes": "Full 4-bit NF4 QLoRA training script implemented and tested. Completed 50-step high power training run on RTX 5080 with loss reduced from 3.90 to 2.14; checkpoint-50 saved and verified."
+    "notes": "Full 4-bit NF4 QLoRA training pipeline implemented and tested with all linear projection layers (r=32, alpha=64). Completed 50-step high power GPU run on RTX 5080 with loss dropping from 3.90 to 2.14 across 800 sequences. Checkpoint-50 and final-50 adapters verified and synced to local storage."
   },
   {
     "id": "DAT-57",
