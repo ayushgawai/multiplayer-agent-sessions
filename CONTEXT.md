@@ -106,18 +106,18 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 
 ## Current status (update on pull / after each feature)
 
-**Last updated:** 2026-10-21 (Ayush)
+**Last updated:** 2026-10-21 (Manav)
 
 - Session service on `main`: durable event log (SQLAlchemy; SQLite in CI, Postgres in Compose) and Redis or in-process fan-out (ADR-002). OpenAPI routes unchanged.
 - React 18 client, CRDT server, and presence on `main` (DAT-15, DAT-16, DAT-17 / PRs #12, #13, #14).
-- ADR-003 MAST prediction record on `main` (DAT-52 / PR #16).
+- ADR-003 MAST prediction record on `main` as Proposed (DAT-52); review changes in PR #16.
 - M3 stub label fix on `main` (DAT-40 / PR #11).
 - MAST track on `main` through download, dictionary, manifest, prompt, parser, viewer, batch, provenance, and classification metrics.
 - QMSum downloaded and verified (DAT-11, 232 meetings, 1,810 query pairs, `STATS.md`); frozen `m1_v1` dataset splits committed (`MANIFEST.json`).
 - M1 full training pipeline and baseline 3-epoch QLoRA run completed (DAT-55); trained weights and checkpoints saved.
 - **Not on `main` yet:** LangGraph runtime (PR #6), `eval/harness.py`, M2/M4 configs.
 
-**Open PRs:** #6 DAT-18 (Shriram), #15 DAT-56 (Shriram).
+**Open PRs:** #6 DAT-18 (Shriram), #15 DAT-56 (Shriram), #16 ADR-003 review changes (Manav).
 
 When you finish a feature, add one bullet here under your name and bump **Last updated**.
 
@@ -134,9 +134,9 @@ When you finish a feature, add one bullet here under your name and bump **Last u
 - Still open: QMSum download (DAT-11), six scenario briefs (DAT-21), team sign-off (DAT-22).
 
 ### Manav
-- On `main`: judge prompt `mast-judge-v1`, parser `mast-parser-v1.1`, result viewer, M3 configs `m3-a` through `m3-d`.
-- In review: client scaffold (#12), Yjs editor and crdt-server (#13), presence (#14). Browser-tested against the session service with up to three participants. Not merged, so do not demo the client from `main`.
-- Open: ADR-003 prediction record (DAT-52) in review as PR #16. Next: M1-03 extractive CPU baseline (DAT-58, due Nov 4), blocked on the M1-02 smoke dataset (DAT-53); location of M1-A code to be agreed with the M1 and evaluation owners first. PR #11 renames the serving stub label `escalate_human` to `escalate`.
+- On `main`: judge prompt `mast-judge-v1`, parser `mast-parser-v1.1`, result viewer, M3 configs `m3-a` through `m3-d`, serving stub label `escalate` (DAT-40, PR #11).
+- On `main`: client scaffold (DAT-15, PR #12), Yjs editor and crdt-server (DAT-16), presence (DAT-17). DAT-16 and DAT-17 were applied to main directly, so PR #13 closed and PR #14 was closed as superseded. Browser-tested with up to three participants.
+- ADR-003 (DAT-52): first version on `main`; the runner owner's review changes are in PR #16. Next: M1-03 extractive CPU baseline (DAT-58, due Nov 4); location of M1-A code to be agreed with the M1 and evaluation owners first.
 
 ### Shriram
 - On `main`: resumable MAST batch and run provenance (DAT-34/35, PR #5). Notes in `docs/verification/dat-34-dat-35-batch-execution.md`.
@@ -227,7 +227,7 @@ ADRs:
 
 - **ADR-001** (22 Sep 2026, accepted). Freezes `SessionEvent` and the HTTP API. Source of truth is `session-service/app/schemas.py`. OpenAPI is committed and regenerated only by `cd session-service && PYTHONPATH=. python scripts/export_openapi.py`.
 - **ADR-002** (6 Oct 2026, accepted). Persists the log in SQL and fans events out over Redis. Public routes stay the same as ADR-001.
-- **ADR-003** (DAT-52, in review as PR #16, Manav). Proposed format for a MAST prediction record. The viewer already reads that shape. It is not accepted yet.
+- **ADR-003** (DAT-52, first version on main, review changes in PR #16, Manav). Proposed format for a MAST prediction record. The viewer already reads that shape. It is not accepted yet.
 
 ## Research plan: reproduction, contribution, and self-improvement
 
