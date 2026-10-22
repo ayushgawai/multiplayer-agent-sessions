@@ -106,14 +106,14 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 
 ## Current status (update on pull / after each feature)
 
-**Last updated:** 2026-10-21 (Pramod)
+**Last updated:** 2026-10-21 (Manav)
 
 - Session service on `main`: durable event log (SQLAlchemy; SQLite in CI, Postgres in Compose) and Redis or in-process fan-out (ADR-002). OpenAPI routes unchanged.
 - MAST track on `main` through download, dictionary, manifest, prompt, parser, viewer, batch, provenance, and classification metrics. No reproduction score has been posted.
 - Legacy M1 configs and current M3 configs are on `main`. DAT-55 must migrate M1 before the bake-off. M2 and M4 configs are not written. No model has been trained.
 - **Not on `main` yet:** React client and Yjs (PRs #12, #13, #14), LangGraph runtime (PR #6), `eval/harness.py`, QMSum, M2/M4 configs, ADR-003.
 
-**Open PRs:** #6 DAT-18 (Shriram), #11 stub label rename (Manav), #12 DAT-15, #13 DAT-16, #14 DAT-17 (Manav).
+**Open PRs:** #6 DAT-18 (Shriram), #11 stub label rename (Manav), #12 DAT-15, #13 DAT-16, #14 DAT-17 (Manav), #15 DAT-56 (Shriram), #16 ADR-003 (Manav).
 
 When you finish a feature, add one bullet here under your name and bump **Last updated**.
 
@@ -129,7 +129,7 @@ When you finish a feature, add one bullet here under your name and bump **Last u
 ### Manav
 - On `main`: judge prompt `mast-judge-v1`, parser `mast-parser-v1.1`, result viewer, M3 configs `m3-a` through `m3-d`.
 - In review: client scaffold (#12), Yjs editor and crdt-server (#13), presence (#14). Browser-tested against the session service with up to three participants. Not merged, so do not demo the client from `main`.
-- Open: ADR-003 prediction record (DAT-52, in progress). PR #11 renames the serving stub label `escalate_human` to `escalate`.
+- Open: ADR-003 prediction record (DAT-52) in review as PR #16. Next: M1-03 extractive CPU baseline (DAT-58, due Nov 4), blocked on the M1-02 smoke dataset (DAT-53); location of M1-A code to be agreed with the M1 and evaluation owners first. PR #11 renames the serving stub label `escalate_human` to `escalate`.
 
 ### Shriram
 - On `main`: resumable MAST batch and run provenance (DAT-34/35, PR #5). Notes in `docs/verification/dat-34-dat-35-batch-execution.md`.
@@ -220,7 +220,7 @@ ADRs:
 
 - **ADR-001** (22 Sep 2026, accepted). Freezes `SessionEvent` and the HTTP API. Source of truth is `session-service/app/schemas.py`. OpenAPI is committed and regenerated only by `cd session-service && PYTHONPATH=. python scripts/export_openapi.py`.
 - **ADR-002** (6 Oct 2026, accepted). Persists the log in SQL and fans events out over Redis. Public routes stay the same as ADR-001.
-- **ADR-003** (DAT-52, in progress, Manav). Proposed format for a MAST prediction record. The viewer already reads that shape. It is not accepted yet.
+- **ADR-003** (DAT-52, in review as PR #16, Manav). Proposed format for a MAST prediction record. The viewer already reads that shape. It is not accepted yet.
 
 ## Research plan: reproduction, contribution, and self-improvement
 
