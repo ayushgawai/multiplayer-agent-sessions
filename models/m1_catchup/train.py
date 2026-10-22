@@ -226,7 +226,7 @@ def train(config_path: Path, resume: bool = False, max_steps: int | None = None)
     tokenizer.save_pretrained(str(final_dir))
 
     print("=" * 70)
-    print("  TRAINING COMPLETED ✅")
+    print("  TRAINING COMPLETED [SUCCESS]")
     print(f"  Elapsed Time: {elapsed/60:.2f} minutes")
     print(f"  Final Loss:   {train_result.training_loss:.4f}")
     print(f"  Final Model:  {final_dir}")
@@ -234,6 +234,8 @@ def train(config_path: Path, resume: bool = False, max_steps: int | None = None)
 
 
 def main() -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description="M1 Full Training")
     parser.add_argument("--config", type=Path, default=REPO_ROOT / "eval" / "configs" / "m1-b.yaml")
     parser.add_argument("--resume", action="store_true", help="Resume from last checkpoint")
