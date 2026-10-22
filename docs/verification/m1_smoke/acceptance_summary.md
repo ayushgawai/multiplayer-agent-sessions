@@ -10,7 +10,7 @@
 ## Required Evidence Checklist
 
 1. **Completed Notebook with Outputs:**
-   * Path: `models/m1_catchup/notebooks/m1_qwen3_gpu_smoke_test.ipynb`
+   * Path: `models/m1_catchup/notebooks/m1_qwen3_gpu_verification.ipynb`
    * Executed with clean outputs, structured verification banners, and confirmed assertions.
 2. **Run Manifest:**
    * Path: `docs/verification/m1_smoke/run_manifest.json`

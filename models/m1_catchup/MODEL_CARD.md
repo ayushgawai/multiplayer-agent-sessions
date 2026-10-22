@@ -30,6 +30,6 @@ Session-state catch-up summarization for hand-off and late joiners. Inputs are a
 
 ## Reproduction
 
-* **Smoke Test Notebook:** `models/m1_catchup/notebooks/m1_qwen3_gpu_smoke_test.ipynb`
+* **Feasibility Notebook:** `models/m1_catchup/notebooks/m1_qwen3_gpu_verification.ipynb`
 * **Training Command:** `python models/m1_catchup/train.py --config eval/configs/m1-b.yaml`
 * **Verification Docs:** `docs/verification/m1_training_run.md` and `docs/verification/m1_smoke/run_manifest.json`
