@@ -125,7 +125,7 @@ When you finish a feature, add one bullet here under your name and bump **Last u
 ### Ayush
 - Foundation, ADR-001/002, durable event log and fan-out, serving stubs, legacy M1 configs, Compose, CI.
 - QMSum download + verification (DAT-11) and frozen m1_v1 split generation (`data/splits/m1_v1/`).
-- M1 GPU smoke test (M1-04) and full QLoRA training pipeline (DAT-55); 50-step run reached loss 2.14, verified checkpoint-50 saved.
+- M1 GPU feasibility verification (M1-04) and full QLoRA training pipeline (DAT-55); 50-step run reached loss 2.14, verified checkpoint-50 saved.
 - Reviewed and merged client scaffold, CRDT server, presence, and ADR-003 PRs (#11, #12, #13, #14, #16).
 - Synchronized Linear board with git commits and automated tracking (`docs/verification/linear_git_sync.md`).
 - Workbook 1 figures: Gantt and PERT. MAST is parallel to the critical path, not on it.
@@ -493,9 +493,9 @@ Do **not** budget paid cloud GPU for 298A unless the GPU lab is unavailable.
 
 Workbook section 2.3 should say training runs in the GPU lab at $0, not invented cloud GPU spend. Colab is fallback only if the GPU lab is unavailable.
 
-## M1 GPU smoke test (M1-04)
+## M1 GPU feasibility verification (M1-04)
 
-**Notebook:** [models/m1_catchup/notebooks/m1_qwen3_gpu_smoke_test.ipynb](models/m1_catchup/notebooks/m1_qwen3_gpu_smoke_test.ipynb)
+**Notebook:** [models/m1_catchup/notebooks/m1_qwen3_gpu_verification.ipynb](models/m1_catchup/notebooks/m1_qwen3_gpu_verification.ipynb)
 
 **Runner / evidence owner:** Ayush
 
@@ -503,7 +503,7 @@ Workbook section 2.3 should say training runs in the GPU lab at $0, not invented
 
 **Status:** ran on 2026-10-21 on an RTX 5080 Laptop, 16 GB, using `eval/configs/m1-b.yaml`. `smoke_passed` is true. Weights were not committed. The manifest and executed notebook stay outside the repo. Linear M1-04 still needs that evidence attached before it can be marked Done.
 
-This is an infrastructure smoke test, not a benchmark and not the four-candidate M1 bake-off. It uses the smallest generative candidate in the current on-disk configs to validate QLoRA, checkpoint, resume, inference, and 4,096-token execution. The notebook reads the model repo, full model revision, learning rate, and LoRA settings directly from `eval/configs/m1-b.yaml` so the smoke run cannot silently drift from that committed feasibility configuration. DAT-55 will replace the legacy candidate mapping before comparative runs.
+This is an infrastructure feasibility verification, not a benchmark and not the four-candidate M1 bake-off. It uses the smallest generative candidate in the current on-disk configs to validate QLoRA, checkpoint, resume, inference, and 4,096-token execution. The notebook reads the model repo, full model revision, learning rate, and LoRA settings directly from `eval/configs/m1-b.yaml` so the smoke run cannot silently drift from that committed feasibility configuration. DAT-55 will replace the legacy candidate mapping before comparative runs.
 
 ### Important environment exception
 
@@ -524,14 +524,14 @@ Before starting Jupyter, set `HF_HOME` and `M1_SMOKE_ARTIFACT_ROOT` to lab scrat
 9. A separate 4,096-token forward pass succeeds.
 10. `run_manifest.json` records the repo commit, dirty state, exact model revision, package versions, hardware, timings, VRAM, checkpoint files, and pass/fail flags.
 
-Response-contract validity is recorded as a quality signal but is not an infrastructure gate because three smoke-training steps are not a meaningful quality run. The CUDA, model-load, train, checkpoint, resume, inference, and 4,096-token checks are infrastructure gates.
+Response-contract validity is recorded as a quality signal but is not an infrastructure gate because three verification-training steps are not a meaningful quality run. The CUDA, model-load, train, checkpoint, resume, inference, and 4,096-token checks are infrastructure gates.
 
 ### Ayush run procedure
 
 From a clean repository checkout on the RTX 5080 Laptop (16 GB), using `eval/configs/m1-b.yaml`:
 
 ```bash
-jupyter lab models/m1_catchup/notebooks/m1_qwen3_gpu_smoke_test.ipynb
+jupyter lab models/m1_catchup/notebooks/m1_qwen3_gpu_verification.ipynb
 ```
 
 Run every cell from top to bottom without skipping cells. If the package cell changes installed libraries, restart the kernel and run from the top. Do not manually change the candidate id, model revision, LoRA values, or 4,096-token setting in the notebook.
@@ -540,7 +540,7 @@ The default output is outside the repository under `~/.cache/multiplayer-agent-s
 
 ### Scope for later work
 
-The target DAT-55 matrix gives the CPU ranking control, ModernBERT selector, Phi-4-mini generator, and Qwen3.5-4B generator separate implementation paths. Each needs its own candidate-specific feasibility and contract tests before the full bake-off. Do not present the legacy Qwen3-1.7B smoke loss, generated text, or 4,096-token forward pass as comparative model performance.
+The target DAT-55 matrix gives the CPU ranking control, ModernBERT selector, Phi-4-mini generator, and Qwen3.5-4B generator separate implementation paths. Each needs its own candidate-specific feasibility and contract tests before the full bake-off. Do not present the legacy Qwen3-1.7B feasibility loss, generated text, or 4,096-token forward pass as comparative model performance.
 
 ## Local commands
 
@@ -560,7 +560,7 @@ cd session-service && pytest -q
 cd serving && pytest -q
 ```
 
-General training extras (on the lab GPU host): `pip install -r requirements-models.txt`. Exception: do not use that requirements file for the legacy Qwen3 GPU smoke notebook until Ayush updates its old Transformers pin; use the notebook package cell in an isolated environment instead.
+General training extras (on the lab GPU host): `pip install -r requirements-models.txt`. Exception: do not use that requirements file for the legacy Qwen3 GPU verification notebook until Ayush updates its old Transformers pin; use the notebook package cell in an isolated environment instead.
 
 ---
 

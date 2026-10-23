@@ -26,6 +26,6 @@ Session-state catch-up summarizer for late joiners and agent hand-offs. Given an
 ## Scripts and Notebooks
 
 * **Training Entrypoint:** `models/m1_catchup/train.py`
-* **Infrastructure Smoke Test:** `models/m1_catchup/notebooks/m1_qwen3_gpu_smoke_test.ipynb`
+* **GPU Feasibility Verification:** `models/m1_catchup/notebooks/m1_qwen3_gpu_verification.ipynb`
 * **Configuration:** `eval/configs/m1-b.yaml`
 * **Serving Stub:** `serving/adapters/m1.py`
