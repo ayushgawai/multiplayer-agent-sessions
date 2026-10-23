@@ -3,7 +3,7 @@
 * **Task Reference:** M1-04 (DAT-57)
 * **Candidate ID:** `m1-b` (`Qwen/Qwen3-1.7B`, revision `70d244cc86ccca08cf5af4e1e306ecf908b1ad5e`)
 * **Hardware:** NVIDIA GeForce RTX 5080 Laptop GPU, 16 GB VRAM
-* **Configuration File:** `eval/configs/m1-b.yaml`
+* **Executed Configuration:** originally `eval/configs/m1-b.yaml`; preserved after DAT-55 at `models/m1_catchup/feasibility/qwen3-1.7b.yaml`
 * **Driver / CUDA:** NVIDIA Driver 592.02, CUDA 12.8, PyTorch 2.11.0 with bfloat16 support
 * **Acceptance Status:** All 9 infrastructure feasibility assertions PASSED
 

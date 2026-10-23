@@ -1,31 +1,40 @@
 # M1 Catch-up Summarizer
 
-Session-state catch-up summarizer for late joiners and agent hand-offs. Given an incoming participant query and a sliding event context window, M1 generates a structured summary covering completed actions, in-progress tasks, and current blockers.
+M1 creates an evidence-linked session catch-up for late joiners and agent hand-offs. The
+frozen contract is `m1-input-v1` to `m1-output-v1`; every claim is categorized and cites one
+or more source-event IDs.
 
-## Architecture and Training Setup
+## Final DAT-55 candidate matrix
 
-* **Base Model:** `Qwen/Qwen3-1.7B` (revision `70d244cc86ccca08cf5af4e1e306ecf908b1ad5e`)
-* **Quantization:** 4-bit NF4 with double quantization and bfloat16 compute dtype
-* **Parameter-Efficient Tuning:** QLoRA with rank $r=32$, $\alpha=64$, dropout 0.05
-* **Target Modules:** All 7 projection layers (`q_proj`, `k_proj`, `v_proj`, `o_proj`, `gate_proj`, `up_proj`, `down_proj`)
-* **Trainable Parameters:** 34,865,152 of 1,755,440,128 total (1.99%)
-* **Optimizer:** `paged_adamw_8bit` with gradient checkpointing and PyTorch SDPA attention
-* **Context Length:** 2,048 tokens
-* **Effective Batch Size:** 16 (gradient accumulation 16)
-* **Dataset Supervision:** Yale-LILY QMSum frozen splits in `data/splits/m1_v1/` (1,194 train, 261 val, 281 test)
+| ID | Candidate | Training path |
+|---|---|---|
+| `m1-a` | BM25 event ranker plus fixed template | CPU, no training |
+| `m1-b` | ModernBERT-base selector plus fixed template | Encoder fine-tune |
+| `m1-c` | Phi-4-mini-instruct | Candidate-specific causal-LM QLoRA trainer required |
+| `m1-d` | Qwen3.5-4B | Candidate-specific conditional-generation QLoRA trainer required |
 
-## Training Progress and Metrics
+Candidate selection is safety-gated and uses critical-fact recall as the first ranking
+metric. ROUGE-L is supporting evidence only. See `eval/configs/m1-contract.yaml` and
+`docs/decisions/ADR-005-m1-experiment-contract.md`.
 
-* **Initial Step Loss:** 3.9066 (step 10)
-* **Mid-Run Loss:** 2.2755 (step 20)
-* **Converged Loss:** 2.1478 (step 40) to 2.1581 (step 50)
-* **Sequences Processed:** 800 meeting dialogue sequences
-* **Checkpoints:** Stored in `checkpoints/m1-b/checkpoint-50` and `checkpoints/m1-b/final-50`
-* **Local Checkpoint Size:** 133 MB adapter safetensors (`adapter_model.safetensors`)
+QMSum is auxiliary summarization supervision. It does not provide the structured status and
+claim-evidence annotations required for final promotion. The winner must be selected on the
+frozen annotated product-session split; until that split exists, no candidate can win.
 
-## Scripts and Notebooks
+## Existing GPU feasibility evidence
 
-* **Training Entrypoint:** `models/m1_catchup/train.py`
-* **GPU Feasibility Verification:** `models/m1_catchup/notebooks/m1_qwen3_gpu_verification.ipynb`
-* **Configuration:** `eval/configs/m1-b.yaml`
-* **Serving Stub:** `serving/adapters/m1.py`
+The October Qwen3-1.7B run verified 4-bit NF4 loading, all-linear QLoRA, checkpoint saving,
+resume, and inference on an RTX 5080 Laptop. It reached training loss 2.14 at step 50 and
+saved a 133 MB adapter. This is infrastructure evidence, not a final candidate result and not
+proof of model quality. Its executed configuration is preserved at
+`models/m1_catchup/feasibility/qwen3-1.7b.yaml` so migration of `m1-b` to ModernBERT does not
+make the verification notebook unreproducible.
+
+## Paths
+
+* **Contract:** `eval/contracts/m1.py`
+* **Experiment policy:** `eval/configs/m1-contract.yaml`
+* **Candidate configs:** `eval/configs/m1-a.yaml` through `m1-d.yaml`
+* **Legacy feasibility trainer:** `models/m1_catchup/train.py`
+* **Legacy GPU verification:** `models/m1_catchup/notebooks/m1_qwen3_gpu_verification.ipynb`
+* **Serving stub:** `serving/adapters/m1.py`
