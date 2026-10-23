@@ -1,10 +1,11 @@
-"""M1 Catch-up Summarizer Full Training Script.
+"""M1 QLoRA infrastructure-feasibility training script.
 
-Trains LoRA adapter for candidate models (e.g. m1-b Qwen3-1.7B) using QLoRA.
-Supports resuming from checkpoint, structured validation, and artifact export.
+Preserves the Qwen3-1.7B checkpoint/resume path validated before DAT-55. This is not a final
+candidate trainer. Final m1-c and m1-d loaders require candidate-specific follow-up work.
 
 Usage:
-  python models/m1_catchup/train.py --config eval/configs/m1-b.yaml [--resume]
+  python models/m1_catchup/train.py \
+    --config models/m1_catchup/feasibility/qwen3-1.7b.yaml [--resume]
 """
 
 from __future__ import annotations
@@ -236,7 +237,11 @@ def main() -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description="M1 Full Training")
-    parser.add_argument("--config", type=Path, default=REPO_ROOT / "eval" / "configs" / "m1-b.yaml")
+    parser.add_argument(
+        "--config",
+        type=Path,
+        default=REPO_ROOT / "models" / "m1_catchup" / "feasibility" / "qwen3-1.7b.yaml",
+    )
     parser.add_argument("--resume", action="store_true", help="Resume from last checkpoint")
     parser.add_argument("--max-steps", type=int, default=None, help="Cap training steps")
     args = parser.parse_args()

@@ -244,11 +244,12 @@ footer{border-top:2px solid var(--ink);padding:20px 0 60px;font-size:13px;color:
   <table class="tbl">
     <thead><tr><th>Handle</th><th>Approx size</th><th>Mode</th><th>Used in</th></tr></thead>
     <tbody>
-      <tr><td><code>answerdotai/ModernBERT-base</code></td><td>149M</td><td>full fine-tune</td><td>m1-a, m2-c, m3-b, base-d</td></tr>
+      <tr><td><code>answerdotai/ModernBERT-base</code></td><td>149M</td><td>full fine-tune</td><td>m1-b, m2-c, m3-b, base-d</td></tr>
       <tr><td><code>microsoft/deberta-v3-base</code></td><td>184M</td><td>full fine-tune</td><td>m2-b</td></tr>
-      <tr><td>Qwen3.5 1.7B instruct</td><td>1.7B</td><td>LoRA</td><td>m1-b, m2-d</td></tr>
-      <tr><td>Qwen3.5 4B instruct</td><td>4B</td><td>LoRA and prompt</td><td>m1-c, m3-c, m3-d, m4-b, m4-d, base-c</td></tr>
-      <tr><td>Gemma 4 E4B instruct</td><td>~4B effective</td><td>LoRA and prompt</td><td>m1-d, m4-c</td></tr>
+      <tr><td><code>microsoft/Phi-4-mini-instruct</code></td><td>3.8B</td><td>QLoRA</td><td>m1-c</td></tr>
+      <tr><td>Qwen3.5 1.7B instruct</td><td>1.7B</td><td>LoRA</td><td>m2-d</td></tr>
+      <tr><td>Qwen3.5 4B instruct</td><td>4B</td><td>LoRA and prompt</td><td>m1-d, m3-c, m3-d, m4-b, m4-d, base-c</td></tr>
+      <tr><td>Gemma 4 E4B instruct</td><td>~4B effective</td><td>LoRA and prompt</td><td>m4-c</td></tr>
       <tr><td>Hosted frontier reasoning model</td><td>API</td><td>prompt</td><td>base-a</td></tr>
       <tr><td>Hosted mid-tier model</td><td>API</td><td>prompt</td><td>base-b</td></tr>
     </tbody>
@@ -609,22 +610,22 @@ Independent verification: docs/verification/&lt;task&gt;.md</pre>
   <h2>Candidate matrix</h2>
   <p class="h2sub">Twenty candidates. Four per task plus four baseline judge arms. Each task includes at least one untrained or non-neural candidate as the floor.</p>
 
-  <h3>M1 · Session-state catch-up summarization <span class="own o-a">Ayush</span></h3>
-  <p>Input: a query plus an event window rendered as a transcript. Output: a summary of what happened, what is in progress, and what is blocked. Primary metric ROUGE-L. Supervised by QMSum, evaluated additionally on the session split.</p>
+  <h3>M1 · Session-state catch-up summarization <span class="own o-a">Pramod / Ayush</span></h3>
+  <p>Input: a query plus ordered events and optional approved behavioral memory. Output: an evidence-linked structured catch-up. Safety gates apply before ranking by critical-fact recall; ROUGE-L is supporting evidence only. Supervised by QMSum and evaluated on an annotated product-session split.</p>
   <div class="scroll">
   <table class="tbl">
     <thead><tr><th>id</th><th>Candidate</th><th>Mode</th><th>What it isolates</th><th>GPU-h / seed</th></tr></thead>
     <tbody>
-      <tr><td><code>m1-a</code></td><td>ModernBERT extractive selector + fixed template</td><td>finetune</td><td>Whether generation is needed at all</td><td>~0.5</td></tr>
-      <tr><td><code>m1-b</code></td><td>Qwen3.5-1.7B + LoRA</td><td>lora</td><td>Effect of model size, smaller end</td><td>~1.5</td></tr>
-      <tr><td><code>m1-c</code></td><td>Qwen3.5-4B + LoRA</td><td>lora</td><td>Effect of model size, larger end</td><td>~3</td></tr>
-      <tr><td><code>m1-d</code></td><td>Gemma 4 E4B + LoRA</td><td>lora</td><td>Effect of model family at matched size</td><td>~3</td></tr>
+      <tr><td><code>m1-a</code></td><td>BM25 event ranker + fixed template</td><td>classical</td><td>Transparent non-neural floor</td><td>0, CPU</td></tr>
+      <tr><td><code>m1-b</code></td><td>ModernBERT-base selector + fixed template</td><td>finetune</td><td>Gain from learned extraction without generation</td><td>~0.5</td></tr>
+      <tr><td><code>m1-c</code></td><td>Phi-4-mini-instruct + QLoRA</td><td>qlora</td><td>Compact generative model from another family</td><td>measure in feasibility run</td></tr>
+      <tr><td><code>m1-d</code></td><td>Qwen3.5-4B + QLoRA</td><td>qlora</td><td>Whether added capacity justifies compute</td><td>measure in feasibility run</td></tr>
     </tbody>
   </table>
   </div>
-  <p><b>Metrics:</b> ROUGE-1, ROUGE-2, ROUGE-L, BERTScore-F1, latency p50 and p95, peak VRAM, output length distribution.<br>
-  <b>Ablation:</b> context window 512, 1024, 2048 tokens.<br>
-  <b>Failure codes:</b> <code>missing_subgoal</code>, <code>wrong_attribution</code>, <code>hallucinated_tool</code>, <code>truncated</code>, <code>generic_output</code>.</p>
+  <p><b>Metrics:</b> schema-valid rate, critical-fact recall, unsupported-claim rate, attribution accuracy, status consistency, ROUGE-L, BERTScore-F1, human edit rate, latency p50/p95 and peak VRAM.<br>
+  <b>Ablation:</b> context window 512, 1024, 2048 tokens; memory disabled versus approved memory.<br>
+  <b>Failure codes:</b> <code>invalid_schema</code>, <code>missing_critical_fact</code>, <code>unsupported_claim</code>, <code>wrong_attribution</code>, <code>wrong_status</code>, <code>generic_output</code>, <code>truncated</code>.</p>
 
   <h3>M2 · Instruction attribution <span class="own o-n">Naman</span></h3>
   <p>Input: an instruction, the last N events, the participant roster. Output: which participant the instruction serves, or <code>shared</code>. Primary metric macro-F1.</p>
@@ -800,7 +801,7 @@ python eval/harness.py --task m1 --all --seeds 13,29,47 --split real
 python eval/compare.py --task m1 --split real --out docs/tables/m1_bakeoff.md
 <span class="c"># write models/m1_catchup/MODEL_CARD.md from the template</span>
 <span class="c"># point serving/adapters/m1.py at the winning checkpoint</span></pre>
-      <p>Implementation notes: <code>m1-a</code> scores each event-window sentence for relevance with ModernBERT and fills a fixed template, so it produces a summary without generation. <code>m1-b</code>, <code>m1-c</code> and <code>m1-d</code> share one training script parameterised by config; do not fork it per model.</p>
+      <p>Implementation notes: <code>m1-a</code> ranks events with BM25 and fills a fixed template. <code>m1-b</code> learns event selection with ModernBERT and uses the same template. <code>m1-c</code> requires a Phi causal-LM QLoRA trainer. <code>m1-d</code> requires a Qwen3.5 conditional-generation QLoRA loader. The older <code>train.py</code> remains infrastructure evidence and is not a final-candidate trainer. Every arm must emit the shared structured evidence contract.</p>
 
       <h4>Acceptance</h4>
       <ul>
