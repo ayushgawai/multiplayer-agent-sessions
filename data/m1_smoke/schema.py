@@ -8,7 +8,8 @@ describes ordered session events with stable ids, so it can be converted to the
 ``loader.gold_reference``).
 
 Smoke fixtures are synthetic and exist only to exercise the pipeline before full training.
-They are never an evaluation test split.
+They are never an evaluation split. The holdout fixture split is named ``smoke_holdout`` so
+it cannot be mistaken for a test split.
 """
 
 from __future__ import annotations
@@ -126,7 +127,7 @@ class CriticalFact(_Strict):
         return self
 
 
-class CatchupExample(_Strict):
+class M1SmokeExample(_Strict):
     """Event-based smoke example (``m1-smoke-v1``). See the module docstring."""
 
     schema_version: Literal["m1-smoke-v1"] = SCHEMA_VERSION

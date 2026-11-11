@@ -25,7 +25,7 @@ from data.m1_smoke.loader import SPLITS, load_fixtures  # noqa: E402
 from data.m1_smoke.schema import (  # noqa: E402
     LABEL_TO_CATEGORY,
     SCHEMA_VERSION,
-    CatchupExample,
+    M1SmokeExample,
 )
 from data.m1_smoke.scenarios import SCENARIOS, Blueprint, instantiate  # noqa: E402
 
@@ -34,12 +34,12 @@ DEFAULT_OUT = "data/m1_smoke/fixtures"
 CANONICAL_COMMAND = f"python data/scripts/make_m1_smoke.py --seed {DEFAULT_SEED} --out {DEFAULT_OUT}"
 N_SESSIONS = 12
 # Sessions per split, and how many sessions in each split also get a "joined late" example.
-SPLIT_SESSIONS = {"train": 8, "dev": 2, "test": 2}
-SPLIT_PREFIX_EXAMPLES = {"train": 4, "dev": 1, "test": 1}
+SPLIT_SESSIONS = {"train": 8, "dev": 2, "smoke_holdout": 2}
+SPLIT_PREFIX_EXAMPLES = {"train": 4, "dev": 1, "smoke_holdout": 1}
 LATE_QUERY = "I just joined. Catch me up on everything up to this point."
 
 
-def _example(bp: Blueprint, suffix: str, query: str, cut: int | None) -> CatchupExample:
+def _example(bp: Blueprint, suffix: str, query: str, cut: int | None) -> M1SmokeExample:
     """Build one example from a blueprint, optionally truncated to its first ``cut`` events."""
     events = bp.events if cut is None else bp.events[:cut]
     kept = {e["source_event_id"] for e in events}
@@ -65,7 +65,7 @@ def _example(bp: Blueprint, suffix: str, query: str, cut: int | None) -> Catchup
                     "evidence_event_ids": support,
                 }
             )
-    return CatchupExample.model_validate(
+    return M1SmokeExample.model_validate(
         {
             "example_id": f"{bp.session_id}-{suffix}",
             "session_id": bp.session_id,
@@ -78,7 +78,7 @@ def _example(bp: Blueprint, suffix: str, query: str, cut: int | None) -> Catchup
     )
 
 
-def build_dataset(seed: int = DEFAULT_SEED) -> dict[str, list[CatchupExample]]:
+def build_dataset(seed: int = DEFAULT_SEED) -> dict[str, list[M1SmokeExample]]:
     """Build all splits in memory. Depends only on ``seed``."""
     rng = random.Random(seed)
     blueprints = [
@@ -88,13 +88,13 @@ def build_dataset(seed: int = DEFAULT_SEED) -> dict[str, list[CatchupExample]]:
     rng.shuffle(order)
     by_id = {bp.session_id: bp for bp in blueprints}
 
-    out: dict[str, list[CatchupExample]] = {}
+    out: dict[str, list[M1SmokeExample]] = {}
     start = 0
     for split in SPLITS:
         count = SPLIT_SESSIONS[split]
         session_ids = sorted(order[start : start + count])
         start += count
-        examples: list[CatchupExample] = []
+        examples: list[M1SmokeExample] = []
         for i, sid in enumerate(session_ids):
             bp = by_id[sid]
             examples.append(_example(bp, "x1", bp.query, None))
@@ -106,7 +106,7 @@ def build_dataset(seed: int = DEFAULT_SEED) -> dict[str, list[CatchupExample]]:
     return out
 
 
-def _dump(example: CatchupExample) -> str:
+def _dump(example: M1SmokeExample) -> str:
     return json.dumps(
         example.model_dump(mode="json"), sort_keys=True, separators=(",", ":"), ensure_ascii=True
     )

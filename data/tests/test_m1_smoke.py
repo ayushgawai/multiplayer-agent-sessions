@@ -25,7 +25,7 @@ from data.m1_smoke.schema import (  # noqa: E402
     CATEGORIES,
     EVENT_TYPES,
     LABEL_TO_CATEGORY,
-    CatchupExample,
+    M1SmokeExample,
 )
 
 FIXTURES = REPO_ROOT / "data" / "m1_smoke" / "fixtures"
@@ -58,7 +58,7 @@ def valid_record() -> dict[str, Any]:
 
 
 @pytest.fixture(scope="module")
-def dataset() -> dict[str, list[CatchupExample]]:
+def dataset() -> dict[str, list[M1SmokeExample]]:
     return loader.load_fixtures(FIXTURES)
 
 
@@ -66,7 +66,7 @@ def dataset() -> dict[str, list[CatchupExample]]:
 
 
 def test_schema_accepts_valid_example() -> None:
-    ex = CatchupExample.model_validate(valid_record())
+    ex = M1SmokeExample.model_validate(valid_record())
     assert ex.events[2].actor_id is None
 
 
@@ -108,7 +108,7 @@ INVALID = {
 @pytest.mark.parametrize("name", sorted(INVALID))
 def test_schema_rejects(name: str) -> None:
     with pytest.raises(ValidationError):
-        CatchupExample.model_validate(_mutate(INVALID[name]))
+        M1SmokeExample.model_validate(_mutate(INVALID[name]))
 
 
 def test_event_types_match_session_service() -> None:
@@ -126,7 +126,7 @@ def test_event_types_match_session_service() -> None:
 
 def test_loader_round_trip(tmp_path: Path) -> None:
     path = tmp_path / "x.jsonl"
-    ex = CatchupExample.model_validate(valid_record())
+    ex = M1SmokeExample.model_validate(valid_record())
     path.write_text(json.dumps(ex.model_dump(mode="json")) + "\n", encoding="utf-8")
     assert loader.load_split(path) == [ex]
 
@@ -175,7 +175,7 @@ def test_loader_error_duplicate_example_id(tmp_path: Path) -> None:
 # --- committed fixtures ---------------------------------------------------------------------
 
 
-def test_fixture_sizes(dataset: dict[str, list[CatchupExample]]) -> None:
+def test_fixture_sizes(dataset: dict[str, list[M1SmokeExample]]) -> None:
     assert sum(len(v) for v in dataset.values()) == 18
     assert len({e.session_id for v in dataset.values() for e in v}) == 12
     for examples in dataset.values():
@@ -183,20 +183,52 @@ def test_fixture_sizes(dataset: dict[str, list[CatchupExample]]) -> None:
             assert 8 <= len(ex.events) <= 20
 
 
-def test_event_ids_are_stable_and_readable(dataset: dict[str, list[CatchupExample]]) -> None:
+def test_event_ids_are_stable_and_readable(dataset: dict[str, list[M1SmokeExample]]) -> None:
     for examples in dataset.values():
         for ex in examples:
             for i, e in enumerate(ex.events, start=1):
                 assert e.source_event_id == f"{ex.session_id}-e{i:03d}"
 
 
+def test_sequences_are_gapless_from_one_like_the_service(
+    dataset: dict[str, list[M1SmokeExample]],
+) -> None:
+    # The live service allocates seq 1, 2, 3, ... and rollback resets the next seq to to_seq + 1.
+    for examples in dataset.values():
+        for ex in examples:
+            assert [e.sequence for e in ex.events] == list(range(1, len(ex.events) + 1))
+
+
+def test_rollback_sessions_show_only_post_rollback_history(
+    dataset: dict[str, list[M1SmokeExample]],
+) -> None:
+    seen = 0
+    for examples in dataset.values():
+        for ex in examples:
+            texts = " ".join(e.text for e in ex.events)
+            assert "Rewrote the pricing section" not in texts  # deleted by the rollback
+            rollbacks = [e for e in ex.events if e.event_type == "rollback"]
+            if rollbacks:
+                seen += 1
+                # appended right after the kept prefix, so seq 3 here
+                assert rollbacks[0].sequence == 3
+    assert seen >= 1
+
+
+def test_no_split_is_called_test(dataset: dict[str, list[M1SmokeExample]]) -> None:
+    assert set(dataset) == {"train", "dev", "smoke_holdout"}
+    assert not (FIXTURES / "test.jsonl").exists()
+    manifest = json.loads((FIXTURES / "MANIFEST.json").read_text(encoding="utf-8"))
+    assert set(manifest["splits"]) == {"train", "dev", "smoke_holdout"}
+
+
 def test_splits_are_session_disjoint_and_ids_unique(
-    dataset: dict[str, list[CatchupExample]],
+    dataset: dict[str, list[M1SmokeExample]],
 ) -> None:
     sessions = {s: {e.session_id for e in v} for s, v in dataset.items()}
     assert not sessions["train"] & sessions["dev"]
-    assert not sessions["train"] & sessions["test"]
-    assert not sessions["dev"] & sessions["test"]
+    assert not sessions["train"] & sessions["smoke_holdout"]
+    assert not sessions["dev"] & sessions["smoke_holdout"]
     example_ids = [e.example_id for v in dataset.values() for e in v]
     assert len(example_ids) == len(set(example_ids))
     event_ids = [ev.source_event_id for v in dataset.values() for e in v for ev in e.events]
@@ -210,7 +242,7 @@ def test_splits_are_session_disjoint_and_ids_unique(
 
 
 def test_every_split_has_all_categories_and_event_labels(
-    dataset: dict[str, list[CatchupExample]],
+    dataset: dict[str, list[M1SmokeExample]],
 ) -> None:
     for split, examples in dataset.items():
         categories = {c for e in examples for c in CATEGORIES if getattr(e.reference, c)}
@@ -219,13 +251,13 @@ def test_every_split_has_all_categories_and_event_labels(
         assert labels == set(LABEL_TO_CATEGORY), split
 
 
-def test_every_event_type_used_is_real(dataset: dict[str, list[CatchupExample]]) -> None:
+def test_every_event_type_used_is_real(dataset: dict[str, list[M1SmokeExample]]) -> None:
     used = {ev.event_type for v in dataset.values() for e in v for ev in e.events}
     assert {"instruction", "agent_step", "tool_call", "tool_result", "interrupt", "handoff",
             "rollback", "doc_update", "arbitration"} <= used
 
 
-def test_critical_facts_have_existing_evidence(dataset: dict[str, list[CatchupExample]]) -> None:
+def test_critical_facts_have_existing_evidence(dataset: dict[str, list[M1SmokeExample]]) -> None:
     for examples in dataset.values():
         for ex in examples:
             ids = {e.source_event_id for e in ex.events}
@@ -242,7 +274,7 @@ def test_generation_is_byte_identical(tmp_path: Path) -> None:
     a, b = tmp_path / "a", tmp_path / "b"
     gen.write_fixtures(a)
     gen.write_fixtures(b)
-    names = ["train.jsonl", "dev.jsonl", "test.jsonl", "MANIFEST.json"]
+    names = ["train.jsonl", "dev.jsonl", "smoke_holdout.jsonl", "MANIFEST.json"]
     for name in names:
         assert (a / name).read_bytes() == (b / name).read_bytes(), name
         assert b"\r" not in (a / name).read_bytes()
@@ -251,7 +283,7 @@ def test_generation_is_byte_identical(tmp_path: Path) -> None:
 
 def test_committed_fixtures_match_generator(tmp_path: Path) -> None:
     gen.write_fixtures(tmp_path)
-    for name in ("train.jsonl", "dev.jsonl", "test.jsonl", "MANIFEST.json"):
+    for name in ("train.jsonl", "dev.jsonl", "smoke_holdout.jsonl", "MANIFEST.json"):
         assert (tmp_path / name).read_bytes() == (FIXTURES / name).read_bytes(), name
 
 
@@ -283,7 +315,7 @@ def test_verify_manifest_detects_tampering(tmp_path: Path) -> None:
 # --- conversion -----------------------------------------------------------------------------
 
 
-def test_to_m1_input_shape(dataset: dict[str, list[CatchupExample]]) -> None:
+def test_to_m1_input_shape(dataset: dict[str, list[M1SmokeExample]]) -> None:
     ex = dataset["train"][0]
     out = loader.to_m1_input(ex)
     assert set(out) == {"schema_version", "example_id", "session_id", "query", "events",
@@ -294,7 +326,7 @@ def test_to_m1_input_shape(dataset: dict[str, list[CatchupExample]]) -> None:
     assert [e["event_id"] for e in out["events"]] == [e.source_event_id for e in ex.events]
 
 
-def test_gold_reference_shape(dataset: dict[str, list[CatchupExample]]) -> None:
+def test_gold_reference_shape(dataset: dict[str, list[M1SmokeExample]]) -> None:
     ref = loader.gold_reference(dataset["train"][0])
     assert ref["schema_version"] == "m1-output-v1"
     assert "candidate_id" not in ref
@@ -307,7 +339,7 @@ def test_gold_reference_shape(dataset: dict[str, list[CatchupExample]]) -> None:
 # --- DAT-55 contract compatibility (skips until eval/contracts/m1.py is on this branch) -----
 
 
-def test_contract_compat(dataset: dict[str, list[CatchupExample]]) -> None:
+def test_contract_compat(dataset: dict[str, list[M1SmokeExample]]) -> None:
     m1 = pytest.importorskip(
         "eval.contracts.m1", reason="unvalidated against DAT-55 contract (not on main yet)"
     )

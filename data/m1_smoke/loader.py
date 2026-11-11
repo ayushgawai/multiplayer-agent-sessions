@@ -9,9 +9,9 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from data.m1_smoke.schema import CATEGORIES, CatchupExample
+from data.m1_smoke.schema import CATEGORIES, M1SmokeExample
 
-SPLITS = ("train", "dev", "test")
+SPLITS = ("train", "dev", "smoke_holdout")
 M1_INPUT_VERSION = "m1-input-v1"
 M1_OUTPUT_VERSION = "m1-output-v1"
 
@@ -20,7 +20,7 @@ class SmokeDataError(ValueError):
     """Raised for unreadable or invalid fixture data. Messages name file and line."""
 
 
-def load_split(path: str | Path) -> list[CatchupExample]:
+def load_split(path: str | Path) -> list[M1SmokeExample]:
     """Read one jsonl split. One JSON object per line, no blank lines."""
     path = Path(path)
     try:
@@ -33,7 +33,7 @@ def load_split(path: str | Path) -> list[CatchupExample]:
     lines = raw.split("\n")
     if lines and lines[-1] == "":
         lines.pop()  # trailing newline
-    examples: list[CatchupExample] = []
+    examples: list[M1SmokeExample] = []
     seen: dict[str, int] = {}
     for lineno, line in enumerate(lines, start=1):
         line = line.rstrip("\r")
@@ -45,7 +45,7 @@ def load_split(path: str | Path) -> list[CatchupExample]:
             raise SmokeDataError(f"{path}:{lineno}: invalid JSON: {exc.msg}") from exc
         example_id = obj.get("example_id", "<unknown>") if isinstance(obj, dict) else "<unknown>"
         try:
-            example = CatchupExample.model_validate(obj)
+            example = M1SmokeExample.model_validate(obj)
         except ValidationError as exc:
             problems = "; ".join(
                 f"{'.'.join(str(p) for p in err['loc']) or '<root>'}: {err['msg']}"
@@ -62,8 +62,8 @@ def load_split(path: str | Path) -> list[CatchupExample]:
     return examples
 
 
-def load_fixtures(fixtures_dir: str | Path) -> dict[str, list[CatchupExample]]:
-    """Load train, dev and test from a fixtures directory."""
+def load_fixtures(fixtures_dir: str | Path) -> dict[str, list[M1SmokeExample]]:
+    """Load train, dev and smoke_holdout from a fixtures directory."""
     fixtures_dir = Path(fixtures_dir)
     return {split: load_split(fixtures_dir / f"{split}.jsonl") for split in SPLITS}
 
@@ -82,7 +82,7 @@ def verify_manifest(fixtures_dir: str | Path) -> None:
             raise SmokeDataError(f"{split}: record count does not match MANIFEST.json")
 
 
-def to_m1_input(example: CatchupExample) -> dict[str, Any]:
+def to_m1_input(example: M1SmokeExample) -> dict[str, Any]:
     """Convert to an m1-input-v1 dict. ``source_event_id`` becomes ``event_id``."""
     return {
         "schema_version": M1_INPUT_VERSION,
@@ -104,7 +104,7 @@ def to_m1_input(example: CatchupExample) -> dict[str, Any]:
     }
 
 
-def gold_reference(example: CatchupExample) -> dict[str, Any]:
+def gold_reference(example: M1SmokeExample) -> dict[str, Any]:
     """Gold summary as an m1-output-v1 dict, without ``candidate_id``."""
     out: dict[str, Any] = {
         "schema_version": M1_OUTPUT_VERSION,

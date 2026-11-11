@@ -218,7 +218,11 @@ ARBITRATION = Scenario(
     ),
 )
 
-# --- Template 5: an interrupt and rollback ------------------------------------------------
+# --- Template 5: a rollback, as the live service leaves the log -----------------------------
+# The service deletes events with seq > to_seq and resets the next seq to to_seq + 1, so a
+# late joiner never sees the rolled-back edits. Here the rewrite was rolled back to seq 2. The
+# `rollback` event is one a client appends afterwards (the service itself appends none) and
+# carries the reason. Sequences stay gap-free: 1, 2, then 3 onward.
 ROLLBACK = Scenario(
     key="rollback",
     keys=("doc", "competitor"),
@@ -231,16 +235,10 @@ ROLLBACK = Scenario(
     events=(
         E("instruction", "h1", "{a1}, rewrite the pricing section of {doc} using the new tiers."),
         E("agent_step", "a1", "Plan: replace the three old tiers with Starter, Team, and Enterprise, then update the comparison table."),
-        E("doc_update", "a1", "Rewrote the pricing section of {doc} with the three new tiers."),
-        E("doc_update", "a1", "Updated the comparison table. The Enterprise price still shows a placeholder."),
-        E("interrupt", "h2", "Stop. Finance has not approved the new tiers.",
-          "decision", "{h2} interrupted the pricing rewrite because finance has not approved the new tiers.",
-          "the rewrite was interrupted pending finance approval"),
-        E("agent_step", "a1", "Halted after two applied edits to {doc}."),
-        E("rollback", "h2", "Roll back {doc} to the state before the pricing rewrite.",
-          "completed", "{doc} was rolled back to its state before the pricing rewrite.",
+        E("rollback", "h2", "Rolled back {doc} to before the pricing rewrite because finance has not approved the new tiers. Two edits were removed.",
+          "completed", "{doc} was rolled back to its state before the pricing rewrite because finance has not approved the new tiers.",
           "{doc} is rolled back to before the pricing rewrite"),
-        E("tool_result", None, "Rollback applied. {doc} restored to the version before the pricing rewrite."),
+        E("agent_step", "a1", "Confirmed: the pricing section of {doc} shows the three old tiers again."),
         E("instruction", "h2", "Finance will confirm the tiers on Thursday. Hold the rewrite until then.",
           "decision", "The pricing rewrite is on hold until finance confirms the tiers on Thursday.",
           "the pricing rewrite is on hold until Thursday"),
@@ -256,6 +254,7 @@ ROLLBACK = Scenario(
         E("doc_update", "a1", "Added {faq} of 8 FAQ answers to {doc}. The rest are still to write.",
           "in_progress", "{a1} has added {faq} of 8 FAQ answers to {doc}.",
           "{faq} of 8 FAQ answers are written"),
+        E("agent_step", "a1", "Saved the FAQ draft and paused until finance answers."),
     ),
 )
 
