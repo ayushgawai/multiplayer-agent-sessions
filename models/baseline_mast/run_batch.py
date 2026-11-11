@@ -378,7 +378,7 @@ class BatchRunner:
         judge: Judge,
         result_dir: Path,
         *,
-        dataset_version: str,
+        eval_manifest_version: str,
         dataset_sha256: str,
         run_id: str,
         max_retries: int = 2,
@@ -386,7 +386,7 @@ class BatchRunner:
     ) -> None:
         self.judge = judge
         self.result_dir = result_dir
-        self.dataset_version = dataset_version
+        self.eval_manifest_version = eval_manifest_version
         self.dataset_sha256 = dataset_sha256
         self.run_id = run_id
         self.max_retries = max_retries
@@ -396,7 +396,7 @@ class BatchRunner:
     def _prediction_identity(self) -> dict[str, Any]:
         return {
             "run_id": self.run_id,
-            "dataset_version": self.dataset_version,
+            "eval_manifest_version": self.eval_manifest_version,
             "dataset_sha256": self.dataset_sha256,
             "prompt_version": PROMPT_VERSION,
             "prompt_sha256": PROMPT_SHA256,
@@ -495,7 +495,7 @@ class BatchRunner:
             "framework": rec.framework,
             "llm_name": rec.llm_name,
             "benchmark": rec.benchmark,
-            "dataset_version": self.dataset_version,
+            "eval_manifest_version": self.eval_manifest_version,
             "dataset_sha256": self.dataset_sha256,
             "prompt_version": PROMPT_VERSION,
             "prompt_sha256": PROMPT_SHA256,
@@ -642,7 +642,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     runner = BatchRunner(
         judge=StubJudge(),
         result_dir=args.result_dir,
-        dataset_version=str(manifest.get("manifest_version", "unknown")),
+        eval_manifest_version=str(manifest.get("manifest_version", "unknown")),
         dataset_sha256=str(entry.get("sha256", "")),
         run_id=run_id,
         max_retries=args.max_retries,
