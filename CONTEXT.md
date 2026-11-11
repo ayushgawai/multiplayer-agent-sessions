@@ -83,7 +83,7 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 | Frozen eval manifest | Naman (DAT-30, PR #4) | Done on `main`: `data/mast/eval_manifest.json` |
 | QMSum download + STATS.md | Ayush / Naman (DAT-11) | Done on `main`: `data/qmsum/STATS.md`, frozen splits in `data/splits/m1_v1/` |
 | MAST classification metrics | Pramod (DAT-37, PR #3) | Done on `main`: `eval/metrics/classification.py`. Convention `mast_binary_label_cells_v1` is provisional until checked against the paper. |
-| Harness runs one candidate end to end | Pramod | Open. `eval/harness.py` is not on `main`. |
+| Harness runs one candidate end to end | Pramod (DAT-61) | Implementation prepared on a branch stacked on DAT-55; CPU orchestration tests pass. Independent review is required before merge. |
 | M3 configs `m3-a`…`m3-d` | Manav (DAT-40, PR #10) | Done on `main` |
 | M2 / M4 configs | Naman, Shriram | Not started |
 | MAST judge prompt / parser / viewer | Manav (DAT-31/32/33, PRs #7 #8 #9) | Done on `main` under `models/baseline_mast/` |
@@ -106,7 +106,7 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 
 ## Current status (update on pull / after each feature)
 
-**Last updated:** 2026-10-22 (Ayush)
+**Last updated:** 2026-11-11 (Pramod)
 
 - Session service on `main`: durable event log (SQLAlchemy; SQLite in CI, Postgres in Compose) and Redis or in-process fan-out (ADR-002). OpenAPI routes unchanged.
 - React 18 client, CRDT server, and presence on `main` (DAT-15, DAT-16, DAT-17 / PRs #12, #13, #14).
@@ -116,7 +116,7 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 - QMSum downloaded and verified (DAT-11, 232 meetings, 1,810 query pairs, `STATS.md`); frozen `m1_v1` dataset splits committed (`MANIFEST.json`).
 - Qwen3-1.7B infrastructure pipeline verified 4-bit NF4 QLoRA, checkpointing and resume; its 50-step run dropped training loss from 3.90 to 2.14. This is feasibility evidence, not a final DAT-55 candidate result.
 - Linear tasks and git commits synced across the team (`docs/verification/linear_git_sync.md`).
-- **Not on `main` yet:** LangGraph runtime (PR #6), `eval/harness.py`, M2/M4 configs.
+- **Not on `main` yet:** LangGraph runtime (PR #6), the DAT-61 M1 harness/comparison implementation, M2/M4 configs.
 
 **Open PRs:** #6 DAT-18 (Shriram), #15 DAT-56 (Shriram).
 
@@ -149,6 +149,9 @@ When you finish a feature, add one bullet here under your name and bump **Last u
 
 ### Pramod
 - On `main`: MAST classification metrics (DAT-37, PR #3), including CI for `eval/tests`.
+- In review: DAT-55 frozen M1 contract and DAT-61 shared harness/comparison. The harness has a
+  CPU-only test runner, strict provenance, safety-gate comparison, and 28 passing `eval` tests; it
+  does not contain model results or declare a winner.
 - Still open: harness one-candidate end to end, published comparison (DAT-38, due 5 Nov), error analysis (DAT-39, due 11 Nov), dataset screenshot (DAT-12), locking the ROUGE call (DAT-13).
 
 ---
@@ -190,7 +193,7 @@ session-service (FastAPI)                 <-- on main
               M1 catch-up, M2 attribution, M3 arbitration, M4 routing
               |
               v
-         eval/   metrics only. Harness not written yet.
+         eval/   metrics on main; DAT-61 harness/comparison awaiting review.
 ```
 
 Session service routes (ADR-001, unchanged by ADR-002):
