@@ -9,7 +9,7 @@ This document is the runbook for the ISA / Team Meeting **pipeline demo**. It ma
 | Demo part | What we show | Script / artifact |
 |-----------|--------------|-------------------|
 | 1. Extraction | Pull pinned public data + taxonomy | `data/scripts/download_mast.py` → `data/mast/hf/`, `data/mast/taxonomy/` |
-| 2. Cleaning | Drop bad rows, normalize fields, binary labels | `data/scripts/eda_mast.py` Stage 2 |
+| 2. Cleaning | Validate labels, key records, exclude fully-null records | `data/scripts/eda_mast.py` Stage 2 |
 | 3. Preprocessing | Flatten labels, category rollups, analysis table | Stage 3 → `data/mast/processed/mast_clean_summary.csv` |
 | 4. Quality assessment | Automated gates + distribution summary | Stage 4 (must print **all checks passed**) |
 
@@ -107,19 +107,19 @@ Implemented in **Stage 2** of `data/scripts/eda_mast.py`.
 
 ### Rules applied
 
-1. Require `trace_id`, a non-empty `trajectory`, and an annotation object  
+1. Require `trace.key`, an integer `trace_id`, and an annotation object (otherwise a hard error, not a silent drop)  
 2. Strip / normalize `mas_name`, `llm_name`, `benchmark_name`  
-3. For each of the 14 MAST codes: coerce to binary `0` / `1`  
-4. Treat `null` annotation cells as `0` (no failure labelled)  
-5. Assign a stable `row_id` from source order  
+3. Each of the 14 MAST codes must be exactly `0` / `1` or `null`. Any other value is a hard error.  
+4. A `null` or missing code stays `null`. It is never converted to `0`.  
+5. Exclude a record from scoring only if all 14 codes are null (4 records). A partly-null record is kept with its nulls preserved (the pinned file has none).  
 
-### Why `row_id`?
+### Record key
 
-`trace_id` alone is **not** globally unique in the release (it repeats across frameworks). We keep all **1,642** paper rows and key analysis rows by `row_id`.
+The canonical key is (`trace.key`, `trace_id`), per `eval_manifest.json`. `trace_id` alone is **not** unique (it resets per source run). Uniqueness is asserted over all 1,642 raw records, and a duplicate fails the run with the duplicate keys listed. The old `row_id` is gone; nothing consumed it.
 
 ### What to say
 
-> “Cleaning keeps the full published set. We only normalize types and nulls so the label matrix is binary and machine-readable. We do not throw away paper rows for convenience.”
+> “We report all 1,642 raw records and score 1,638. The 4 records with no labels at all are excluded, and we never read a missing label as a negative one.”
 
 ---
 
@@ -131,8 +131,10 @@ Implemented in **Stage 3** of `data/scripts/eda_mast.py`.
 
 | Output | Meaning |
 |--------|---------|
-| `fail_1_1` … `fail_3_3` | Flattened binary columns for each failure mode |
-| `n_failures` | How many modes are positive on that trace |
+| `trace_key`, `trace_id` | Canonical record key |
+| `fail_1_1` … `fail_3_3` | Flattened label columns; a null label is an empty cell |
+| `n_failures` | How many modes are positive (1) on that trace; nulls are not counted |
+| `n_null_labels` | How many of the 14 codes are null on that trace |
 | `failure_codes` | Pipe-joined list of active codes (e.g. `1.3\|2.6`) |
 | `cat_specification` | Count of positives in category 1.x |
 | `cat_misalignment` | Count of positives in category 2.x |
@@ -148,13 +150,15 @@ Implemented in **Stage 3** of `data/scripts/eda_mast.py`.
 
 ### Artifact produced
 
-**`data/mast/processed/mast_clean_summary.csv`**
+**`data/mast/processed/mast_clean_summary.csv`** (gitignored; scorable records only)
+
+**`data/mast/EDA_SUMMARY.json`** (committed, deterministic: raw / scorable counts, excluded keys, per-code 1/0/null counts, key-uniqueness result, input sha256). Two runs give byte-identical files.
 
 Open a few rows in a spreadsheet or `head` during the demo to show the flattened schema.
 
 ```bash
 head -n 3 data/mast/processed/mast_clean_summary.csv
-wc -l data/mast/processed/mast_clean_summary.csv   # 1643 = header + 1642 rows
+wc -l data/mast/processed/mast_clean_summary.csv   # 1639 = header + 1638 scorable rows
 ```
 
 ---
@@ -167,14 +171,17 @@ Implemented in **Stage 4** of `data/scripts/eda_mast.py`.
 
 | Check | Pass criterion |
 |-------|----------------|
-| Record count vs paper | cleaned rows == **1642** |
-| Unique `row_id` | 1642 unique ids |
+| Raw record count | **1642** (paper; read from `eval_manifest.json`) |
+| Scorable record count | **1638** |
+| Excluded records | **4**, keys equal the manifest's `excluded_records` |
+| Partially-null records | 0 |
+| Unique (`trace_key`, `trace_id`) | 1642 unique keys over all raw records |
 | Schema completeness | identity fields + 14 label columns present |
-| Label domain | every label cell is `0` or `1` |
+| Label domain | every label cell is `0`, `1`, or null |
 | Taxonomy present | `definitions.txt` non-empty |
 | Human-labelled IAA set | **19** rows |
 
-Informational (not a fail): composite key `(mas, benchmark, llm, trace_id)` has fewer unique values than 1642 because the source reuses `trace_id` within frameworks — that is why we use `row_id`.
+Note: the 4-tuple `(mas, benchmark, llm, trace_id)` is not unique (1552 distinct), which is why the key is (`trace.key`, `trace_id`).
 
 ### Distribution summary (EDA for the walkthrough)
 
@@ -183,7 +190,7 @@ The script prints:
 - Counts of frameworks / LLMs / benchmarks  
 - Top frameworks (e.g. AG2, MetaGPT, ChatDev, …)  
 - Top failure modes (e.g. 1.3 Step repetition, 3.3, 2.6, …)  
-- Share of traces with ≥1 failure (~75%)  
+- Share of scorable traces with ≥1 failure (~75%)  
 - Trace length: min / median / max characters  
 
 Use this as the “we looked at the data” evidence for the ISA.
