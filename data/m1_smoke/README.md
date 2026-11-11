@@ -3,21 +3,23 @@
 A tiny, deterministic, synthetic set of session event logs for checking the M1 catch-up pipeline
 (loading, input conversion, output validation, metrics wiring) before full training.
 
-**These fixtures are for smoke tests only.** They are synthetic. They are never the M1 evaluation
-test split, never training data for a reported result, and no score computed on them may be quoted
-as a model result. The `test` file here is a fixture split, not the frozen evaluation split.
+**These fixtures are for smoke tests only.** They are synthetic. They are never an M1 evaluation
+split, never training data for a reported result, and no score computed on them may be quoted as a
+model result. The three splits are `train`, `dev` and `smoke_holdout`. There is deliberately no
+split called `test`: the real evaluation splits are `data/splits/m1_session_v1/` and the frozen
+QMSum `m1_v1`, and CONTEXT.md forbids synthetic rows in any test split.
 
 ## Contents
 
 - 12 sessions built from 5 hand-written scenarios: a feature built by a human and two agents, an
   agent blocked on a failed tool call, a handoff between humans, an arbitration between two agents,
-  and an interrupt with rollback. 14 to 16 events each (9 to 11 in the "joined late" prefixes).
+  and an interrupt with rollback. 13 to 16 events each (8 to 12 in the "joined late" prefixes).
 - 18 examples: one full catch-up per session, plus a "joined late" example (a prefix of the log) for
   6 sessions.
-- Splits are disjoint by `session_id`: train 8 sessions (12 examples), dev 2 (3), test 2 (3).
+- Splits are disjoint by `session_id`: train 8 sessions (12 examples), dev 2 (3), smoke_holdout 2 (3).
 - Every split contains all five categories.
 
-Files in `fixtures/`: `train.jsonl`, `dev.jsonl`, `test.jsonl`, `MANIFEST.json` (seed, split policy,
+Files in `fixtures/`: `train.jsonl`, `dev.jsonl`, `smoke_holdout.jsonl`, `MANIFEST.json` (seed, split policy,
 per-split count, sessions, sha256 and bytes, generator command; no timestamps).
 
 ## Reproduce
@@ -40,7 +42,7 @@ pytest -q data/tests/test_m1_smoke.py
 ```python
 from data.m1_smoke.loader import load_split, load_fixtures, verify_manifest, to_m1_input, gold_reference
 
-splits = load_fixtures("data/m1_smoke/fixtures")   # {"train": [...], "dev": [...], "test": [...]}
+splits = load_fixtures("data/m1_smoke/fixtures")   # {"train": [...], "dev": [...], "smoke_holdout": [...]}
 verify_manifest("data/m1_smoke/fixtures")          # sha256, bytes and counts vs MANIFEST.json
 ```
 
@@ -48,7 +50,7 @@ Load errors name the file, line number and example id.
 
 ## Schema (`m1-smoke-v1`, `data/m1_smoke/schema.py`)
 
-`CatchupExample` (pydantic v2, `extra="forbid"`):
+`M1SmokeExample` (pydantic v2, `extra="forbid"`):
 
 | Field | Meaning |
 |-------|---------|
@@ -91,7 +93,14 @@ sometimes, supporting events (for example the failing tool result behind a block
   Pramod should confirm the mapping.
 - The contract plans real session data in `data/splits/m1_session_v1/`. That is not this dataset.
 
-## Known simplification
+## Rollback matches the live service
 
-Rolled-back events stay in the log here, with the `rollback` event after them, so a catch-up can
-describe them. In the live service, rollback deletes events after `to_seq`. Open question for review.
+The session service rolls back by deleting every event with `seq > to_seq` and setting the next
+sequence to `to_seq + 1` (`session-service/app/store.py`, `Store.rollback`). It appends no marker
+event. M1 therefore never sees rolled-back events, and the rollback scenario is generated as the
+post-rollback log: the deleted edits are absent, sequences stay gap-free (1, 2, 3, ...), and no
+claim or critical fact cites a deleted event. The `rollback` event (type exists in `EventType`) is
+one a client appends after the service call, with seq `to_seq + 1`; its text records why.
+
+Out of scope for M1 input: the audit trail of the deleted events. If that is ever needed, it needs
+its own immutable audit-log contract. It is not part of `m1-smoke-v1`.
