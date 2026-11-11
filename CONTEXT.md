@@ -106,7 +106,7 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 
 ## Current status (update on pull / after each feature)
 
-**Last updated:** 2026-10-22 (Ayush)
+**Last updated:** 2026-11-11 (Naman)
 
 - Session service on `main`: durable event log (SQLAlchemy; SQLite in CI, Postgres in Compose) and Redis or in-process fan-out (ADR-002). OpenAPI routes unchanged.
 - React 18 client, CRDT server, and presence on `main` (DAT-15, DAT-16, DAT-17 / PRs #12, #13, #14).
@@ -134,6 +134,7 @@ When you finish a feature, add one bullet here under your name and bump **Last u
 ### Naman
 - On `main`: DAT-28 download and checksums, DAT-29 dictionary and taxonomy, DAT-30 eval manifest.
 - Done on `main`: QMSum download (DAT-11, 232 meetings, 1,810 query pairs in `data/qmsum/STATS.md`, splits frozen in `data/splits/m1_v1/`).
+- DAT-53 (M1-02, PR pending): deterministic M1 smoke dataset in `data/m1_smoke/` (18 synthetic examples, 12 sessions, train/dev/test fixtures split by `session_id`) with an event-based `CatchupExample` (`m1-smoke-v1`), loader, and tests. Reproduce: `python data/scripts/make_m1_smoke.py --seed 13 --out data/m1_smoke/fixtures`. Smoke fixtures only, not an evaluation split. The session-service `CatchupExample` is unchanged. Contract alignment: `to_m1_input` and `gold_reference` match the DAT-55 `m1-input-v1`/`m1-output-v1` models on Pramod's branch (PR #20); the compat test skips until `eval/contracts/m1.py` is on `main`.
 - Still open: six scenario briefs (DAT-21), team sign-off (DAT-22).
 
 ### Manav
