@@ -94,6 +94,34 @@ def test_every_other_split_is_accepted(
     assert store.get(stored.lesson_id) is not None
 
 
+def test_an_approved_test_split_record_in_the_log_is_never_retrieved(
+    store: MemoryStore, make_lesson: Any
+) -> None:
+    """propose() is not the only guard, because a log can be written around it."""
+    smuggled = make_lesson(split=Split.test).model_dump(mode="json")
+    smuggled["state"] = LessonState.approved.value
+    store.path.write_text(json.dumps(smuggled) + "\n", encoding="utf-8")
+
+    assert store.version == 1
+    assert store.retrieve(Task.m1) == []
+    assert store.retrieve(Task.m1, version=1) == []
+
+
+def test_a_smuggled_test_split_record_still_shows_in_the_audit_trail(
+    store: MemoryStore, make_lesson: Any
+) -> None:
+    """Retrieval hides it; the audit trail must not, or it cannot be found."""
+    smuggled = make_lesson(split=Split.test).model_dump(mode="json")
+    smuggled["state"] = LessonState.approved.value
+    store.path.write_text(json.dumps(smuggled) + "\n", encoding="utf-8")
+
+    stored = store.get(smuggled["lesson_id"])
+
+    assert stored is not None
+    assert stored.split is Split.test
+    assert [r.split for r in store.revisions()] == [Split.test]
+
+
 def test_a_store_cannot_be_opened_inside_the_frozen_reproduction(tmp_path: Path) -> None:
     for guarded in ("data/mast", "models/baseline_mast"):
         target = tmp_path / guarded / "lessons.jsonl"

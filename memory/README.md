@@ -89,6 +89,11 @@ influence a run even if a caller forgets to filter.
 feedback into memory would leak the frozen evaluation into training-time
 behaviour, which would invalidate every number downstream of it.
 
+`retrieve` enforces the same rule a second time, so a test-split record that
+reached the log by some other route, a hand edit or an import, is still never
+returned. Such a record stays visible through `get` and `revisions` so it can
+be found and dealt with.
+
 ## Versioning and rollback
 
 The store is an append-only JSONL log of lesson revisions. Proposing,

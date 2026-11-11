@@ -215,10 +215,15 @@ class MemoryStore:
         not attempted here; see README.md.
         """
         state = self.current() if version is None else self.at_version(version)
+        # propose() already refuses the test split, so this second check only
+        # matters for a log that was written around it: a hand edit, an import,
+        # or a future writer. Filtering here rather than refusing at parse time
+        # keeps get() and history() able to show the record being excluded.
         hits = [
             lesson
             for lesson in state.values()
             if lesson.is_retrievable()
+            and lesson.split is not Split.test
             and lesson.task is task
             and (candidate_id is None or lesson.candidate_id == candidate_id)
             and (session_id is None or lesson.session_id == session_id)
