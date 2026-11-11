@@ -134,7 +134,7 @@ When you finish a feature, add one bullet here under your name and bump **Last u
 ### Naman
 - On `main`: DAT-28 download and checksums, DAT-29 dictionary and taxonomy, DAT-30 eval manifest.
 - Done on `main`: QMSum download (DAT-11, 232 meetings, 1,810 query pairs in `data/qmsum/STATS.md`, splits frozen in `data/splits/m1_v1/`).
-- DAT-54 (MAST-17, PR pending): `eda_mast.py` keeps null labels null, keys records by (`trace.key`, `trace_id`), excludes the 4 fully-null records (1,642 raw, 1,638 scorable), and writes the committed `data/mast/EDA_SUMMARY.json`. Tests in `data/tests/test_eda_mast.py`.
+- DAT-54 (MAST-17, PR #21): `eda_mast.py` keeps null labels null, keys records by (`trace.key`, `trace_id`), excludes the 4 fully-null records (1,642 raw, 1,638 scorable), and writes the committed `data/mast/EDA_SUMMARY.json`. Tests in `data/tests/test_eda_mast.py`.
 - Still open: six scenario briefs (DAT-21), team sign-off (DAT-22).
 
 ### Manav
