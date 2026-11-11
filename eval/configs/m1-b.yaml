@@ -7,18 +7,20 @@ model:
   revision: "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
 split: data/splits/m1_v1/
 train:
-  epochs: 3
-  max_seq_len: 4096
+  epochs: 5
+  max_seq_len: 2048
+  per_device_train_batch_size: 4
   effective_batch_size: 16
-  lr: 2.0e-4
+  lr: 3.0e-4
   warmup_ratio: 0.06
-  save_steps: 200
+  save_steps: 50
+  dataloader_num_workers: 2
   checkpoint_uri: "file://./checkpoints/m1-b/"
 lora:
-  r: 16
-  alpha: 32
+  r: 32
+  alpha: 64
   dropout: 0.05
-  target_modules: [q_proj, v_proj]
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
 prompt_file: null
 metrics: [rouge_l, bertscore_f1, latency_p50, latency_p95, peak_vram]
 primary_metric: rouge_l

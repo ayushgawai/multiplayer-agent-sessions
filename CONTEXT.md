@@ -81,7 +81,7 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 | MAST download script + `data/mast/STATS.md` | Naman (DAT-28, PR #1) | Done on `main` |
 | MAST dictionary + taxonomy | Naman (DAT-29, PR #2) | Done on `main`: `data/mast/DATA_DICTIONARY.md`, `data/mast/TAXONOMY.md` |
 | Frozen eval manifest | Naman (DAT-30, PR #4) | Done on `main`: `data/mast/eval_manifest.json` |
-| QMSum download + STATS.md | Naman (DAT-11) | Open |
+| QMSum download + STATS.md | Ayush / Naman (DAT-11) | Done on `main`: `data/qmsum/STATS.md`, frozen splits in `data/splits/m1_v1/` |
 | MAST classification metrics | Pramod (DAT-37, PR #3) | Done on `main`: `eval/metrics/classification.py`. Convention `mast_binary_label_cells_v1` is provisional until checked against the paper. |
 | Harness runs one candidate end to end | Pramod | Open. `eval/harness.py` is not on `main`. |
 | M3 configs `m3-a`…`m3-d` | Manav (DAT-40, PR #10) | Done on `main` |
@@ -106,30 +106,41 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 
 ## Current status (update on pull / after each feature)
 
-**Last updated:** 2026-10-21 (Pramod)
+**Last updated:** 2026-10-22 (Ayush)
 
 - Session service on `main`: durable event log (SQLAlchemy; SQLite in CI, Postgres in Compose) and Redis or in-process fan-out (ADR-002). OpenAPI routes unchanged.
-- MAST track on `main` through download, dictionary, manifest, prompt, parser, viewer, batch, provenance, and classification metrics. No reproduction score has been posted.
-- Legacy M1 configs and current M3 configs are on `main`. DAT-55 must migrate M1 before the bake-off. M2 and M4 configs are not written. No model has been trained.
-- **Not on `main` yet:** React client and Yjs (PRs #12, #13, #14), LangGraph runtime (PR #6), `eval/harness.py`, QMSum, M2/M4 configs, ADR-003.
+- React 18 client, CRDT server, and presence on `main` (DAT-15, DAT-16, DAT-17 / PRs #12, #13, #14).
+- ADR-003 MAST prediction record on `main` (DAT-52 / PR #16 merged).
+- M3 stub label fix on `main` (DAT-40 / PR #11 merged).
+- MAST track on `main` through download, dictionary, manifest, prompt, parser, viewer, batch, provenance, and classification metrics.
+- QMSum downloaded and verified (DAT-11, 232 meetings, 1,810 query pairs, `STATS.md`); frozen `m1_v1` dataset splits committed (`MANIFEST.json`).
+- M1 full training pipeline and 4-bit NF4 QLoRA completed (DAT-55); 50-step high power training run dropped loss from 3.90 to 2.14 with verified checkpoint-50.
+- Linear tasks and git commits synced across the team (`docs/verification/linear_git_sync.md`).
+- **Not on `main` yet:** LangGraph runtime (PR #6), `eval/harness.py`, M2/M4 configs.
 
-**Open PRs:** #6 DAT-18 (Shriram), #11 stub label rename (Manav), #12 DAT-15, #13 DAT-16, #14 DAT-17 (Manav).
+**Open PRs:** #6 DAT-18 (Shriram), #15 DAT-56 (Shriram).
 
 When you finish a feature, add one bullet here under your name and bump **Last updated**.
 
 ### Ayush
 - Foundation, ADR-001/002, durable event log and fan-out, serving stubs, legacy M1 configs, Compose, CI.
+- QMSum download + verification (DAT-11) and frozen m1_v1 split generation (`data/splits/m1_v1/`).
+- M1 GPU feasibility verification (M1-04) and full QLoRA training pipeline (DAT-55); 50-step run reached loss 2.14, verified checkpoint-50 saved.
+- Reviewed and merged client scaffold, CRDT server, presence, and ADR-003 PRs (#11, #12, #13, #14, #16).
+- Synchronized Linear board with git commits and automated tracking (`docs/verification/linear_git_sync.md`).
 - Workbook 1 figures: Gantt and PERT. MAST is parallel to the critical path, not on it.
 - Next: pin the MAST judge environment (DAT-25), judge metadata (DAT-26), clean-environment smoke test (DAT-27). Branch protection (DAT-10) is still open.
 
 ### Naman
 - On `main`: DAT-28 download and checksums, DAT-29 dictionary and taxonomy, DAT-30 eval manifest.
-- Still open: QMSum download (DAT-11), six scenario briefs (DAT-21), team sign-off (DAT-22).
+- Done on `main`: QMSum download (DAT-11, 232 meetings, 1,810 query pairs in `data/qmsum/STATS.md`, splits frozen in `data/splits/m1_v1/`).
+- Still open: six scenario briefs (DAT-21), team sign-off (DAT-22).
 
 ### Manav
-- On `main`: judge prompt `mast-judge-v1`, parser `mast-parser-v1.1`, result viewer, M3 configs `m3-a` through `m3-d`.
-- In review: client scaffold (#12), Yjs editor and crdt-server (#13), presence (#14). Browser-tested against the session service with up to three participants. Not merged, so do not demo the client from `main`.
-- Open: ADR-003 prediction record (DAT-52, in progress). PR #11 renames the serving stub label `escalate_human` to `escalate`.
+- On `main`: judge prompt `mast-judge-v1`, parser `mast-parser-v1.1`, result viewer, M3 configs `m3-a` through `m3-d`, serving stub label `escalate` (DAT-40, PR #11).
+- On `main`: client scaffold (DAT-15, PR #12), Yjs editor and crdt-server (DAT-16), presence (DAT-17). Browser-tested with up to three participants.
+- ADR-003 (DAT-52): merged to `main` with runner owner review changes incorporated (PR #16).
+- Next: M1-03 extractive CPU baseline (DAT-58, due Nov 4); location of M1-A code to be agreed with the M1 and evaluation owners first.
 
 ### Shriram
 - On `main`: resumable MAST batch and run provenance (DAT-34/35, PR #5). Notes in `docs/verification/dat-34-dat-35-batch-execution.md`.
@@ -221,7 +232,7 @@ ADRs:
 
 - **ADR-001** (22 Sep 2026, accepted). Freezes `SessionEvent` and the HTTP API. Source of truth is `session-service/app/schemas.py`. OpenAPI is committed and regenerated only by `cd session-service && PYTHONPATH=. python scripts/export_openapi.py`.
 - **ADR-002** (6 Oct 2026, accepted). Persists the log in SQL and fans events out over Redis. Public routes stay the same as ADR-001.
-- **ADR-003** (DAT-52, in progress, Manav). Proposed format for a MAST prediction record. The viewer already reads that shape. It is not accepted yet.
+- **ADR-003** (DAT-52, first version on main, review changes in PR #16, Manav). Proposed format for a MAST prediction record. The viewer already reads that shape. It is not accepted yet.
 
 ## Research plan: reproduction, contribution, and self-improvement
 
@@ -335,7 +346,7 @@ Full IEEE list is at the end of `docs/reports/T4.A4.docx`, references [1] throug
 | MAST human file | 19 rows, inter-annotator sample. Rounds 1 to 3 use older taxonomies (18, 17, 17 modes). Only 4 rows (`Generlazability`, spelled that way in the file) use the current 14 codes. Do not pool rounds. | `MAD_human_labelled_dataset.json` | Same download |
 | Dictionary and taxonomy | Field counts and the 14 definitions | `data/mast/DATA_DICTIONARY.md`, `data/mast/TAXONOMY.md` | On `main` |
 | Eval manifest | Frozen link from download to eval | `data/mast/eval_manifest.json` | On `main` |
-| QMSum | M1 supervision only | Not downloaded. DAT-11 | Open |
+| QMSum | M1 supervision only | Downloaded & verified; 232 meetings, 1,810 query pairs. DAT-11 | Done |
 | Pilot sessions | About 30 in-house sessions, event logs only, double annotated, for M2 to M4 | Not collected | After the integration gate |
 
 Observed on the full MAST file (dictionary, not a model result): 7 frameworks (AG2 597, MetaGPT 430, ChatDev 330, Magentic 195, OpenManus 30, AppWorld 30, HyperAgent 30), 5 LLM names (GPT-4o, Claude, Qwen, CodeLlama, GPT-4o-mini), 8 benchmarks. `trace_id` is not unique across frameworks. Top-level keys are `mas_name`, `llm_name`, `benchmark_name`, `trace_id`, `trace`, `mast_annotation`.
@@ -369,7 +380,7 @@ Success line: `QUALITY GATE: all checks passed`. The cleaner keeps all 1,642 row
 | AI-4 | M2 | macro-F1 at least 0.75 |
 | AI-5 | M3 | macro-F1 at least 0.70 and safer than last-writer-wins |
 | AI-8 | Failure analysis | At least 50 failures tagged with the MAST taxonomy |
-| DR-1 | QMSum counts match the paper | After DAT-11 |
+| DR-1 | QMSum counts match the paper | Done on `main` (232 meetings, 1,810 pairs verified in `data/qmsum/STATS.md`) |
 | DR-4 | Splits by session | No row from a test session in train |
 
 Workbook section map: 1.1 background (Ayush), 1.2 requirements and 1.3 deliverables (Pramod), 1.4 technology survey (Manav), 1.5 literature (Pramod), 2.1 data (Naman), 2.2 methodology and 2.3 organization (Shriram; the template numbers WBS as 2.2.4), 2.4 resources (Ayush; template section 2.3), 2.5 schedule (Pramod; template section 2.4). Abstract presentation is 2 points. The pipeline demo is 3 points. Total 15.
@@ -444,28 +455,56 @@ Schema, integration, sessions, frozen splits, study, defence.
 - A paid cloud GPU price, or a specific lab GPU model, unless the workbook on the table says it.
 - That synthetic data is in any test split.
 
+## Team Meeting 1 (8 Oct 2026)
+
+Professor: 10 slides, 17 minutes, then 3 minutes of questions. Deck: `docs/meeting1/index.html`. Spoken notes: `docs/meeting1/presenter.html`. Arrow keys stay in sync across the two windows.
+
+ISA: a live pipeline, not slides. Screen guide: `docs/meeting1/isa.html`. Paste-ready answer sheet with function names: `docs/ai/team-meeting-1-brief.md`. Runbook: `docs/demo1-data-pipeline.md`.
+
+```bash
+source .venv/bin/activate
+python data/scripts/download_mast.py
+python data/scripts/eda_mast.py
+```
+
+The success line is `QUALITY GATE: all checks passed`.
+
+| Stage | Function | File |
+|-------|----------|------|
+| Pin and download | `download_hf_release`, `download_github_taxonomy`, `verify_checksum`, `inspect_dataset`, `write_stats_md` | `data/scripts/download_mast.py` |
+| Load | `stage1_extract` | `data/scripts/eda_mast.py` |
+| Clean | `stage2_clean` | same file |
+| Flatten | `stage3_preprocess` | writes `data/mast/processed/mast_clean_summary.csv` |
+| Gate and EDA | `stage4_quality` | same file |
+
+Cleaning keeps all 1,642 rows. 56 null label cells become 0. Zero rows dropped on the pinned file. `trace_id` is not unique (206 distinct values; composite key 1,552 of 1,642), so the id is `row_id`. Preprocessing adds `fail_1_1` through `fail_3_3`, `failure_codes`, and three category counts. The gate checks count, unique `row_id`, schema, binary labels, the taxonomy file, and 19 human rows.
+
+EDA on that file: 1,237 traces (75.3%) have at least one failure. Top positive labels are 1.3 (664), 3.3 (658), 2.6 (610). Trace length min 1,262, median 9,746, max 2,004,123 characters. This null-to-zero step is only in `stage2_clean`. `parse_judge_response` in `models/baseline_mast/parse_judge.py` leaves missing codes null.
+
+There is no train split and no augmentation in this demo. QMSum is still DAT-11.
+
 ## Compute (team truth)
 
 Do **not** budget paid cloud GPU for 298A unless the GPU lab is unavailable.
 
 | Resource | Detail | Cost |
 |----------|--------|------|
-| GPU lab | University GPU lab access (team has ongoing free access) | $0 |
+| GPU lab | NVIDIA GeForce RTX 5080 Laptop, 16 GB. Model settings come from `eval/configs/m1-b.yaml`. | $0 |
 | LLM APIs | OpenRouter and/or OpenAI / Anthropic / Kiro CLI as needed for MAST judge and prompted arms | pay-as-you-go; keep receipts; no fixed $100–$250 commitment |
 
 Workbook section 2.3 should say training runs in the GPU lab at $0, not invented cloud GPU spend. Colab is fallback only if the GPU lab is unavailable.
 
-## M1 GPU smoke test (M1-04)
+## M1 GPU feasibility verification (M1-04)
 
-**Notebook:** [models/m1_catchup/notebooks/m1_qwen3_gpu_smoke_test.ipynb](models/m1_catchup/notebooks/m1_qwen3_gpu_smoke_test.ipynb)
+**Notebook:** [models/m1_catchup/notebooks/m1_qwen3_gpu_verification.ipynb](models/m1_catchup/notebooks/m1_qwen3_gpu_verification.ipynb)
 
 **Runner / evidence owner:** Ayush
 
 **Candidate covered:** current legacy config `m1-b`, `Qwen/Qwen3-1.7B` with QLoRA; infrastructure validation only, not a final DAT-55 candidate
 
-**Status:** notebook prepared and statically validated; a real GPU run is still required before M1-04 can be marked Done.
+**Status:** ran on 2026-10-21 on an RTX 5080 Laptop, 16 GB, using `eval/configs/m1-b.yaml`. `smoke_passed` is true. Weights were not committed. The manifest and executed notebook stay outside the repo. Linear M1-04 still needs that evidence attached before it can be marked Done.
 
-This is an infrastructure smoke test, not a benchmark and not the four-candidate M1 bake-off. It uses the smallest generative candidate in the current on-disk configs to validate QLoRA, checkpoint, resume, inference, and 4,096-token execution. The notebook reads the model repo, full model revision, learning rate, and LoRA settings directly from `eval/configs/m1-b.yaml` so the smoke run cannot silently drift from that committed feasibility configuration. DAT-55 will replace the legacy candidate mapping before comparative runs.
+This is an infrastructure feasibility verification, not a benchmark and not the four-candidate M1 bake-off. It uses the smallest generative candidate in the current on-disk configs to validate QLoRA, checkpoint, resume, inference, and 4,096-token execution. The notebook reads the model repo, full model revision, learning rate, and LoRA settings directly from `eval/configs/m1-b.yaml` so the smoke run cannot silently drift from that committed feasibility configuration. DAT-55 will replace the legacy candidate mapping before comparative runs.
 
 ### Important environment exception
 
@@ -475,7 +514,7 @@ Before starting Jupyter, set `HF_HOME` and `M1_SMOKE_ARTIFACT_ROOT` to lab scrat
 
 ### What the notebook verifies
 
-1. CUDA is available, the GPU has at least 20 GiB VRAM, and a real CUDA matrix operation succeeds.
+1. CUDA is available on the lab RTX 5080 Laptop (16 GB, at least 12 GiB free), and a real CUDA matrix operation succeeds.
 2. The pinned Hugging Face revision resolves exactly.
 3. Qwen3-1.7B loads in 4-bit NF4 mode with the configured `q_proj` and `v_proj` LoRA targets.
 4. Short backward training produces a finite loss.
@@ -486,14 +525,14 @@ Before starting Jupyter, set `HF_HOME` and `M1_SMOKE_ARTIFACT_ROOT` to lab scrat
 9. A separate 4,096-token forward pass succeeds.
 10. `run_manifest.json` records the repo commit, dirty state, exact model revision, package versions, hardware, timings, VRAM, checkpoint files, and pass/fail flags.
 
-Response-contract validity is recorded as a quality signal but is not an infrastructure gate because three smoke-training steps are not a meaningful quality run. The CUDA, model-load, train, checkpoint, resume, inference, and 4,096-token checks are infrastructure gates.
+Response-contract validity is recorded as a quality signal but is not an infrastructure gate because three verification-training steps are not a meaningful quality run. The CUDA, model-load, train, checkpoint, resume, inference, and 4,096-token checks are infrastructure gates.
 
 ### Ayush run procedure
 
-From a clean repository checkout on an RTX 4090 or RTX 5090:
+From a clean repository checkout on the RTX 5080 Laptop (16 GB), using `eval/configs/m1-b.yaml`:
 
 ```bash
-jupyter lab models/m1_catchup/notebooks/m1_qwen3_gpu_smoke_test.ipynb
+jupyter lab models/m1_catchup/notebooks/m1_qwen3_gpu_verification.ipynb
 ```
 
 Run every cell from top to bottom without skipping cells. If the package cell changes installed libraries, restart the kernel and run from the top. Do not manually change the candidate id, model revision, LoRA values, or 4,096-token setting in the notebook.
@@ -502,7 +541,7 @@ The default output is outside the repository under `~/.cache/multiplayer-agent-s
 
 ### Scope for later work
 
-The target DAT-55 matrix gives the CPU ranking control, ModernBERT selector, Phi-4-mini generator, and Qwen3.5-4B generator separate implementation paths. Each needs its own candidate-specific feasibility and contract tests before the full bake-off. Do not present the legacy Qwen3-1.7B smoke loss, generated text, or 4,096-token forward pass as comparative model performance.
+The target DAT-55 matrix gives the CPU ranking control, ModernBERT selector, Phi-4-mini generator, and Qwen3.5-4B generator separate implementation paths. Each needs its own candidate-specific feasibility and contract tests before the full bake-off. Do not present the legacy Qwen3-1.7B feasibility loss, generated text, or 4,096-token forward pass as comparative model performance.
 
 ## Local commands
 
@@ -522,7 +561,7 @@ cd session-service && pytest -q
 cd serving && pytest -q
 ```
 
-General training extras (on the lab GPU host): `pip install -r requirements-models.txt`. Exception: do not use that requirements file for the legacy Qwen3 GPU smoke notebook until Ayush updates its old Transformers pin; use the notebook package cell in an isolated environment instead.
+General training extras (on the lab GPU host): `pip install -r requirements-models.txt`. Exception: do not use that requirements file for the legacy Qwen3 GPU verification notebook until Ayush updates its old Transformers pin; use the notebook package cell in an isolated environment instead.
 
 ---
 
