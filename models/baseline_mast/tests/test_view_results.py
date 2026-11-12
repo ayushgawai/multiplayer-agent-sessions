@@ -159,3 +159,9 @@ def test_trace_key_llm_name_benchmark_escaped() -> None:
     assert "<b>trace_key</b>: &lt;i&gt;k&lt;/i&gt;" in page
     assert "<b>llm_name</b>: &lt;b&gt;gpt&lt;/b&gt;" in page
     assert "<b>benchmark</b>: &lt;u&gt;bench&lt;/u&gt;" in page
+
+
+def test_old_trace_text_key_is_ignored() -> None:
+    page = build_html([_rec(trace_text="SHOULD-NOT-APPEAR")], None)
+    assert "SHOULD-NOT-APPEAR" not in page
+    assert "trace text" not in page.lower()

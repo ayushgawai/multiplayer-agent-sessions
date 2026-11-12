@@ -1,0 +1,692 @@
+{
+ "qmsum_raw_train": {
+  "meetings": 162,
+  "keys": [
+   "general_query_list",
+   "meeting_transcripts",
+   "specific_query_list",
+   "topic_list"
+  ],
+  "specific": 1095,
+  "general": 162,
+  "turns": 88336,
+  "topic": 725
+ },
+ "qmsum_raw_val": {
+  "meetings": 35,
+  "keys": [
+   "general_query_list",
+   "meeting_transcripts",
+   "specific_query_list",
+   "topic_list"
+  ],
+  "specific": 237,
+  "general": 35,
+  "turns": 20123,
+  "topic": 149
+ },
+ "qmsum_raw_test": {
+  "meetings": 35,
+  "keys": [
+   "general_query_list",
+   "meeting_transcripts",
+   "specific_query_list",
+   "topic_list"
+  ],
+  "specific": 244,
+  "general": 37,
+  "turns": 20718,
+  "topic": 147
+ },
+ "qmsum_raw_sample": {
+  "topic_list": "[{\"topic\": \"Remote control prototype introduction\", \"relevant_text_span\": [[\"0\", \"53\"]]}, {\"topic\": \"Product evaluation discussion\", \"relevant_text_span\": [[\"54\", \"283\"]]}, {\"topic\": \"Product cost discussion\", \"relevant_text_span\": [[\"284\", \"459\"]]}, {\"topic\": \"Project and overall process review\", \"",
+  "general_query_list": "[{\"query\": \"Summarize the whole meeting.\", \"answer\": \"Firstly, Project Manager reviewed the overall process that the team designed the remote control that they had viewed the fashion trends and incorporated the key features. After that, User Interface introduced the prototype of remote control based",
+  "specific_query_list": "[{\"query\": \"How Did Project Manager and User Interface introduce the prototype of the remote control?\", \"answer\": \"Project Manager introduced that the prototype incorporated fashion trends that people prefer fancy looking products like fruit and vegetable. After That, User Interface presented the pr",
+  "meeting_transcripts": "[{\"speaker\": \"Project Manager\", \"content\": \"Yep . Soon as I get this . Okay . This is our last meeting . Um I'll go ahead and go through the minutes from the previous meeting . Uh and then we'll have a , the prototype presentation . {vocalsound} Um then we will um do an evaluation . Uh or we'll see "
+ },
+ "meeting_hash_overlap": {
+  "train&val": 0,
+  "train&test": 0,
+  "val&test": 0
+ },
+ "meeting_hash_unique": {
+  "train": 162,
+  "val": 35,
+  "test": 35
+ },
+ "split_train": {
+  "rows": 1257,
+  "cols": [
+   "context_spans",
+   "id",
+   "query",
+   "reference_summary"
+  ],
+  "kinds": {
+   "s": 1095,
+   "g": 162
+  },
+  "meetings": 162,
+  "ref_words_min_q1_med_q3_p95_max_mean": [
+   14,
+   47.0,
+   66,
+   90.0,
+   134.0,
+   238,
+   70.6
+  ],
+  "query_words": [
+   2,
+   8.0,
+   11,
+   15.0,
+   22.0,
+   38,
+   11.7
+  ],
+  "n_spans": [
+   1,
+   13.0,
+   29,
+   98.0,
+   587.5,
+   1832,
+   115.2
+  ],
+  "context_words": [
+   41,
+   348.0,
+   660,
+   1843.5,
+   10367.6,
+   26338,
+   2121.7
+  ],
+  "empty_query": 0,
+  "empty_ref": 0,
+  "empty_ctx": 0,
+  "dup_ids": 0
+ },
+ "split_val": {
+  "rows": 272,
+  "cols": [
+   "context_spans",
+   "id",
+   "query",
+   "reference_summary"
+  ],
+  "kinds": {
+   "s": 237,
+   "g": 35
+  },
+  "meetings": 35,
+  "ref_words_min_q1_med_q3_p95_max_mean": [
+   19,
+   50.0,
+   68.0,
+   85.8,
+   125.0,
+   188,
+   70.6
+  ],
+  "query_words": [
+   3,
+   7.0,
+   10.0,
+   15.0,
+   21.0,
+   30,
+   11.4
+  ],
+  "n_spans": [
+   1,
+   13.0,
+   30.5,
+   115.0,
+   623.6,
+   1259,
+   123.4
+  ],
+  "context_words": [
+   6,
+   342.2,
+   695.5,
+   1896.5,
+   11209.5,
+   24573,
+   2173.9
+  ],
+  "empty_query": 0,
+  "empty_ref": 0,
+  "empty_ctx": 0,
+  "dup_ids": 0
+ },
+ "split_test": {
+  "rows": 281,
+  "cols": [
+   "context_spans",
+   "id",
+   "query",
+   "reference_summary"
+  ],
+  "kinds": {
+   "s": 244,
+   "g": 37
+  },
+  "meetings": 35,
+  "ref_words_min_q1_med_q3_p95_max_mean": [
+   14,
+   43.0,
+   59,
+   81.0,
+   121.9,
+   188,
+   64.7
+  ],
+  "query_words": [
+   3,
+   7.0,
+   11,
+   15.0,
+   20.0,
+   30,
+   11.5
+  ],
+  "n_spans": [
+   1,
+   13.5,
+   33,
+   115.0,
+   677.9,
+   1368,
+   125.5
+  ],
+  "context_words": [
+   104,
+   330.0,
+   671,
+   2092.5,
+   10280.2,
+   25244,
+   2227.2
+  ],
+  "empty_query": 0,
+  "empty_ref": 0,
+  "empty_ctx": 0,
+  "dup_ids": 0
+ },
+ "id_overlap": {
+  "train&val": 0,
+  "train&test": 0,
+  "val&test": 0
+ },
+ "query_ref_pair_overlap": {
+  "train&val": 0,
+  "train&test": 0,
+  "val&test": 0
+ },
+ "ref_text_overlap": {
+  "train&val": 1,
+  "train&test": 0,
+  "val&test": 1
+ },
+ "context_hash_overlap": {
+  "train&val": 0,
+  "train&test": 0,
+  "val&test": 0
+ },
+ "split_samples": {
+  "train": {
+   "id": "qmsum_train_145_s1",
+   "query": "Did the Professor agree with Grad G on cross-lingual data?",
+   "n_spans": 17,
+   "span0": "PhD G: Yeah , and perhaps , um {disfmarker} {pause} We were thinking that perhaps the cross - language issue is not , uh , so big of a issue . Well , w w we {disfmarker} perhaps we should not focus too much on that cross - language stuff . I mean , uh , traini",
+   "reference_summary": "Grad G thought that the multi-lingual aspect of the model was not very important. The professor disagreed. He explained that the point of the project was to have something robust that could apply to many languages."
+  },
+  "val": {
+   "id": "qmsum_val_4_s0",
+   "query": "Summarize the presentations on working design, technical functions, functional requirements.",
+   "n_spans": 260,
+   "span0": "Project Manager: All hooked up . {vocalsound} Okay , so now we are here at the functional design meeting . Um {vocalsound} hopefully this meeting I'll be doing a little bit less talking than I did last time 'cause this is when you get to show us what you've be",
+   "reference_summary": "Firstly, Industrial Designer presented on working design, identifying a few basic components of the remote. From the functional design perspective, Industrial Designer introduced what exactly the components were and how they worked with each other. Next, User Interface presented on technical functions design and personally sugge"
+  },
+  "test": {
+   "id": "qmsum_test_9_s3",
+   "query": "How would the middle layer work?",
+   "n_spans": 8,
+   "span0": "Grad B: And they wouldn't look pretty . So .",
+   "reference_summary": "The values these nodes take feed into the middle layer nodes identified as hidden variables of the user/device interaction, such as whether the user is on tour, running an errand or in a hurry. These, in turn, help infer whether the user wants to see, enter or simply approach a building."
+  }
+ },
+ "manifest_sha_ok": {
+  "train": true,
+  "val": true,
+  "test": true
+ },
+ "mast_raw": {
+  "rows": 1642,
+  "top_keys": [
+   "benchmark_name",
+   "llm_name",
+   "mas_name",
+   "mast_annotation",
+   "trace",
+   "trace_id"
+  ],
+  "trace_keys": [
+   "index",
+   "key",
+   "trajectory"
+  ],
+  "ann_keys": [
+   "1.1",
+   "1.2",
+   "1.3",
+   "1.4",
+   "1.5",
+   "2.1",
+   "2.2",
+   "2.3",
+   "2.4",
+   "2.5",
+   "2.6",
+   "3.1",
+   "3.2",
+   "3.3"
+  ]
+ },
+ "mast_raw_sample": {
+  "mas_name": "AG2",
+  "llm_name": "Claude",
+  "benchmark_name": "GSM",
+  "trace_id": 190,
+  "trace": null,
+  "mast_annotation": {
+   "1.1": 0,
+   "1.2": 0,
+   "1.3": 0,
+   "1.4": 0,
+   "1.5": 0,
+   "2.1": 0,
+   "2.2": 0,
+   "2.3": 0,
+   "2.4": 0,
+   "2.5": 0,
+   "2.6": 1,
+   "3.1": 0,
+   "3.2": 1,
+   "3.3": 1
+  },
+  "trace.key": "AG2_GSM_Plus_Claude",
+  "trajectory_head": "{'content': [\"Let's use Python to solve a math problem.\", '', 'Query requirements:', \"You should always use the 'print' function for the output and use fractions/radical forms instead of decimals.\", 'You can use packages like sympy to help you.', 'You must follow the formats below to write your code"
+ },
+ "mast_raw_null_sample": [
+  {
+   "mas": "ChatDev",
+   "llm": "CodeLlama",
+   "bench": "ProgramDev-v2",
+   "trace_id": 4,
+   "key": "ChatDev_ProgramDev-v2_CodeLlama",
+   "ann": {
+    "1.1": null,
+    "1.2": null,
+    "1.3": null,
+    "1.4": null,
+    "1.5": null,
+    "2.1": null,
+    "2.2": null,
+    "2.3": null,
+    "2.4": null,
+    "2.5": null,
+    "2.6": null,
+    "3.1": null,
+    "3.2": null,
+    "3.3": null
+   }
+  }
+ ],
+ "mast_whitespace_fixed": {},
+ "mast_human": {
+  "rows": 19,
+  "keys": [
+   "annotations",
+   "benchmark_name",
+   "mas_name",
+   "round",
+   "trace",
+   "trace_id"
+  ]
+ },
+ "mast_clean": {
+  "rows": 1638,
+  "cols": 26,
+  "columns": [
+   "trace_key",
+   "trace_id",
+   "mas_name",
+   "llm_name",
+   "benchmark_name",
+   "trace_chars",
+   "n_failures",
+   "n_null_labels",
+   "failure_codes",
+   "cat_specification",
+   "cat_misalignment",
+   "cat_verification",
+   "fail_1_1",
+   "fail_1_2",
+   "fail_1_3",
+   "fail_1_4",
+   "fail_1_5",
+   "fail_2_1",
+   "fail_2_2",
+   "fail_2_3",
+   "fail_2_4",
+   "fail_2_5",
+   "fail_2_6",
+   "fail_3_1",
+   "fail_3_2",
+   "fail_3_3"
+  ]
+ },
+ "mast_clean_samples": [
+  {
+   "trace_key": "AG2_MMLU_GPT4o_Mini",
+   "trace_id": 59,
+   "mas_name": "AG2",
+   "llm_name": "GPT-4o-mini",
+   "benchmark_name": "MMLU",
+   "trace_chars": 7412,
+   "n_failures": 3,
+   "n_null_labels": 0,
+   "failure_codes": "2.2|2.6|3.2",
+   "cat_specification": 0,
+   "cat_misalignment": 2,
+   "cat_verification": 1,
+   "fail_1_1": 0,
+   "fail_1_2": 0,
+   "fail_1_3": 0,
+   "fail_1_4": 0,
+   "fail_1_5": 0,
+   "fail_2_1": 0,
+   "fail_2_2": 1,
+   "fail_2_3": 0,
+   "fail_2_4": 0,
+   "fail_2_5": 0,
+   "fail_2_6": 1,
+   "fail_3_1": 0,
+   "fail_3_2": 1,
+   "fail_3_3": 0
+  },
+  {
+   "trace_key": "ChatDev_ProgramDev2_GPT4o",
+   "trace_id": 39,
+   "mas_name": "ChatDev",
+   "llm_name": "GPT-4o",
+   "benchmark_name": "ProgramDev",
+   "trace_chars": 267208,
+   "n_failures": 5,
+   "n_null_labels": 0,
+   "failure_codes": "1.1|2.3|2.5|2.6|3.2",
+   "cat_specification": 1,
+   "cat_misalignment": 3,
+   "cat_verification": 1,
+   "fail_1_1": 1,
+   "fail_1_2": 0,
+   "fail_1_3": 0,
+   "fail_1_4": 0,
+   "fail_1_5": 0,
+   "fail_2_1": 0,
+   "fail_2_2": 0,
+   "fail_2_3": 1,
+   "fail_2_4": 0,
+   "fail_2_5": 1,
+   "fail_2_6": 1,
+   "fail_3_1": 0,
+   "fail_3_2": 1,
+   "fail_3_3": 0
+  },
+  {
+   "trace_key": "ChatDev_ProgramDev-v2_CodeLlama",
+   "trace_id": 38,
+   "mas_name": "ChatDev",
+   "llm_name": "CodeLlama",
+   "benchmark_name": "ProgramDev-v2",
+   "trace_chars": 743062,
+   "n_failures": 11,
+   "n_null_labels": 0,
+   "failure_codes": "1.1|1.3|1.4|1.5|2.1|2.2|2.3|2.5|2.6|3.2|3.3",
+   "cat_specification": 4,
+   "cat_misalignment": 5,
+   "cat_verification": 2,
+   "fail_1_1": 1,
+   "fail_1_2": 0,
+   "fail_1_3": 1,
+   "fail_1_4": 1,
+   "fail_1_5": 1,
+   "fail_2_1": 1,
+   "fail_2_2": 1,
+   "fail_2_3": 1,
+   "fail_2_4": 0,
+   "fail_2_5": 1,
+   "fail_2_6": 1,
+   "fail_3_1": 0,
+   "fail_3_2": 1,
+   "fail_3_3": 1
+  },
+  {
+   "trace_key": "ChatDev_ProgramDev_GPT4o",
+   "trace_id": 0,
+   "mas_name": "ChatDev",
+   "llm_name": "GPT-4o",
+   "benchmark_name": "ProgramDev",
+   "trace_chars": 345536,
+   "n_failures": 0,
+   "n_null_labels": 0,
+   "failure_codes": NaN,
+   "cat_specification": 0,
+   "cat_misalignment": 0,
+   "cat_verification": 0,
+   "fail_1_1": 0,
+   "fail_1_2": 0,
+   "fail_1_3": 0,
+   "fail_1_4": 0,
+   "fail_1_5": 0,
+   "fail_2_1": 0,
+   "fail_2_2": 0,
+   "fail_2_3": 0,
+   "fail_2_4": 0,
+   "fail_2_5": 0,
+   "fail_2_6": 0,
+   "fail_3_1": 0,
+   "fail_3_2": 0,
+   "fail_3_3": 0
+  }
+ ],
+ "mast_mas_name": {
+  "AG2": 597,
+  "MetaGPT": 430,
+  "ChatDev": 326,
+  "Magentic": 195,
+  "OpenManus": 30,
+  "AppWorld": 30,
+  "HyperAgent": 30
+ },
+ "mast_llm_name": {
+  "GPT-4o": 751,
+  "Claude": 323,
+  "Qwen": 200,
+  "CodeLlama": 196,
+  "GPT-4o-mini": 168
+ },
+ "mast_benchmark_name": {
+  "ProgramDev-v2": 396,
+  "ProgramDev": 390,
+  "GSM": 223,
+  "Olympiad": 206,
+  "GAIA": 195,
+  "MMLU": 168,
+  "Test-C": 30,
+  "SWE-Bench-Lite": 30
+ },
+ "mast_trace_chars": {
+  "count": 1638.0,
+  "mean": 114467.0,
+  "std": 214286.0,
+  "min": 1262.0,
+  "25%": 5248.0,
+  "50%": 9734.0,
+  "75%": 80922.0,
+  "95%": 635977.0,
+  "max": 2004123.0
+ },
+ "mast_nfail": {
+  "count": 1638.0,
+  "mean": 3.14,
+  "std": 3.02,
+  "min": 0.0,
+  "25%": 1.0,
+  "50%": 2.0,
+  "75%": 5.0,
+  "max": 14.0
+ },
+ "mast_prev": {
+  "fail_1_1": 0.3608,
+  "fail_1_2": 0.0556,
+  "fail_1_3": 0.4054,
+  "fail_1_4": 0.0714,
+  "fail_1_5": 0.2662,
+  "fail_2_1": 0.0488,
+  "fail_2_2": 0.1618,
+  "fail_2_3": 0.2155,
+  "fail_2_4": 0.0147,
+  "fail_2_5": 0.2259,
+  "fail_2_6": 0.3724,
+  "fail_3_1": 0.1673,
+  "fail_3_2": 0.3712,
+  "fail_3_3": 0.4017
+ },
+ "mast_any_fail_by_fw": {
+  "AG2": 0.479,
+  "AppWorld": 0.967,
+  "ChatDev": 0.936,
+  "HyperAgent": 0.9,
+  "Magentic": 0.785,
+  "MetaGPT": 0.949,
+  "OpenManus": 0.967
+ },
+ "mast_mean_nfail_by_fw": {
+  "AG2": 1.55,
+  "AppWorld": 3.67,
+  "ChatDev": 4.66,
+  "HyperAgent": 6.17,
+  "Magentic": 4.08,
+  "MetaGPT": 3.42,
+  "OpenManus": 4.33
+ },
+ "mast_top_corr": [
+  [
+   0.659,
+   "fail_1_3",
+   "fail_1_5"
+  ],
+  [
+   0.619,
+   "fail_1_4",
+   "fail_2_1"
+  ],
+  [
+   0.494,
+   "fail_1_1",
+   "fail_2_3"
+  ],
+  [
+   0.476,
+   "fail_2_6",
+   "fail_3_3"
+  ],
+  [
+   0.44,
+   "fail_1_2",
+   "fail_1_4"
+  ],
+  [
+   0.44,
+   "fail_1_2",
+   "fail_2_1"
+  ]
+ ],
+ "mast_low_corr": [
+  [
+   0.078,
+   "fail_1_1",
+   "fail_2_4"
+  ],
+  [
+   0.053,
+   "fail_1_2",
+   "fail_2_2"
+  ],
+  [
+   0.037,
+   "fail_1_2",
+   "fail_2_4"
+  ]
+ ],
+ "mast_corr_len_nfail": 0.535,
+ "eval_manifest_keys": {
+  "manifest_version": [
+   "str",
+   5
+  ],
+  "status": [
+   "str",
+   6
+  ],
+  "linear": [
+   "str",
+   16
+  ],
+  "owner": [
+   "str",
+   12
+  ],
+  "created_at": [
+   "str",
+   32
+  ],
+  "purpose": [
+   "str",
+   398
+  ],
+  "dataset": [
+   "dict",
+   6
+  ],
+  "taxonomy": [
+   "dict",
+   8
+  ],
+  "record_key": [
+   "dict",
+   2
+  ],
+  "reference_sources": [
+   "list",
+   2
+  ],
+  "reference_type_values": [
+   "list",
+   2
+  ],
+  "reference_type_note": [
+   "str",
+   383
+  ],
+  "see_also": [
+   "list",
+   5
+  ]
+ }
+}

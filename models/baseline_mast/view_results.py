@@ -22,7 +22,7 @@ F_BENCHMARK = "benchmark"
 F_REFERENCE_SOURCE = "reference_source"
 F_TRACE_KEY = "trace_key"
 F_LLM_NAME = "llm_name"
-F_DATASET_VERSION = "dataset_version"
+F_EVAL_MANIFEST_VERSION = "eval_manifest_version"
 F_DATASET_SHA256 = "dataset_sha256"
 F_PROMPT_VERSION = "prompt_version"
 F_PROMPT_SHA256 = "prompt_sha256"
@@ -48,7 +48,6 @@ F_SUMMARY = "summary"
 F_TASK_COMPLETED = "task_completed"
 F_WARNINGS = "warnings"
 F_LABELS_OFFICIAL = "labels_official"
-F_TRACE_TEXT = "trace_text"
 
 M_GIT_SHA = "git_sha"
 M_START = "start_time_utc"
@@ -266,8 +265,8 @@ def build_html(
     parser_version = manifest.get(F_PARSER_VERSION) or (
         records[0].get(F_PARSER_VERSION) if records else ""
     )
-    dataset_version = (
-        records[0].get(F_DATASET_VERSION) if records else ""
+    eval_manifest_version = manifest.get(F_EVAL_MANIFEST_VERSION) or (
+        records[0].get(F_EVAL_MANIFEST_VERSION) if records else ""
     )
 
     status_rows = "".join(
@@ -335,12 +334,6 @@ def build_html(
                 indent=2,
             )
         )
-        trace_block = ""
-        if rec.get(F_TRACE_TEXT):
-            trace_block = (
-                "<details><summary>trace text</summary>"
-                f"<pre>{_esc(rec.get(F_TRACE_TEXT))}</pre></details>"
-            )
         detail = f"""
 <details>
 <summary>detail {_esc(trace_id)}</summary>
@@ -360,7 +353,6 @@ def build_html(
 <div><b>predicted labels</b><pre>{pred_json}</pre></div>
 <div><b>raw_response</b><pre>{_esc(rec.get(F_RAW_RESPONSE))}</pre></div>
 <div><b>parsed fields</b><pre>{parsed_json}</pre></div>
-{trace_block}
 </details>
 """
         body_rows.append(
@@ -391,7 +383,7 @@ def build_html(
 <div><b>model_id</b><br/>{_esc(model_id)}</div>
 <div><b>prompt</b><br/>{_esc(prompt_version)} {_esc(sha12)}</div>
 <div><b>parser_version</b><br/>{_esc(parser_version)}</div>
-<div><b>dataset_version</b><br/>{_esc(dataset_version)}</div>
+<div><b>eval_manifest_version</b><br/>{_esc(eval_manifest_version)}</div>
 <div><b>records</b><br/>{_esc(len(records))}</div>
 <div><b>traces with disagreement</b><br/>{_esc(n_dis)}</div>
 </div>

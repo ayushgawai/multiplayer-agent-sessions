@@ -38,6 +38,7 @@ tmp/
 data/mast/**
 !data/mast/README.md
 !data/mast/STATS.md
+!data/mast/EDA_SUMMARY.json
 !data/mast/DATA_DICTIONARY.md
 !data/mast/TAXONOMY.md
 !data/mast/AUDIT_REPORT.md
@@ -57,3 +58,4 @@ mlruns/
 # Generated locally but openapi.json is committed intentionally
 *.log
 .cache/
+/warehouse/

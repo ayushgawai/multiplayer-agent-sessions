@@ -106,7 +106,7 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 
 ## Current status (update on pull / after each feature)
 
-**Last updated:** 2026-10-22 (Ayush)
+**Last updated:** 2026-11-11 (Naman)
 
 - Session service on `main`: durable event log (SQLAlchemy; SQLite in CI, Postgres in Compose) and Redis or in-process fan-out (ADR-002). OpenAPI routes unchanged.
 - React 18 client, CRDT server, and presence on `main` (DAT-15, DAT-16, DAT-17 / PRs #12, #13, #14).
@@ -134,13 +134,20 @@ When you finish a feature, add one bullet here under your name and bump **Last u
 ### Naman
 - On `main`: DAT-28 download and checksums, DAT-29 dictionary and taxonomy, DAT-30 eval manifest.
 - Done on `main`: QMSum download (DAT-11, 232 meetings, 1,810 query pairs in `data/qmsum/STATS.md`, splits frozen in `data/splits/m1_v1/`).
+- DAT-54 (MAST-17, PR #21): `eda_mast.py` keeps null labels null, keys records by (`trace.key`, `trace_id`), excludes the 4 fully-null records (1,642 raw, 1,638 scorable), and writes the committed `data/mast/EDA_SUMMARY.json`. Tests in `data/tests/test_eda_mast.py`.
+- DAT-53 (M1-02, PR #22, merged as `fbb3fdf`): deterministic M1 smoke dataset in `data/m1_smoke/` (18 synthetic examples, 12 sessions, splits `train`, `dev`, `smoke_holdout`, disjoint by `session_id`) with an event-based `M1SmokeExample` (`m1-smoke-v1`), loader, and tests. Reproduce: `python data/scripts/make_m1_smoke.py --seed 13 --out data/m1_smoke/fixtures`. Smoke fixtures only, never an evaluation split, and there is no split named test. The session-service `CatchupExample` is unchanged. Review decisions: the rollback scenario is the post-rollback log the live service would hold (events after `to_seq` deleted, sequences gap-free); the third split was renamed from test to `smoke_holdout`; the class was renamed from `CatchupExample` to `M1SmokeExample`. Contract alignment: `to_m1_input` and `gold_reference` validate against the DAT-55 `m1-input-v1`/`m1-output-v1` models in `eval/contracts/m1.py` (PR #20, on `main`); the compat test now runs.
+- Constraint on the real M1 session dataset (`m1_session_v1`, the product-session data): it must use scenarios different from the `m1-smoke-v1` templates, because Manav's M1-A baseline rules were fitted on the smoke templates. Reusing them would leak. No Linear issue for it exists yet as of 2026-11-11.
+- Design constraints for the real M1 session dataset (`m1_session_v1`), from Manav's M1-A fitting notes (PR #26): [data/m1_session/DESIGN_CONSTRAINTS.md](data/m1_session/DESIGN_CONSTRAINTS.md). No Linear issue exists for that dataset yet.
 - Still open: six scenario briefs (DAT-21), team sign-off (DAT-22).
 
 ### Manav
-- On `main`: judge prompt `mast-judge-v1`, parser `mast-parser-v1.1`, result viewer, M3 configs `m3-a` through `m3-d`, serving stub label `escalate` (DAT-40, PR #11).
-- On `main`: client scaffold (DAT-15, PR #12), Yjs editor and crdt-server (DAT-16), presence (DAT-17). Browser-tested with up to three participants.
-- ADR-003 (DAT-52): merged to `main` with runner owner review changes incorporated (PR #16).
-- Next: M1-03 extractive CPU baseline (DAT-58, due Nov 4); location of M1-A code to be agreed with the M1 and evaluation owners first.
+- On `main`: MAST judge prompt `mast-judge-v1`, parser `mast-parser-v1.1` and result viewer (DAT-31 to DAT-33), M3 configs `m3-a` to `m3-d` (DAT-40), serving stub label `escalate` (PR #11), and ADR-003 prediction record (DAT-52, first version `19a115c`, review changes `48d1bb9`).
+- On `main`, client (DAT-15, PR #12): Vite 5, React 18 and strict TypeScript; API types generated from the session-service OpenAPI; mock or real backend through `VITE_USE_MOCK`; lobby to create or join a session; live event list (stream with periodic reconcile, polling fallback); instruction box; rollback panel; timestamps without a zone read as UTC. 41 Vitest tests.
+- On `main`, CRDT editor (DAT-16): TipTap 2.8 editor bound to a shared Yjs document through `crdt-server` (y-websocket at `ws://localhost:1234/crdt/{session_id}`); a bridge posts one debounced `doc_update` event (800 ms) to the session-service log; observers can read but not edit. 4 crdt-server convergence tests.
+- On `main`, presence (DAT-17): presence bar and collaboration cursors from Yjs awareness; each display name maps to a stable colour from a fixed palette, so it survives a rejoin. Browser-tested with up to three participants.
+- Not integrated: the client does not call or display any model output. `catchup_summary` from join is not rendered (the mock returns null), and there is no M1 or M3 UI while `serving/adapters/m1.py` to `m4.py` are stubs.
+- In review: M1-A BM25 extractive baseline (DAT-58, draft PR #26). It stays draft until #20 (DAT-55), #22 (DAT-53) and #25 (DAT-61) land; then main is merged into the branch so the PR holds only the BM25 code and tests, and the evaluation owner completes the contract review. The real evaluator and reportable metric run are handled separately. Removal of the optional `trace_text` field from the result viewer is in PR #28.
+- Next: M1 catch-up panel in the client once the M1 contract (#25) and M1 serving land; end-to-end wiring with the session service, agent runtime and serving; demo script and deck under `docs/slides/` with the environment owner.
 
 ### Shriram
 - On `main`: resumable MAST batch and run provenance (DAT-34/35, PR #5). Notes in `docs/verification/dat-34-dat-35-batch-execution.md`.
@@ -360,7 +367,7 @@ python data/scripts/download_mast.py
 python data/scripts/eda_mast.py
 ```
 
-Success line: `QUALITY GATE: all checks passed`. The cleaner keeps all 1,642 rows. Null annotation cells become 0 in that demo script. That coercion is for the EDA quality gate. The judge parser does not do the same thing. Runbook: `docs/demo1-data-pipeline.md`.
+Success line: `QUALITY GATE: all checks passed`. The cleaner reports 1,642 raw records and scores 1,638. The 4 fully-null records are excluded, and null labels stay null (never 0) in the EDA script and in the judge parser. Runbook: `docs/demo1-data-pipeline.md`.
 
 ## Requirements worth quoting
 
@@ -451,7 +458,7 @@ Schema, integration, sessions, frozen splits, study, defence.
 - That the MAST judge has been reproduced to 0.94, 0.80, or 0.77.
 - That the client or the LangGraph runtime is on `main`. They are open pull requests.
 - That the 1,642 MAST labels are human labels. They are LLM-judge labels. The human file has 19 rows.
-- That null labels in the judge parser become 0. Only the EDA script does that.
+- That null labels become 0 anywhere. The EDA script (since DAT-54) and the judge parser both leave them null. The 4 fully-null records are excluded from scoring.
 - A paid cloud GPU price, or a specific lab GPU model, unless the workbook on the table says it.
 - That synthetic data is in any test split.
 
@@ -477,9 +484,9 @@ The success line is `QUALITY GATE: all checks passed`.
 | Flatten | `stage3_preprocess` | writes `data/mast/processed/mast_clean_summary.csv` |
 | Gate and EDA | `stage4_quality` | same file |
 
-Cleaning keeps all 1,642 rows. 56 null label cells become 0. Zero rows dropped on the pinned file. `trace_id` is not unique (206 distinct values; composite key 1,552 of 1,642), so the id is `row_id`. Preprocessing adds `fail_1_1` through `fail_3_3`, `failure_codes`, and three category counts. The gate checks count, unique `row_id`, schema, binary labels, the taxonomy file, and 19 human rows.
+Cleaning reports 1,642 raw records and 1,638 scorable. The 56 null label cells (4 records x 14 codes) stay null and those 4 records are excluded. `trace_id` is not unique (206 distinct values), so the record key is (`trace.key`, `trace_id`), unique over all 1,642. `row_id` is gone. Preprocessing adds `trace_key`, `fail_1_1` through `fail_3_3` (null is an empty cell), `n_null_labels`, `failure_codes`, and three category counts. The gate checks raw, scorable and excluded counts against `eval_manifest.json`, key uniqueness, schema, label domain (0, 1, null), the taxonomy file, and 19 human rows. A deterministic summary is committed at `data/mast/EDA_SUMMARY.json`.
 
-EDA on that file: 1,237 traces (75.3%) have at least one failure. Top positive labels are 1.3 (664), 3.3 (658), 2.6 (610). Trace length min 1,262, median 9,746, max 2,004,123 characters. This null-to-zero step is only in `stage2_clean`. `parse_judge_response` in `models/baseline_mast/parse_judge.py` leaves missing codes null.
+EDA on the 1,638 scorable records: 1,237 traces (75.5%) have at least one failure. Top positive labels are 1.3 (664), 3.3 (658), 2.6 (610). Trace length min 1,262, median 9,739, max 2,004,123 characters. `parse_judge_response` in `models/baseline_mast/parse_judge.py` also leaves missing codes null.
 
 There is no train split and no augmentation in this demo. QMSum is still DAT-11.
 
@@ -489,7 +496,7 @@ Do **not** budget paid cloud GPU for 298A unless the GPU lab is unavailable.
 
 | Resource | Detail | Cost |
 |----------|--------|------|
-| GPU lab | University NVIDIA RTX 4090/5090 pool for final candidates; the prior feasibility run used an RTX 5080 Laptop, 16 GB. | $0 |
+| GPU lab | University GPU lab for final candidates; the prior feasibility run used an RTX 5080 Laptop, 16 GB. | $0 |
 | LLM APIs | OpenRouter and/or OpenAI / Anthropic / Kiro CLI as needed for MAST judge and prompted arms | pay-as-you-go; keep receipts; no fixed $100–$250 commitment |
 
 Workbook section 2.3 should say training runs in the GPU lab at $0, not invented cloud GPU spend. Colab is fallback only if the GPU lab is unavailable.

@@ -1,0 +1,13 @@
+{"summary": "One run on the real data takes about 6 seconds and all 19 quality checks pass; the transcript of two consecutive runs and the report is committed as `infra/warehouse/SAMPLE_RUN.md`. Table 19 lists the tables it produces.",
+ "tables": [
+ ["raw", "mast_traces", "1,642", "10", "One row per landed MAST record: key, framework, model, benchmark, trajectory length and preview, raw labels, source digest, load time"],
+ ["raw", "qmsum_examples", "1,810", "10", "One row per example per split, as landed"],
+ ["staging", "mast_traces_clean", "1,638", "7", "Validated traces; the 4 all-null records excluded"],
+ ["staging", "mast_labels_long", "22,932", "4", "One row per trace per failure code (1,638 x 14)"],
+ ["staging", "qmsum_examples_clean", "1,810", "9", "Trimmed text with word counts"],
+ ["marts", "fact_trace", "1,638", "11", "Trace facts with keys to the four dimensions, failure and category counts"],
+ ["marts", "fact_trace_failure", "5,141", "2", "One row per positive label"],
+ ["marts", "fact_m1_example", "1,810", "7", "Split, span count, query, reference and context word counts"],
+ ["marts", "dim_failure_mode, dim_framework, dim_llm, dim_benchmark", "14, 7, 5, 8", "3, 2, 2, 2", "Dimensions of the star schema"],
+ ["meta", "quality_checks", "19 per run", "6", "Check name, expected, actual, passed"],
+ ["meta", "pipeline_runs", "4 per run", "10", "Stage, start, finish, duration, rows in and out, status, git commit, error"]]}
