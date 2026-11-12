@@ -1,0 +1,53 @@
+{
+  "contract": "m1-smoke-v1",
+  "converts_to": [
+    "m1-input-v1",
+    "m1-output-v1"
+  ],
+  "generator": {
+    "command": "python data/scripts/make_m1_smoke.py --seed 13 --out data/m1_smoke/fixtures",
+    "script": "data/scripts/make_m1_smoke.py"
+  },
+  "purpose": "smoke fixtures for pipeline validation; never an M1 evaluation split",
+  "seed": 13,
+  "split_policy": "by session_id",
+  "splits": {
+    "dev": {
+      "bytes": 12623,
+      "count": 3,
+      "file": "dev.jsonl",
+      "sessions": [
+        "smoke-s04",
+        "smoke-s11"
+      ],
+      "sha256": "0d898c2612fb39402981943988480dbd1ec1f4b59ddcd67678b427646f9d9253"
+    },
+    "smoke_holdout": {
+      "bytes": 11968,
+      "count": 3,
+      "file": "smoke_holdout.jsonl",
+      "sessions": [
+        "smoke-s05",
+        "smoke-s06"
+      ],
+      "sha256": "e63d7df37b10a39d68aeab0c494b22cada628508eb802d9a5b1673ce2d301174"
+    },
+    "train": {
+      "bytes": 49732,
+      "count": 12,
+      "file": "train.jsonl",
+      "sessions": [
+        "smoke-s01",
+        "smoke-s02",
+        "smoke-s03",
+        "smoke-s07",
+        "smoke-s08",
+        "smoke-s09",
+        "smoke-s10",
+        "smoke-s12"
+      ],
+      "sha256": "9528085da810fcb259a153cf8bed1b68d45d2bcc5c7701acd8b6656b0740b609"
+    }
+  },
+  "task": "m1_catchup_smoke"
+}
