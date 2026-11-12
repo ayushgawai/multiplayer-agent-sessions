@@ -386,23 +386,55 @@ def _predict_and_validate(
     prepared: PreparedCandidate,
     examples: Sequence[M1EvaluationExample],
     config: M1CandidateConfig,
-) -> list[PredictionRecord]:
+    *,
+    smoke: bool,
+    timer: Callable[[], float],
+) -> tuple[list[PredictionRecord], list[float]]:
+    """Predict every example once, timing each call, and validate each output.
+
+    Latency is the distribution over all evaluated examples, so p95 reflects the long-context tail
+    rather than one repeated input. A few untimed warm-up calls run first. A candidate exception on
+    an example is recorded as an invalid prediction for that example, not as a run failure; its
+    call is still timed, because the caller waited for it.
+    """
+
+    warmups = min(1 if smoke else 10, len(examples))
+    for example in examples[:warmups]:
+        try:
+            prepared.predict(example.model_input)
+        except Exception:  # the timed pass records the same failure per example
+            pass
+
     predictions: list[PredictionRecord] = []
+    latency_ms: list[float] = []
     for example in examples:
-        raw = prepared.predict(example.model_input)
-        output = dict(raw) if isinstance(raw, Mapping) else {"_raw_repr": repr(raw)}
+        raised: Exception | None = None
+        started = timer()
+        try:
+            raw = prepared.predict(example.model_input)
+        except Exception as exc:  # any candidate error is an invalid output
+            raised = exc
+        latency_ms.append(
+            _safe_json_number((timer() - started) * 1000.0, name="latency sample")
+        )
         valid = True
         error: str | None = None
-        try:
-            parsed = M1Output.model_validate(output)
-            if parsed.candidate_id != config.candidate_id:
-                raise ValueError(
-                    f"output candidate_id {parsed.candidate_id!r} does not match {config.candidate_id!r}"
-                )
-            validate_m1_pair(example.model_input, parsed)
-        except ValueError as exc:
+        if raised is not None:
+            output: dict[str, Any] = {"_exception": type(raised).__name__}
             valid = False
-            error = str(exc)
+            error = f"candidate raised {type(raised).__name__}: {raised}"
+        else:
+            output = dict(raw) if isinstance(raw, Mapping) else {"_raw_repr": repr(raw)}
+            try:
+                parsed = M1Output.model_validate(output)
+                if parsed.candidate_id != config.candidate_id:
+                    raise ValueError(
+                        f"output candidate_id {parsed.candidate_id!r} does not match {config.candidate_id!r}"
+                    )
+                validate_m1_pair(example.model_input, parsed)
+            except ValueError as exc:
+                valid = False
+                error = str(exc)
         predictions.append(
             PredictionRecord(
                 example_id=example.model_input.example_id,
@@ -411,27 +443,7 @@ def _predict_and_validate(
                 validation_error=error,
             )
         )
-    return predictions
-
-
-def _measure_latency(
-    prepared: PreparedCandidate,
-    example: M1EvaluationExample,
-    *,
-    smoke: bool,
-    timer: Callable[[], float],
-) -> list[float]:
-    warmups = 1 if smoke else 10
-    measured = 3 if smoke else 100
-    for _ in range(warmups):
-        prepared.predict(example.model_input)
-    samples: list[float] = []
-    for _ in range(measured):
-        started = timer()
-        prepared.predict(example.model_input)
-        elapsed_ms = (timer() - started) * 1000.0
-        samples.append(_safe_json_number(elapsed_ms, name="latency sample"))
-    return samples
+    return predictions, latency_ms
 
 
 def run_seed(
@@ -465,8 +477,9 @@ def run_seed(
             raise HarnessError("runner hardware must not be blank")
         examples = _validate_examples(prepared.examples, smoke=smoke, max_examples=max_examples)
         example_ids_sha, examples_sha = _example_hashes(examples)
-        latency = _measure_latency(prepared, examples[0], smoke=smoke, timer=timer)
-        predictions = _predict_and_validate(prepared, examples, config)
+        predictions, latency = _predict_and_validate(
+            prepared, examples, config, smoke=smoke, timer=timer
+        )
         summary = evaluator(examples, predictions, config, seed)
         if not isinstance(summary, EvaluationSummary):
             summary = EvaluationSummary.model_validate(summary)
