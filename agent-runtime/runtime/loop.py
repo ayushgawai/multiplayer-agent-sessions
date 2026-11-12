@@ -26,7 +26,7 @@ plan from killing the run.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from langgraph.graph import END, START, StateGraph
 
@@ -322,14 +322,22 @@ class AgentLoop:
             "answer": None,
             "halted_reason": None,
         }
-        # recursion_limit guards the graph itself; the step cap is the real
-        # bound, so give LangGraph enough room to reach it and halt cleanly.
-        config = {"recursion_limit": self.max_steps * 4 + 10}
         # The recorder outlives the run, so mark where this run starts and
         # return only its own slice. Returning the whole recorder would put
         # another session's events in this run's audit.
         first_event = len(self.sink.events)
-        final: AgentState = self.graph.invoke(initial, config=config)
+        # recursion_limit guards the graph itself; the step cap is the real
+        # bound, so give LangGraph enough room to reach it and halt cleanly.
+        # The dict is inline because RunnableConfig is a TypedDict: through a
+        # variable it would widen to dict[str, int] and no longer match.
+        # invoke is typed as returning Any, so the cast is where we assert the
+        # graph returns the state we gave it.
+        final = cast(
+            AgentState,
+            self.graph.invoke(
+                initial, config={"recursion_limit": self.max_steps * 4 + 10}
+            ),
+        )
         final["events"] = list(self.sink.events[first_event:])
         return final
 
