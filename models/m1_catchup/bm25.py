@@ -29,6 +29,13 @@ synthetic template text. ``smoke_holdout`` was never used for tuning. The rules 
 not be changed after looking at ``session_test`` or any other evaluation split. Each
 claim cites exactly one source event, so a critical fact whose evidence spans two
 events can be covered only partially. This is a known limit of the extractive design.
+
+"m1-a rules v1" includes three changes made on contract review, before the rules
+were frozen. Claims are the full whitespace-collapsed event text with no truncation,
+because cutting a claim can drop a qualifier or a negation and leave it unsupported
+by its own event. The pause rule applies to agent steps only, so an interrupt or an
+arbitration is always a decision. A tool result that reports an error or failure is
+never in progress.
 """
 
 from __future__ import annotations
@@ -68,7 +75,6 @@ from eval.run_contract import (
 CANDIDATE_ID = "m1-a"
 OUTPUT_VERSION = "m1-output-v1"
 MAX_CLAIMS_PER_CATEGORY = 3
-MAX_CLAIM_CHARS = 240
 BM25_K1 = 1.5
 BM25_B = 0.75
 
@@ -169,13 +175,17 @@ class CategoryRule:
 
     ``patterns`` are matched against the event text. If ``pattern_event_types``
     is set, the patterns apply only to those event types. Events whose type is in
-    ``always_event_types`` match the category whatever their text says.
+    ``always_event_types`` match the category whatever their text says. Events
+    whose type is in ``error_exempt_event_types`` and whose text matches
+    ``ERROR_REPORT_PATTERNS`` never match through ``patterns``.
     """
 
     category: str
     patterns: tuple[re.Pattern[str], ...]
     pattern_event_types: frozenset[str] | None = None
     always_event_types: frozenset[str] = frozenset()
+    # Events of these types whose text reports an error or failure never match.
+    error_exempt_event_types: frozenset[str] = frozenset()
 
 
 # Event types that never yield a claim.
@@ -188,7 +198,10 @@ FIXED_EVENT_TYPE_CATEGORY: dict[str, str] = {"rollback": "completed"}
 
 # Text that marks a pause, not a state worth reporting (train: "Pausing dark mode
 # as requested. Token mapping is saved at 2 of 5.", which would read as progress).
+# The rule applies to agent steps only, which is where that example comes from. An
+# interrupt or an arbitration is always a decision, whatever words its text uses.
 NO_CLAIM_PATTERNS = _patterns(r"\bpaus(?:ed|ing)\b")
+NO_CLAIM_PATTERN_EVENT_TYPES = frozenset({"agent_step"})
 
 BLOCKED_PATTERNS = _patterns(
     r"\bblocked\b",
@@ -238,6 +251,15 @@ PENDING_ACTION_PATTERNS = _patterns(
 # write tests" is neutral in train and dev, so it must not match ", please".
 PENDING_ACTION_EVENT_TYPES = frozenset({"instruction"})
 
+# A failed tool call is not work in progress (for example a tool result
+# "Error: permission denied writing to prod." would match "writing").
+ERROR_REPORT_PATTERNS = _patterns(
+    r"\berror\b",
+    r"\bfail(?:ed|ure|ures|s)?\b",
+    r"\btimed out\b",
+)
+IN_PROGRESS_ERROR_EXEMPT_EVENT_TYPES = frozenset({"tool_result"})
+
 IN_PROGRESS_PATTERNS = _patterns(
     r"\bin progress\b",
     r"\brunning\b",
@@ -280,7 +302,11 @@ CATEGORY_RULES: tuple[CategoryRule, ...] = (
         PENDING_ACTION_PATTERNS,
         pattern_event_types=PENDING_ACTION_EVENT_TYPES,
     ),
-    CategoryRule("in_progress", IN_PROGRESS_PATTERNS),
+    CategoryRule(
+        "in_progress",
+        IN_PROGRESS_PATTERNS,
+        error_exempt_event_types=IN_PROGRESS_ERROR_EXEMPT_EVENT_TYPES,
+    ),
     CategoryRule(
         "completed", COMPLETED_PATTERNS, always_event_types=COMPLETED_EVENT_TYPES
     ),
@@ -315,13 +341,19 @@ def classify_event(event: M1Event) -> str | None:
     if fixed is not None:
         return fixed
     text = event.text
-    if any(pattern.search(text) for pattern in NO_CLAIM_PATTERNS):
+    if event.event_type in NO_CLAIM_PATTERN_EVENT_TYPES and any(
+        pattern.search(text) for pattern in NO_CLAIM_PATTERNS
+    ):
         return None
     for rule in CATEGORY_RULES:
         if event.event_type in rule.always_event_types:
             return rule.category
         restricted = rule.pattern_event_types
         if restricted is not None and event.event_type not in restricted:
+            continue
+        if event.event_type in rule.error_exempt_event_types and any(
+            pattern.search(text) for pattern in ERROR_REPORT_PATTERNS
+        ):
             continue
         if any(pattern.search(text) for pattern in rule.patterns):
             return rule.category
@@ -335,19 +367,6 @@ def classify_event(event: M1Event) -> str | None:
 
 def collapse_whitespace(text: str) -> str:
     return " ".join(text.split())
-
-
-def truncate_at_word(text: str, limit: int = MAX_CLAIM_CHARS) -> str:
-    """Cut to at most ``limit`` characters at a word boundary when possible."""
-
-    if len(text) <= limit:
-        return text
-    cut = text[:limit]
-    if text[limit] != " ":
-        boundary = cut.rfind(" ")
-        if boundary > 0:
-            cut = cut[:boundary]
-    return cut.rstrip()
 
 
 def normalize_claim_text(text: str) -> str:
@@ -376,7 +395,7 @@ def predict(model_input: M1Input) -> dict[str, Any]:
             candidates[category].append(position)
 
     claim_texts = {
-        position: truncate_at_word(collapse_whitespace(event.text))
+        position: collapse_whitespace(event.text)
         for position, event in enumerate(events)
     }
     seen: set[str] = set()

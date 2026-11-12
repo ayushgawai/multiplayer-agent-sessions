@@ -21,7 +21,6 @@ from eval.contracts.m1 import (
 from eval.run_contract import M1EvaluationExample, RunnerRequest
 from models.m1_catchup import bm25
 from models.m1_catchup.bm25 import (
-    MAX_CLAIM_CHARS,
     MAX_CLAIMS_PER_CATEGORY,
     BM25Index,
     build_eval_runner,
@@ -30,7 +29,6 @@ from models.m1_catchup.bm25 import (
     normalize_claim_text,
     predict,
     tokenize,
-    truncate_at_word,
 )
 
 FIXTURES = Path(__file__).resolve().parents[3] / "data" / "m1_smoke" / "fixtures"
@@ -167,6 +165,42 @@ def test_neutral_events_have_no_category() -> None:
     assert classify_event(paused) is None
 
 
+def test_pause_wording_does_not_override_always_decision_event_types() -> None:
+    interrupt = event(
+        "e1", 1, "interrupt", "Stop. Pausing the migration until legal signs off."
+    )
+    arbitration = event("e2", 2, "arbitration", "Paused proposal B; proposal A wins.")
+    assert classify_event(interrupt) == "decisions"
+    assert classify_event(arbitration) == "decisions"
+
+
+def test_a_pause_by_an_agent_step_still_yields_no_claim() -> None:
+    text = "Pausing dark mode as requested. Token mapping is saved at 2 of 5."
+    assert classify_event(event("e1", 1, "agent_step", text)) is None
+
+
+def test_a_tool_error_is_not_work_in_progress() -> None:
+    error = event("e1", 1, "tool_result", "Error: permission denied writing to prod.")
+    failed = event("e2", 2, "tool_result", "Write failed: writing to disk timed out.")
+    assert classify_event(error) != "in_progress"
+    assert classify_event(failed) != "in_progress"
+    assert classify_event(error) is None
+    assert classify_event(failed) is None
+
+
+def test_existing_in_progress_cases_keep_their_category() -> None:
+    writing_text = (
+        "Writing 9 tests for pdf_export: empty input, unicode text, and large payloads."
+    )
+    writing = event("e1", 1, "agent_step", writing_text)
+    progress_text = "Running the soak test, 27 of 100 runs done."
+    progress = event("e2", 2, "tool_result", progress_text)
+    mixed = event("e3", 3, "tool_result", "4 passed, 1 failed: one test timed out.")
+    assert classify_event(writing) == "in_progress"
+    assert classify_event(progress) == "in_progress"
+    assert classify_event(mixed) is None
+
+
 def test_priority_order_blocked_beats_completed() -> None:
     text = "The export is blocked, although the parser is done."
     assert classify_event(event("e1", 1, "agent_step", text)) == "blocked"
@@ -220,8 +254,7 @@ def test_predict_output_is_valid_and_extractive(
             assert len(claim["source_event_ids"]) == 1
             event_id = claim["source_event_ids"][0]
             assert event_id in texts
-            assert claim["text"] == truncate_at_word(texts[event_id])
-            assert len(claim["text"]) <= MAX_CLAIM_CHARS
+            assert claim["text"] == texts[event_id]
             assert sequence[event_id] > previous
             previous = sequence[event_id]
             cited.append(event_id)
@@ -242,7 +275,7 @@ def test_claims_cover_every_category_on_the_fixtures() -> None:
     assert seen == set(M1_CATEGORIES)
 
 
-# --- predict: extraction, ranking and truncation -----------------------------
+# --- predict: extraction and ranking -----------------------------------------
 
 
 def test_claim_text_is_whitespace_collapsed_event_text() -> None:
@@ -253,19 +286,27 @@ def test_claim_text_is_whitespace_collapsed_event_text() -> None:
     ]
 
 
-def test_long_text_is_truncated_at_a_word_boundary() -> None:
+def test_long_text_is_emitted_in_full() -> None:
     long_text = " ".join(["segment"] * 100)
+    assert len(long_text) > 240
     output = predict(make_input([event("e1", 1, "doc_update", long_text)]))
     claim_text = output["completed"][0]["text"]
-    assert len(claim_text) <= MAX_CLAIM_CHARS
-    assert collapse_whitespace(long_text).startswith(claim_text)
-    assert claim_text.endswith("segment")
-    assert not claim_text.endswith(" ")
+    assert claim_text == collapse_whitespace(long_text)
+    assert len(claim_text) > 240
 
 
-def test_truncation_without_spaces_cuts_at_the_limit() -> None:
-    assert truncate_at_word("x" * 500) == "x" * MAX_CLAIM_CHARS
-    assert truncate_at_word("short text") == "short text"
+def test_a_trailing_qualifier_is_never_cut_from_a_claim() -> None:
+    long_text = (
+        "We will ship the billing page on Friday and notify the support team and "
+        "the partner accounts about the new invoice layout, the updated tax lines, "
+        "the renamed export columns, the changed refund wording and the new "
+        "reminder emails, but only if legal does not object."
+    )
+    assert len(long_text) > 240
+    output = predict(make_input([event("e1", 1, "instruction", long_text)]))
+    claims = parsed_claims(output, "pending_actions")
+    assert [c["text"] for c in claims] == [collapse_whitespace(long_text)]
+    assert str(claims[0]["text"]).endswith("only if legal does not object.")
 
 
 def test_at_most_three_claims_ranked_by_bm25_then_later_sequence() -> None:
@@ -345,7 +386,7 @@ def test_a_skipped_duplicate_does_not_use_up_a_slot() -> None:
     assert [c["source_event_ids"] for c in claims] == [["e3"], ["e4"], ["e5"]]
 
 
-def test_texts_that_truncate_to_the_same_claim_are_deduplicated() -> None:
+def test_long_texts_with_a_shared_prefix_are_distinct_claims() -> None:
     prefix = " ".join(["segment"] * 60)
     events = [
         event("e1", 1, "doc_update", prefix + " alpha ending"),
@@ -353,8 +394,20 @@ def test_texts_that_truncate_to_the_same_claim_are_deduplicated() -> None:
     ]
     output = predict(make_input(events))
     claims = parsed_claims(output, "completed")
-    assert len(claims) == 1
-    assert len(str(claims[0]["text"])) <= MAX_CLAIM_CHARS
+    assert [c["text"] for c in claims] == [
+        collapse_whitespace(prefix + " alpha ending"),
+        collapse_whitespace(prefix + " beta ending"),
+    ]
+
+
+def test_identical_long_texts_are_still_deduplicated() -> None:
+    prefix = " ".join(["segment"] * 60)
+    events = [
+        event("e1", 1, "doc_update", prefix + " ending"),
+        event("e2", 2, "doc_update", prefix.upper() + "   ending"),
+    ]
+    output = predict(make_input(events))
+    assert len(parsed_claims(output, "completed")) == 1
 
 
 @pytest.mark.parametrize(
@@ -391,7 +444,7 @@ def test_predict_code_never_names_gold_fields() -> None:
         predict,
         classify_event,
         tokenize,
-        truncate_at_word,
+        collapse_whitespace,
         BM25Index.scores,
         BM25Index.__init__,
     ):
