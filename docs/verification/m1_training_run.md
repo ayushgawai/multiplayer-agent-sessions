@@ -43,5 +43,5 @@ This document records the exact configuration, training dynamics, loss values, a
 * **Local Checkpoints:** `checkpoints/m1-b/final-50/` (`adapter_model.safetensors`, `adapter_config.json`)
 * **Training Code:** `models/m1_catchup/train.py`
 * **Feasibility Notebook:** `models/m1_catchup/notebooks/m1_qwen3_gpu_verification.ipynb`
-* **Configuration:** `eval/configs/m1-b.yaml`
+* **Executed Configuration:** originally `eval/configs/m1-b.yaml`; preserved after DAT-55 at `models/m1_catchup/feasibility/qwen3-1.7b.yaml`
 * **Dataset Splits:** `data/splits/m1_v1/`
