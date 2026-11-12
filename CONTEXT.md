@@ -83,7 +83,7 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 | Frozen eval manifest | Naman (DAT-30, PR #4) | Done on `main`: `data/mast/eval_manifest.json` |
 | QMSum download + STATS.md | Ayush / Naman (DAT-11) | Done on `main`: `data/qmsum/STATS.md`, frozen splits in `data/splits/m1_v1/` |
 | MAST classification metrics | Pramod (DAT-37, PR #3) | Done on `main`: `eval/metrics/classification.py`. Convention `mast_binary_label_cells_v1` is provisional until checked against the paper. |
-| Harness runs one candidate end to end | Pramod (DAT-61) | Done on `main`: PR #25 (merge `fe188b9`). Gates apply per seed (ADR-005); results record runner and evaluator identity and the verified split manifest. M1-A runs end to end on it. Two follow-ups (latency over all examples, candidate exceptions as invalid outputs) are in a separate PR and must land before a reportable run. |
+| Harness runs one candidate end to end | Pramod (DAT-61) | Done on `main`: PR #25 (merge `fe188b9`). Gates apply per seed (ADR-005); results record runner and evaluator identity and the verified split manifest. M1-A runs end to end on it. Follow-ups on `main` via PR #41: latency over all examples, candidate exceptions as invalid outputs. |
 | M3 configs `m3-a`…`m3-d` | Manav (DAT-40, PR #10) | Done on `main` |
 | M2 / M4 configs | Naman, Shriram | Not started |
 | MAST judge prompt / parser / viewer | Manav (DAT-31/32/33, PRs #7 #8 #9) | Done on `main` under `models/baseline_mast/` |
@@ -122,13 +122,13 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 - Source-to-warehouse pipeline demo on `main`: `infra/warehouse/pipeline.py` (DuckDB, 19 quality checks, run history; PR #33). Why no AWS or Airflow yet: `docs/reports/T4-TA-aws-airflow-justification.md`.
 - CI now runs agent-runtime and warehouse tests; lock refreshed; checkpoint utility accepts remote URIs (PR #32).
 - **No model is trained and no model result exists.** M1 candidate code for m1-b, m1-c, m1-d is on branch `m1-candidate-train-infer` (no PR yet). On the lab GPU: m1-b (ModernBERT) passed a 40-step feasibility smoke; m1-c (Phi-4-mini) failed after 2 of 15 steps at about 5 min per step, not diagnosed; m1-d (Qwen3.5-4B) not run.
-- M1 harness and comparison on `main` (DAT-61 / PR #25, merge `fe188b9`).
-- **Not on `main` yet:** the DAT-61 harness follow-ups (latency over all examples, exceptions as invalid outputs), BM25 m1-a (PR #26), M2/M4 configs, any product session (`data/sessions/raw/` is empty).
+- Shared M1 evaluation harness on `main` (DAT-61 / PR #25, merge `fe188b9`, per-seed gates; follow-ups in PR #41: latency timed over every evaluated example, candidate exceptions counted as invalid outputs). No reportable candidate run yet; M1-A has run through it on the smoke split only.
+- **Not on `main` yet:** BM25 m1-a (PR #26, evaluation contract review in progress), M2/M4 configs, any product session (`data/sessions/raw/` is empty).
 
-**Open PRs:** DAT-61 harness follow-ups (Pramod; needed before a reportable run), #26 DAT-58 BM25 (ready for the evaluation contract review), #15 DAT-56 (changes requested).
+**Open PRs:** #26 DAT-58 BM25 (evaluation contract review in progress), #15 DAT-56 (changes requested).
 
 **Pick up here next time (in order):**
-1. Review and merge #26 and the DAT-61 harness follow-ups. #25 (the harness) is merged; a reportable run still needs the follow-ups, the reviewed metric evaluator, and the session split.
+1. Finish the contract review of #26 and merge it; wire the m1-b/c/d runners into the merged harness. A reportable run still needs the reviewed metric evaluator and the session split.
 2. Record and annotate product sessions; freeze `data/splits/m1_session_v1/`. ADR-005 blocks choosing an M1 winner until then.
 3. Diagnose the m1-c GPU smoke (probably memory at 4,096 tokens on 16 GB), run m1-d, write `docs/verification/m1_candidate_feasibility.md`, open the M1 PR.
 4. Run the MAST judge (DAT-25, DAT-26, DAT-27).
@@ -178,8 +178,8 @@ When you finish a feature, add one bullet here under your name and bump **Last u
   runner and evaluator that ran and the verified split manifest; compare refuses test-double
   results, mixed evaluators, and candidates that evaluated different examples, and only
   `session_test` can select. It does not contain model results or declare a winner.
-- In review: DAT-61 follow-ups (latency timed over all evaluated examples; a candidate exception
-  counts as an invalid output). Needed before a reportable run.
+- On `main`: DAT-61 follow-ups (PR #41): latency is timed over all evaluated examples, and a
+  candidate exception counts as an invalid output instead of aborting the seed.
 - Still open: published comparison (DAT-38, due 5 Nov), error analysis (DAT-39, due 11 Nov), dataset screenshot (DAT-12), locking the ROUGE call (DAT-13).
 
 ---

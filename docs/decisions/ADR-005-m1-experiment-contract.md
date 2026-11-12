@@ -1,6 +1,6 @@
 # ADR-005: Freeze the M1 experiment and candidate-selection contract
 
-- Status: Proposed (implementation complete; independent review pending)
+- Status: Accepted (reviewed and merged in PR #20, 2026-11-11)
 - Date: 2026-10-22
 - Owner: M1 contract owner. Reviewer: independent evaluation or model owner
 
