@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import importlib
+import inspect
 import json
 import math
 import statistics
@@ -38,11 +39,13 @@ from eval.run_contract import (  # noqa: E402
     M1EvaluationExample,
     M1ExperimentContract,
     MetricSummary,
+    PluginIdentity,
     PredictionRecord,
     PreparedCandidate,
     RunnerFactory,
     RunnerRequest,
     SeedRunResult,
+    is_test_plugin,
 )
 from eval.seeding import set_all_seeds  # noqa: E402
 
@@ -56,6 +59,8 @@ DEFAULT_RUNNERS = {
     "m1-c": "models.m1_catchup.phi_qlora:build_eval_runner",
     "m1-d": "models.m1_catchup.qwen_qlora:build_eval_runner",
 }
+# Which MANIFEST.json split entry holds the examples evaluated for each reportable split.
+MANIFEST_SPLIT_KEYS = {"qmsum_test": "test", "session_test": "test"}
 T = TypeVar("T")
 
 
@@ -147,6 +152,25 @@ def load_evaluator(spec: str) -> Evaluator:
     return cast(Evaluator, evaluator)
 
 
+def plugin_identity(plugin: object, *, role: str) -> PluginIdentity:
+    """Identify the callable that actually ran, by module:qualname and module source hash."""
+
+    module = inspect.getmodule(plugin)
+    qualname = getattr(plugin, "__qualname__", None)
+    if module is None or not qualname:
+        raise HarnessError(f"{role} plugin must be a named module-level callable")
+    try:
+        source_file = inspect.getsourcefile(module)
+    except TypeError:
+        source_file = None
+    if source_file is None or not Path(source_file).is_file():
+        raise HarnessError(f"{role} plugin module {module.__name__!r} has no source file to hash")
+    return PluginIdentity(
+        spec=f"{module.__name__}:{qualname}",
+        module_sha256=hashlib.sha256(Path(source_file).read_bytes()).hexdigest(),
+    )
+
+
 def _git(*args: str) -> str:
     completed = subprocess.run(
         ["git", *args],
@@ -182,6 +206,63 @@ def require_clean_tracked_dataset(dataset_path: Path) -> None:
     dirty = _git("status", "--porcelain", "--", relative.as_posix())
     if dirty:
         raise HarnessError(f"reportable dataset has uncommitted changes:\n{dirty}")
+
+
+def require_clean_tracked_code() -> None:
+    """Reject reportable runs whose tracked evaluation or candidate code differs from git_sha."""
+
+    dirty = _git("status", "--porcelain", "--untracked-files=no", "--", "eval", "models")
+    if dirty:
+        raise HarnessError(
+            "reportable runs require committed eval/ and models/ code; uncommitted changes:\n" + dirty
+        )
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def verify_split_manifest(dataset_path: Path, split_key: str) -> tuple[str, int]:
+    """Check every split file against MANIFEST.json and return (manifest sha256, split count).
+
+    Each entry under ``splits`` must give ``sha256`` and ``count``; ``bytes`` is checked when
+    present. The file is ``entry["file"]`` when given, otherwise ``<split name>.jsonl``.
+    """
+
+    manifest_path = dataset_path / "MANIFEST.json"
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise HarnessError(f"cannot read dataset manifest {manifest_path}: {exc}") from exc
+    splits = manifest.get("splits") if isinstance(manifest, dict) else None
+    if not isinstance(splits, dict) or not splits:
+        raise HarnessError(f"dataset manifest has no splits: {manifest_path}")
+    if split_key not in splits:
+        raise HarnessError(f"dataset manifest has no {split_key!r} split: {manifest_path}")
+    for name, entry in splits.items():
+        if not isinstance(entry, dict) or "sha256" not in entry or "count" not in entry:
+            raise HarnessError(f"manifest split {name!r} must record sha256 and count")
+        split_file = dataset_path / str(entry.get("file", f"{name}.jsonl"))
+        if not split_file.is_file():
+            raise HarnessError(f"manifest split file is missing: {split_file}")
+        if "bytes" in entry and split_file.stat().st_size != entry["bytes"]:
+            raise HarnessError(f"split file size does not match MANIFEST.json: {split_file}")
+        if _sha256_file(split_file) != entry["sha256"]:
+            raise HarnessError(f"split file sha256 does not match MANIFEST.json: {split_file}")
+        with split_file.open("rb") as stream:
+            rows = sum(1 for line in stream if line.strip())
+        if rows != entry["count"]:
+            raise HarnessError(
+                f"split file {split_file} has {rows} rows; MANIFEST.json records {entry['count']}"
+            )
+    count = splits[split_key]["count"]
+    if not isinstance(count, int) or count <= 0:
+        raise HarnessError(f"manifest split {split_key!r} count must be a positive integer")
+    return _sha256_file(manifest_path), count
 
 
 def dataset_path_for_split(config: M1CandidateConfig, contract: M1ExperimentContract, split: str) -> Path:
@@ -286,6 +367,21 @@ def _validate_examples(
     return selected
 
 
+def _example_hashes(examples: Sequence[M1EvaluationExample]) -> tuple[str, str]:
+    """Return (sha256 of sorted example ids, sha256 of the canonical example content)."""
+
+    ordered = sorted(examples, key=lambda example: example.model_input.example_id)
+    ids = "\n".join(example.model_input.example_id for example in ordered)
+    content = "\n".join(
+        json.dumps(example.model_dump(mode="json"), sort_keys=True, separators=(",", ":"))
+        for example in ordered
+    )
+    return (
+        hashlib.sha256(ids.encode("utf-8")).hexdigest(),
+        hashlib.sha256(content.encode("utf-8")).hexdigest(),
+    )
+
+
 def _predict_and_validate(
     prepared: PreparedCandidate,
     examples: Sequence[M1EvaluationExample],
@@ -368,6 +464,7 @@ def run_seed(
         if not prepared.hardware.strip():
             raise HarnessError("runner hardware must not be blank")
         examples = _validate_examples(prepared.examples, smoke=smoke, max_examples=max_examples)
+        example_ids_sha, examples_sha = _example_hashes(examples)
         latency = _measure_latency(prepared, examples[0], smoke=smoke, timer=timer)
         predictions = _predict_and_validate(prepared, examples, config)
         summary = evaluator(examples, predictions, config, seed)
@@ -410,6 +507,8 @@ def run_seed(
         prediction_path = (
             output_dir / "predictions" / split / config.candidate_id / f"seed-{seed}.jsonl"
         )
+        if not smoke and prediction_path.exists():
+            raise HarnessError(f"refusing to overwrite reportable predictions: {prediction_path}")
         prediction_sha = _write_predictions(prediction_path, predictions)
         elapsed_min = max(0.0, (timer() - started) / 60.0)
         try:
@@ -420,6 +519,8 @@ def run_seed(
             SeedRunResult(
                 seed=seed,
                 attempted_examples=len(predictions),
+                example_ids_sha256=example_ids_sha,
+                examples_sha256=examples_sha,
                 valid_outputs=valid_outputs,
                 metrics=metrics,
                 failures=failures,
@@ -478,8 +579,24 @@ def run_candidate(
         raise HarnessError(f"{config.candidate_id} schemas do not match the experiment contract")
     if set(config.metrics) != set(contract.metrics):
         raise HarnessError(f"{config.candidate_id} metrics do not match the experiment contract")
-    if enforce_clean_split and not smoke:
-        require_clean_tracked_dataset(dataset_path)
+    runner_identity = plugin_identity(runner_factory, role="runner")
+    evaluator_identity = plugin_identity(evaluator, role="evaluator")
+    manifest_sha: str | None = None
+    manifest_count: int | None = None
+    if not smoke:
+        for role, identity in (("runner", runner_identity), ("evaluator", evaluator_identity)):
+            if is_test_plugin(identity.spec):
+                raise HarnessError(
+                    f"reportable runs cannot use a test {role} plugin: {identity.spec}"
+                )
+        if split not in MANIFEST_SPLIT_KEYS:
+            raise HarnessError(f"split {split!r} cannot produce a reportable result")
+        if enforce_clean_split:
+            require_clean_tracked_dataset(dataset_path)
+            require_clean_tracked_code()
+        manifest_sha, manifest_count = verify_split_manifest(
+            dataset_path, MANIFEST_SPLIT_KEYS[split]
+        )
 
     runs: list[SeedRunResult] = []
     dataset_versions: list[str] = []
@@ -500,6 +617,8 @@ def run_candidate(
         dataset_versions.append(dataset_version)
     if len(set(dataset_versions)) != 1:
         raise HarnessError("runner changed dataset_version across seeds")
+    if manifest_count is not None:
+        check_reportable_examples(runs, manifest_count)
 
     failures = {
         code: sum(run.failures[code] for run in runs) for code in config.failure_codes
@@ -516,6 +635,10 @@ def run_candidate(
         split=split,
         split_path=_portable_path(dataset_path),
         dataset_version=dataset_versions[0],
+        dataset_manifest_sha256=manifest_sha,
+        manifest_example_count=manifest_count,
+        runner=runner_identity,
+        evaluator=evaluator_identity,
         git_sha=git_sha(),
         model_repo=config.model.repo,
         model_revision=config.model.revision,
@@ -528,6 +651,19 @@ def run_candidate(
         peak_vram_mb=max(run.peak_vram_mb for run in runs),
         wall_clock_min=sum(run.wall_clock_min for run in runs),
     )
+
+
+def check_reportable_examples(runs: Sequence[SeedRunResult], manifest_count: int) -> None:
+    """Every seed must evaluate the whole manifest split, and the same examples."""
+
+    for run in runs:
+        if run.attempted_examples != manifest_count:
+            raise HarnessError(
+                f"seed {run.seed} evaluated {run.attempted_examples} examples; "
+                f"the manifest split has {manifest_count}"
+            )
+    if len({(run.example_ids_sha256, run.examples_sha256) for run in runs}) != 1:
+        raise HarnessError("seeds evaluated different examples")
 
 
 def _parse_seeds(raw: str | None, contract: M1ExperimentContract, smoke: bool) -> list[int]:
@@ -603,6 +739,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     evaluator = load_evaluator(args.evaluator)
     seeds = _parse_seeds(args.seeds, contract, smoke)
     args.output_dir.mkdir(parents=True, exist_ok=True)
+
+    for config, _ in loaded:
+        result_path = args.output_dir / f"{config.candidate_id}-{split}.json"
+        if not smoke and result_path.exists():
+            raise HarnessError(f"refusing to overwrite reportable result: {result_path}")
 
     for config, config_path in loaded:
         dataset_path = dataset_path_for_split(config, contract, split)

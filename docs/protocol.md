@@ -12,13 +12,25 @@ change those decisions.
 - strictly validates the experiment and candidate YAML files;
 - sets Python, NumPy, and (when installed) PyTorch seeds;
 - requires all frozen seeds `13, 29, 47` for a reportable run;
-- rejects a dirty, untracked, missing, or manifest-less reportable dataset;
+- rejects a dirty, untracked, missing, or manifest-less reportable dataset, and tracked uncommitted
+  changes under `eval/` or `models/`, so `git_sha` describes the code that ran;
+- verifies every split file named in the dataset `MANIFEST.json` (sha256, row count, and byte size
+  when recorded) before a reportable run, and requires each seed to evaluate exactly the manifest's
+  `test` split row count;
+- refuses runner or evaluator plugins from a `tests` package (for example
+  `eval.tests.fake_m1_plugin`) for reportable runs;
+- refuses to overwrite an existing reportable result or prediction file;
 - rejects approved memory during candidate selection;
 - validates every prediction against `m1-output-v1` and its input evidence ids;
 - measures latency after warm-up and records peak VRAM reported by the runner;
 - writes deterministic-key-order result JSON and prediction JSONL with checksums;
 - records the git SHA, config digest, pinned model revision, dataset version, hardware, failures,
-  runtime, and per-seed metrics.
+  runtime, and per-seed metrics;
+- records the runner and evaluator that actually ran (`module:qualname` plus the sha256 of the
+  module source), the dataset manifest sha256 and split row count, and for every seed the sha256
+  of the sorted example ids and of the canonical example content.
+
+Result files use schema `candidate-result-v2`.
 
 Smoke runs are explicitly marked `smoke_non_reportable`. They cannot be accepted by
 `eval/compare.py` or used to select a candidate.
@@ -73,7 +85,8 @@ never be used for a bake-off.
 
 ## Commands
 
-Run a CPU-only orchestration smoke test for one candidate:
+Run a CPU-only orchestration smoke test for one candidate (smoke runs may use the test double; a
+reportable run with it is refused):
 
 ```bash
 python -m eval.harness \
@@ -108,9 +121,20 @@ python -m eval.compare \
   --out docs/tables/m1_bakeoff.md
 ```
 
-`eval/compare.py` refuses incomplete or mixed artifacts, applies the frozen safety gates, and ranks
-only eligible candidates. It labels the leading result as provisional. The final winner still
-requires the frozen blinded human review of the top two eligible candidates.
+`eval/compare.py` refuses incomplete or mixed artifacts. In addition to the contract version, task,
+split, seeds, and metric set, all four results must agree on the split path, dataset version,
+dataset manifest sha256, manifest row count, and evaluator identity (spec and module hash); every
+candidate and seed must have evaluated the same example ids and content, and the full manifest row
+count. A result produced by a runner or evaluator from a `tests` package is refused.
+
+It then applies the frozen safety gates per seed and ranks only eligible candidates, keeping any
+candidate within a metric's margin of the stage best (with a 1e-9 float tolerance). It labels the
+leading result as provisional. The final winner still requires the frozen blinded human review of
+the top two eligible candidates.
+
+Only `session_test` can select a candidate. `--split qmsum_test` produces a diagnostic table with
+no eligibility decision, no rank, and no leader, because ADR-005 forbids QMSum from selecting the
+product winner.
 
 ## Required verification before a reportable run
 

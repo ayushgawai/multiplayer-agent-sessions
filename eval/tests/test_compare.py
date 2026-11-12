@@ -10,11 +10,12 @@ from typing import Literal
 import pytest
 
 from eval.compare import assess_eligibility, compare, rank_eligible
-from eval.harness import HarnessError, load_contract
+from eval.harness import DEFAULT_RUNNERS, HarnessError, load_contract
 from eval.run_contract import (
     CandidateResult,
     M1ExperimentContract,
     MetricSummary,
+    PluginIdentity,
     SeedRunResult,
 )
 
@@ -35,6 +36,11 @@ METRICS = {
 
 CandidateId = Literal["m1-a", "m1-b", "m1-c", "m1-d"]
 CANDIDATE_IDS: tuple[CandidateId, ...] = ("m1-a", "m1-b", "m1-c", "m1-d")
+EXAMPLES = 10
+IDS_SHA = "1" * 64
+CONTENT_SHA = "2" * 64
+EVALUATOR = PluginIdentity(spec="eval.m1_evaluator:evaluate", module_sha256="e" * 64)
+FAKE_RUNNER = "eval.tests.fake_m1_plugin:build_eval_runner"
 
 
 def _result(
@@ -49,8 +55,10 @@ def _result(
     runs = [
         SeedRunResult(
             seed=seed,
-            attempted_examples=10,
-            valid_outputs=10,
+            attempted_examples=EXAMPLES,
+            example_ids_sha256=IDS_SHA,
+            examples_sha256=CONTENT_SHA,
+            valid_outputs=EXAMPLES,
             metrics={name: series[index] for name, series in seed_values.items()},
             failures={
                 "invalid_schema": 0,
@@ -80,6 +88,10 @@ def _result(
         split="session_test",
         split_path="data/splits/m1_session_v1",
         dataset_version="dataset-v1",
+        dataset_manifest_sha256="f" * 64,
+        manifest_example_count=EXAMPLES,
+        runner=PluginIdentity(spec=DEFAULT_RUNNERS[candidate_id], module_sha256="9" * 64),
+        evaluator=EVALUATOR,
         git_sha="b" * 40,
         model_repo=None if candidate_id == "m1-a" else "example/model",
         model_revision=None if candidate_id == "m1-a" else "c" * 40,
@@ -101,13 +113,33 @@ def _result(
     )
 
 
-def _write_results(results_dir: Path, results: list[CandidateResult]) -> None:
+def _write_results(
+    results_dir: Path, results: list[CandidateResult], split: str = "session_test"
+) -> None:
     results_dir.mkdir()
     for result in results:
-        path = results_dir / f"{result.candidate_id}-session_test.json"
-        path.write_text(
-            json.dumps(result.model_dump(mode="json"), sort_keys=True), encoding="utf-8"
-        )
+        payload = result.model_dump(mode="json")
+        payload["split"] = split
+        path = results_dir / f"{result.candidate_id}-{split}.json"
+        path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+
+
+def _edit_result(results_dir: Path, candidate_id: str, edit: object, split: str = "session_test") -> None:
+    """Apply ``edit(payload)`` to one written result file, as a tampered or mixed artifact would."""
+
+    path = results_dir / f"{candidate_id}-{split}.json"
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    edit(payload)  # type: ignore[operator]
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+
+def _compare(tmp_path: Path, results_dir: Path, split: str = "session_test") -> str:
+    return compare(
+        results_dir=results_dir,
+        split=split,
+        contract_path=Path("eval/configs/m1-contract.yaml"),
+        output_path=tmp_path / "out.md",
+    )
 
 
 def test_compare_applies_safety_gates_and_keeps_human_confirmation(tmp_path: Path) -> None:
@@ -259,3 +291,112 @@ def test_contract_rejects_tie_margins_that_do_not_match_ranked_metrics() -> None
 
     with pytest.raises(ValueError, match="quality_tie_margins must match rank_eligible_by"):
         M1ExperimentContract.model_validate(payload)
+
+
+def test_compare_rejects_results_produced_by_the_test_double(tmp_path: Path) -> None:
+    results = [
+        _result(candidate_id).model_copy(
+            update={"runner": PluginIdentity(spec=FAKE_RUNNER, module_sha256="9" * 64)}
+        )
+        for candidate_id in CANDIDATE_IDS
+    ]
+    results_dir = tmp_path / "results"
+    _write_results(results_dir, results)
+
+    with pytest.raises(HarnessError, match="produced by a test runner plugin"):
+        _compare(tmp_path, results_dir)
+
+
+def test_compare_rejects_a_test_evaluator(tmp_path: Path) -> None:
+    fake = {"spec": "eval.tests.fake_m1_plugin:evaluate", "module_sha256": "e" * 64}
+    results_dir = tmp_path / "results"
+    _write_results(results_dir, [_result(candidate_id) for candidate_id in CANDIDATE_IDS])
+    for candidate_id in CANDIDATE_IDS:
+        _edit_result(results_dir, candidate_id, lambda payload: payload.update(evaluator=fake))
+
+    with pytest.raises(HarnessError, match="produced by a test evaluator plugin"):
+        _compare(tmp_path, results_dir)
+
+
+@pytest.mark.parametrize("field", ["spec", "module_sha256"])
+def test_compare_rejects_mixed_evaluators(tmp_path: Path, field: str) -> None:
+    other = {"spec": "eval.other_evaluator:evaluate", "module_sha256": "d" * 64}
+    results_dir = tmp_path / "results"
+    _write_results(results_dir, [_result(candidate_id) for candidate_id in CANDIDATE_IDS])
+    _edit_result(results_dir, "m1-c", lambda payload: payload["evaluator"].update({field: other[field]}))
+
+    with pytest.raises(HarnessError, match="disagree on evaluator"):
+        _compare(tmp_path, results_dir)
+
+
+def test_qmsum_comparison_is_diagnostic_and_names_no_leader(tmp_path: Path) -> None:
+    results_dir = tmp_path / "results"
+    _write_results(
+        results_dir,
+        [
+            _result("m1-a", critical_fact_recall=0.70),
+            _result("m1-b", critical_fact_recall=0.90),
+            _result("m1-c"),
+            _result("m1-d"),
+        ],
+        split="qmsum_test",
+    )
+
+    markdown = _compare(tmp_path, results_dir, split="qmsum_test")
+
+    assert "This is not a selection result" in markdown
+    assert "leader" not in markdown
+    assert "provisional rank" not in markdown
+    assert "diagnostic only" in markdown
+
+
+def test_compare_rejects_a_candidate_that_evaluated_fewer_examples(tmp_path: Path) -> None:
+    results_dir = tmp_path / "results"
+    _write_results(results_dir, [_result(candidate_id) for candidate_id in CANDIDATE_IDS])
+
+    def evaluate_subset(payload: dict[str, object]) -> None:
+        for run in payload["runs"]:  # type: ignore[attr-defined]
+            run["attempted_examples"] = EXAMPLES - 1
+            run["valid_outputs"] = EXAMPLES - 1
+
+    _edit_result(results_dir, "m1-b", evaluate_subset)
+
+    with pytest.raises(HarnessError, match="evaluated 9 examples; the manifest split has 10"):
+        _compare(tmp_path, results_dir)
+
+
+def test_compare_rejects_a_candidate_with_different_example_ids(tmp_path: Path) -> None:
+    results_dir = tmp_path / "results"
+    _write_results(results_dir, [_result(candidate_id) for candidate_id in CANDIDATE_IDS])
+    _edit_result(
+        results_dir, "m1-d", lambda payload: payload["runs"][1].update(example_ids_sha256="3" * 64)
+    )
+
+    with pytest.raises(HarnessError, match="evaluated different examples"):
+        _compare(tmp_path, results_dir)
+
+
+def test_compare_rejects_mixed_dataset_manifests(tmp_path: Path) -> None:
+    results_dir = tmp_path / "results"
+    _write_results(results_dir, [_result(candidate_id) for candidate_id in CANDIDATE_IDS])
+    _edit_result(results_dir, "m1-a", lambda payload: payload.update(dataset_manifest_sha256="0" * 64))
+
+    with pytest.raises(HarnessError, match="disagree on dataset_manifest_sha256"):
+        _compare(tmp_path, results_dir)
+
+
+def test_candidate_exactly_at_the_tie_margin_is_retained() -> None:
+    contract = load_contract()
+    # 0.80 - 0.79 is slightly above 0.01 in floating point; m1-c must still tie with m1-b
+    # on recall, and then win on BERTScore-F1.
+    results = [
+        _result("m1-a", critical_fact_recall=0.50),
+        _result("m1-b", critical_fact_recall=0.80, bertscore_f1=0.90),
+        _result("m1-c", critical_fact_recall=0.79, bertscore_f1=0.95),
+        _result("m1-d", critical_fact_recall=0.50),
+    ]
+    assert 0.80 - 0.79 > 0.01
+
+    ranked = rank_eligible(assess_eligibility(results, contract), contract)
+
+    assert ranked[0].result.candidate_id == "m1-c"

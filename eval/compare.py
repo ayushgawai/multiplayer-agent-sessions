@@ -26,7 +26,12 @@ from eval.run_contract import (  # noqa: E402
     CandidateResult,
     M1ExperimentContract,
     MetricSummary,
+    is_test_plugin,
 )
+
+# Absolute slack on tie margins, so a value exactly at the margin is not dropped by float error
+# (for example 0.80 - 0.79 is slightly above 0.01 in binary floating point).
+TIE_TOLERANCE = 1e-9
 
 
 @dataclass(frozen=True)
@@ -96,12 +101,39 @@ def validate_result_set(
         for name, summary in result.metrics.items():
             _validate_metric_summary(result.candidate_id, name, summary, len(contract.seeds))
 
-    shared_fields = ("split_path", "dataset_version")
+    for result in results:
+        for role, identity in (("runner", result.runner), ("evaluator", result.evaluator)):
+            if is_test_plugin(identity.spec):
+                raise HarnessError(
+                    f"{result.candidate_id} was produced by a test {role} plugin: {identity.spec}"
+                )
+        if result.dataset_manifest_sha256 is None or result.manifest_example_count is None:
+            raise HarnessError(f"{result.candidate_id} has no verified dataset manifest")
+        for run in result.runs:
+            if run.attempted_examples != result.manifest_example_count:
+                raise HarnessError(
+                    f"{result.candidate_id} seed {run.seed} evaluated {run.attempted_examples} "
+                    f"examples; the manifest split has {result.manifest_example_count}"
+                )
+
+    shared_fields = (
+        "split_path",
+        "dataset_version",
+        "dataset_manifest_sha256",
+        "manifest_example_count",
+        "evaluator",
+    )
     reference = results[0]
     for result in results[1:]:
         for field in shared_fields:
             if getattr(result, field) != getattr(reference, field):
                 raise HarnessError(f"mixed result set: candidates disagree on {field}")
+
+    example_sets = {
+        (run.example_ids_sha256, run.examples_sha256) for result in results for run in result.runs
+    }
+    if len(example_sets) != 1:
+        raise HarnessError("mixed result set: candidates or seeds evaluated different examples")
 
 
 def _validate_metric_summary(
@@ -190,14 +222,14 @@ def rank_eligible(
             return [
                 candidate
                 for candidate, value in zip(candidates, values, strict=True)
-                if stage_best - value <= margin
+                if stage_best - value <= margin + TIE_TOLERANCE
             ]
         if direction == "minimize":
             stage_best = min(values)
             return [
                 candidate
                 for candidate, value in zip(candidates, values, strict=True)
-                if value - stage_best <= margin
+                if value - stage_best <= margin + TIE_TOLERANCE
             ]
         raise HarnessError(f"metric {metric} has invalid direction {direction!r}")
 
@@ -231,6 +263,8 @@ def render_markdown(
     ranked: Sequence[CandidateAssessment],
     contract: M1ExperimentContract,
     split: str,
+    *,
+    selection: bool = True,
 ) -> str:
     rank_by = list(contract.selection.rank_eligible_by)
     tie_breaks = list(contract.selection.tie_break_by)
@@ -249,14 +283,15 @@ def render_markdown(
     rows = [f"| {' | '.join(columns)} |", f"| {' | '.join(['---'] * len(columns))} |"]
     for assessment in assessments:
         result = assessment.result
-        decision = (
-            f"provisional rank {rank[result.candidate_id]}"
-            if assessment.eligible
-            else "; ".join(assessment.reasons)
-        )
+        if not selection:
+            decision = "diagnostic only"
+        elif assessment.eligible:
+            decision = f"provisional rank {rank[result.candidate_id]}"
+        else:
+            decision = "; ".join(assessment.reasons)
         values = [
             result.candidate_id,
-            "yes" if assessment.eligible else "no",
+            ("yes" if assessment.eligible else "no") if selection else "n/a",
             *(_format_metric(_mean(result, metric)) for metric in rank_by),
             _format_metric(_mean(result, "schema_valid_rate")),
             _format_metric(_mean(result, "unsupported_claim_rate")),
@@ -267,7 +302,13 @@ def render_markdown(
         ]
         rows.append(f"| {' | '.join(values)} |")
 
-    if ranked:
+    if not selection:
+        conclusion = (
+            f"Diagnostic comparison on `{split}`. This is not a selection result: the frozen "
+            f"contract selects the M1 winner only on "
+            f"`{contract.split['candidate_selection_split']}`, so no candidate is ranked here."
+        )
+    elif ranked:
         leader = ranked[0].result.candidate_id
         conclusion = (
             f"Provisional machine-ranked leader: **{leader}**. This is not the final winner. "
@@ -299,9 +340,10 @@ def compare(
     contract = load_contract(contract_path)
     results = load_results(results_dir, split)
     validate_result_set(results, contract, split)
+    selection = split == contract.split["candidate_selection_split"]
     assessments = assess_eligibility(results, contract)
-    ranked = rank_eligible(assessments, contract)
-    markdown = render_markdown(assessments, ranked, contract, split)
+    ranked = rank_eligible(assessments, contract) if selection else []
+    markdown = render_markdown(assessments, ranked, contract, split, selection=selection)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(markdown, encoding="utf-8", newline="\n")
     return markdown
