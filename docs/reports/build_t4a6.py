@@ -53,7 +53,10 @@ def runs(p, text, size=None, bold=False, italic=False, mono=False):
 
 
 def H(text, level):
-    return d.add_heading(text, level)
+    h = d.add_heading(text, level)
+    # Keeps a heading from being stranded alone at the foot of a page.
+    h.paragraph_format.keep_with_next = True
+    return h
 
 
 def B(items):
@@ -146,6 +149,20 @@ def T(headers, rows, widths, caption=None, size=9, mono_cols=(), number=True):
     return t
 
 
+def CODE(lines, size=7.5):
+    """Verbatim console output. Not passed through runs(), so backticks stay literal."""
+    for i, ln in enumerate(lines):
+        p = d.add_paragraph()
+        p.alignment = L
+        p.paragraph_format.space_after = Pt(0)
+        p.paragraph_format.space_before = Pt(4 if i == 0 else 0)
+        p.paragraph_format.line_spacing = 1.0
+        r = p.add_run(ln or " ")
+        r.font.name = "Consolas"
+        r._r.get_or_add_rPr().rFonts.set(qn("w:eastAsia"), "Consolas")
+        r.font.size = Pt(size)
+
+
 def F(name, caption, width=6.5):
     N["f"] += 1
     p = d.add_paragraph()
@@ -161,7 +178,7 @@ P("DATA 298A MSDA Project I", C, 16, bold=True, after=2)
 P("Workbook 2", C, 14, bold=True, after=6)
 P("Multiplayer Agents: A Shared Live Session Layer for Human-Agent Collaboration", C, bold=True, after=6)
 P("Team 4. Ayush Gawai, Naman Vipul Chheda, Manav Patel, Shriram Dundigalla, Pramod Satya Dindukurthi. "
-  "Section 21, Topic 4. Advisor: Prof. Simon Shim. November 11, 2026", C, after=6)
+  "Section 21, Topic 4. Advisor: Prof. Simon Shim. November 12, 2026", C, after=6)
 T(["Team member", "Sections written"],
   [["Ayush Gawai", "4.1, 4.2, 4.3"],
    ["Naman Vipul Chheda", "3.1, 3.2, 3.3"],
@@ -182,7 +199,7 @@ P("This workbook is report sections 3 and 4. Sections 1 and 2 are not rewritten;
 H("3. Data Engineering", 1)
 H("3.1 Data Process", 2)
 P("The project uses three data sources, and each one answers a different question. MAST-Data [3] is the corpus "
-  "of the published baseline we reproduce: it tells us whether our evaluation tooling can recover a published "
+  "of the published baseline selected for reproduction: it tells us whether our evaluation tooling can recover a published "
   "number. QMSum [2] is supervision for Model 1 only: it teaches query-focused summarisation of multi-party "
   "discussion. The product-session corpus, recorded on our own platform, is the only source that contains the "
   "task we actually care about, and it is the source that selects a winner for every model. The three paths are "
@@ -227,7 +244,7 @@ if WH:
 # ------------------------------------------------------------------ 3.2
 H("3.2 Data Collection", 2)
 P("Table 20 lists the raw sources with their parameters and quantities. Both public sources are sufficient for "
-  "their purpose in DATA 298A: the MAST release is the complete corpus used in the paper we reproduce, so there "
+  "their purpose in DATA 298A: the MAST release is the complete corpus used in the paper selected for reproduction, so there "
   "is no larger set to collect, and the QMSum release is the complete benchmark. The source that is not yet "
   "sufficient is our own, and section 3.6 says so plainly.")
 T(["Source", "Origin and pinned revision", "Quantity retrieved", "Parameters (fields)", "Licence", "Role"],
@@ -490,7 +507,7 @@ T(["Gap", "Evidence", "Who it would disadvantage if the system were deployed", "
     "MAST is the baseline and a taxonomy source, not training data for Models 2 to 4."],
    ["The human-labelled MAST file has 19 traces, and only 4 of them use the current 14-code taxonomy, so the human comparison rests on 4 traces (56 label cells).",
     "`eval_manifest.json`.",
-    "Anyone reading a reproduced agreement figure as precise.",
+    "Anyone reading an agreement figure from that comparison as precise.",
     "Report sample size and a 95% confidence interval beside every value."],
    ["No product sessions are recorded yet; the first ones will come from the five team members.",
     "`data/sessions/raw/` is empty on 11 Nov 2026.",
@@ -501,21 +518,28 @@ T(["Gap", "Evidence", "Who it would disadvantage if the system were deployed", "
 # ================================================================== 4
 H("4. Model Development", 1)
 H("4.1 Model Proposals", 2)
-P("The project proposes four learned models, each of which removes one coordination cost identified in section "
-  "2.2.1, and reproduces one published baseline that is deliberately not one of the four. Table 35 lists them. "
-  "Model 1 is built in DATA 298A and Models 2 to 4 in DATA 298B.")
+P("The project evaluates five systems: four product models and one independent published baseline system. The "
+  "four product models are M1 to M4, and each removes one coordination cost identified in section 2.2.1. The "
+  "fifth system is the published MAST LLM-as-a-Judge of Cemri et al. [3], selected for reproduction as an "
+  "external point of comparison. It is a separate system, not a fifth product model, and it is deliberately "
+  "not one of M1 to M4: it classifies failures in other teams' multi-agent traces rather than serving any "
+  "feature of this platform. Each of the four product models is in turn proposed as four competing candidate "
+  "architectures, so sixteen candidates are specified in total. Table 35 lists the five systems, and Tables 36 "
+  "and 37 give every candidate for Model 1 and for Models 2 to 4. Model 1 is built in DATA 298A and Models 2 "
+  "to 4 in DATA 298B.")
 T(["#", "Model", "Concept / architecture", "Built in", "Owner"],
   [["1", "M1 Session-state catch-up", "Given the ordered event log of a session and a query, produce a structured catch-up in five categories (completed, in progress, blocked, decisions, pending actions) in which every claim cites the event ids that support it. Four candidates: BM25 extractive, ModernBERT extractive selector, Phi-4-mini with QLoRA, Qwen3.5-4B with QLoRA.", "298A", "Ayush"],
    ["2", "M2 Intent attribution", "Classify which participant an instruction addresses. Pairwise scoring of (instruction, candidate participant, recent context). Four candidates: TF-IDF classical control, DeBERTaV3 and ModernBERT cross-encoders, Qwen with a classification head.", "298B", "Naman"],
    ["3", "M3 Merge arbitration", "Given two conflicting instructions to one agent, decide accept A, accept B, merge, or escalate to a human. Four candidates: last-writer-wins rule, ModernBERT pairwise cross-encoder, Qwen3.5-4B with LoRA and a four-way head, few-shot prompted Qwen3.5-4B.", "298B", "Manav"],
    ["4", "M4 Decomposition and routing", "Decompose a task into a directed acyclic graph of subtasks and route each to a participant or agent. Four candidates: rules-only router, LLM planner with a learned router, LLM planner alone, single-prompt planner and router.", "298B", "Shriram"],
-   ["—", "Reproduced baseline: MAST LLM-as-a-Judge", "Cemri et al., NeurIPS 2025 [3], Table 2, row o1 (few shot): accuracy 0.94, recall 0.77, precision 0.833, F1 0.80, Cohen's kappa 0.77 against expert annotation. Inference only.", "298A", "Pramod"]],
-  [0.3, 1.25, 3.55, 0.55, 0.85], "The four models and the separately listed reproduced baseline.", size=8.5)
+   ["5", "Published baseline system selected for reproduction: MAST LLM-as-a-Judge (not one of M1 to M4)", "Cemri et al., NeurIPS 2025 [3], Table 2, row o1 (few shot). The published figures we aim to recover are accuracy 0.94, recall 0.77, precision 0.833, F1 0.80 and Cohen's kappa 0.77 against expert annotation. Inference only, no training. Status: prompt, parser, batch runner, provenance and metrics are on `main`; the pinned judge environment is open (DAT-36), so the judge has not been run and no reproduction result exists yet.", "298A", "Pramod"]],
+  [0.3, 1.25, 3.55, 0.55, 0.85], "The five systems: four product models and the independent published baseline system selected for reproduction.", size=8.5)
 P("Each model is developed as a bake-off of four candidates that share frozen data, one input and output "
   "contract, one evaluation harness and three seeds (13, 29, 47). A candidate is a configuration file under "
   "`eval/configs/` that pins the model repository and a full 40-character revision, so a result can be re-run "
-  "exactly. Counting candidates, the project proposes sixteen model configurations plus the baseline; the "
-  "architectures named below are candidates under evaluation, not selections.")
+  "exactly. That is where the sixteen candidates come from, four for each of the four product models; the "
+  "architectures named below are candidates under evaluation, not selections. The baseline system is excluded "
+  "from the bake-off because it is not ours to select: it is run as published, to test our tooling.")
 H("Model 1: session-state catch-up (298A)", 3)
 P("Problem. A participant or agent who joins a session in progress must learn its state without reading the "
   "whole history. Input is an `m1-input-v1` record: a query and the ordered events of the session, each with a "
@@ -561,14 +585,21 @@ P("Three design points distinguish these models. Model 2 is framed as pairwise r
   "output, so the model can abstain when a wrong merge would be harmful; last-writer-wins is what every current "
   "product does implicitly and is therefore the arm to beat. Model 4 rejects any plan that is not a valid "
   "directed acyclic graph before a quality metric is computed, because an invalid plan cannot be executed.")
-H("The reproduced baseline", 3)
-P("The baseline is the LLM-as-a-Judge annotation pipeline of MAST [3]: a language model reads an execution "
-  "trace, the 14 failure-mode definitions and few-shot examples, and emits 14 binary labels. We reproduce the "
-  "configuration in Table 2 of the paper, row o1 (few shot). It is kept apart from the four models for a "
-  "reason: it is the external reference point that tells us whether our prompt, parser, batch runner and metric "
-  "code can recover a published number, and none of our models is claimed to improve on it. The prompt "
-  "(`mast-judge-v1`), deterministic parser (`mast-parser-v1.1`), resumable batch runner, provenance record and "
-  "classification metrics are on the main branch.")
+H("The published baseline system selected for reproduction", 3)
+P("The fifth system is the LLM-as-a-Judge annotation pipeline of MAST [3]: a language model reads an execution "
+  "trace, the 14 failure-mode definitions and few-shot examples, and emits 14 binary labels. The configuration "
+  "selected for reproduction is the one in Table 2 of the paper, row o1 (few shot). It is kept apart from the "
+  "four product models for a reason: it is the external reference point that will tell us whether our prompt, "
+  "parser, batch runner and metric code can recover a published number, and none of our models is claimed to "
+  "improve on it. The prompt (`mast-judge-v1`), deterministic parser (`mast-parser-v1.1`), resumable batch "
+  "runner, provenance record and classification metrics are on the main branch.")
+P("What has not happened yet is the run itself. The pinned o1 judge environment and its clean-environment smoke "
+  "test are still open work (DAT-36), so the judge has not been executed against the corpus and no agreement "
+  "figure has been produced. The batch runner has so far been exercised only with a deterministic stand-in "
+  "judge, which verifies resume, provenance and parsing behaviour and nothing about agreement with the paper. "
+  "Until the pinned environment runs, this workbook describes a baseline selected for reproduction and a "
+  "reproduction method, not a reproduced result, and the figures quoted from [3] are the paper's own.",
+  after=10)
 
 # ------------------------------------------------------------------ 4.2
 H("4.2 Model Supports", 2)
@@ -728,8 +759,160 @@ P("Evaluation ends with two further steps for every model. An ablation varies th
   "and 2,048 tokens) and, for Model 1, approved memory on and off. And every failure is assigned one of seven "
   "frozen failure codes (invalid schema, missing critical fact, unsupported claim, wrong attribution, wrong "
   "status, generic output, truncated), which feeds the categorised failure analysis required by AI-8.")
-H("4.5 First Model Implementation", 2)
-H("4.6 Baseline Reproduction", 2)
+H("4.5 Data Pipeline Demo", 2)
+P("This section demonstrates the pipeline that carries data from its original sources into a queryable "
+  "warehouse, together with the checks and run history that make a run auditable. Everything shown here is on "
+  "the main branch in `infra/warehouse/pipeline.py` (pull request #33) and runs end to end on a laptop in about "
+  "seven seconds, with no cloud account and no scheduler. Figure 3 gives the same path as a diagram; this "
+  "section gives the commands, the warehouse it builds and the output it actually produces.")
+P("One command runs the whole pipeline, and a second shows the run history. These are the exact commands used "
+  "for the run reproduced in Figures 13 and 14:", after=4)
+CODE(["$ source .venv/bin/activate",
+      "$ python data/scripts/download_mast.py        # stage 0: fetch and checksum the sources",
+      "$ python data/scripts/eda_mast.py             # clean and flatten MAST",
+      "$ python infra/warehouse/pipeline.py          # ingest, clean, transform, quality",
+      "$ python infra/warehouse/pipeline.py --report # run history and latest checks"])
+P("No arguments are required: `--data-root` defaults to the repository's `data/` directory and `--db` to "
+  "`warehouse/mas.duckdb`, so a reader who has cloned the repository and installed the lock file can reproduce "
+  "the run with the four commands above and nothing else.", after=6)
+P("The pipeline is deliberately re-runnable. Each run replaces the `raw`, `staging` and `marts` layers from the "
+  "pinned sources and appends to the `meta` layer, so the data is always rebuilt from source while the history "
+  "of runs accumulates. A run is therefore idempotent in its data and additive in its audit trail.", after=8)
+H("Stages: ingestion, cleaning, transformation and quality", 3)
+T(["Stage", "What it does", "Tools", "Rows in / out", "Measured"],
+  [["ingest", "Reads the pinned MAST download and the three frozen QMSum split files, verifies every file against its recorded SHA-256 before anything is loaded, and writes them unaltered into the `raw` layer. A checksum mismatch aborts the run.", "DuckDB, hashlib", "3,452 / 3,452", "1.26 s"],
+   ["clean", "Applies the frozen label and key policy: the canonical key is (`trace.key`, `trace_id`), a label is 0, 1 or null and null is never silently converted to 0, and the 4 records whose 14 codes are all null are excluded from scoring. Writes the `staging` layer.", "DuckDB SQL, `eda_mast.py`", "3,452 / 3,448", "5.59 s"],
+   ["transform", "Reshapes staging into a star schema: four dimension tables and three fact tables, including the long-form label table that turns 14 label columns into one row per positive label.", "DuckDB SQL", "3,448 / 3,448", "0.02 s"],
+   ["quality", "Runs 19 assertions over the built warehouse (Table 45) and records each one, with its expected and actual value, in `meta.quality_checks`.", "DuckDB SQL", "19 / 19", "0.01 s"]],
+  [0.75, 3.25, 0.95, 0.8, 0.65], "The four pipeline stages, with durations from the run captured in Figure 13 "
+  "(total 6.89 s).", size=8.5)
+H("The warehouse: raw, staging, marts and metadata", 3)
+P("The warehouse is a single DuckDB file, `warehouse/mas.duckdb`, organised in four schemas so that every "
+  "number can be traced back to the untouched source it came from [23], [24]. The row counts below were queried "
+  "from the file after the run.", after=4)
+T(["Layer", "Purpose", "Table", "Rows", "Cols"],
+  [["`raw`", "Source data exactly as downloaded, so the original is always recoverable without re-downloading.", "`mast_traces`", "1,642", "10"],
+   ["", "", "`qmsum_examples`", "1,810", "10"],
+   ["`staging`", "Cleaned and validated, with the label and key policy applied and nulls preserved.", "`mast_traces_clean`", "1,638", "7"],
+   ["", "", "`mast_labels_long`", "22,932", "4"],
+   ["", "", "`qmsum_examples_clean`", "1,810", "9"],
+   ["`marts`", "Star schema for analysis: the tables that section 3.6 and the figures are computed from.", "`fact_trace`", "1,638", "11"],
+   ["", "", "`fact_trace_failure`", "5,141", "2"],
+   ["", "", "`fact_m1_example`", "1,810", "7"],
+   ["", "", "`dim_failure_mode`", "14", "3"],
+   ["", "", "`dim_benchmark`", "8", "2"],
+   ["", "", "`dim_framework`", "7", "2"],
+   ["", "", "`dim_llm`", "5", "2"],
+   ["`meta`", "Pipeline monitoring: one row per stage per run, and one row per quality check per run. This layer is appended to, never replaced, so it grows with each run.", "`pipeline_runs`", "4 per run", "10"],
+   ["", "", "`quality_checks`", "19 per run", "6"]],
+  [0.7, 2.75, 1.7, 0.7, 0.45], "Every table in the warehouse, by layer, with row counts queried from "
+  "`warehouse/mas.duckdb` after the run. The `raw`, `staging` and `marts` layers are rebuilt from source on "
+  "every run, so their counts are fixed; the `meta` layer accumulates, so its totals depend on how many runs "
+  "the warehouse has seen.", size=8.5)
+H("Quality checks", 3)
+P("The pipeline does not report success merely because the code did not crash. It asserts 19 facts about the "
+  "warehouse it has just built, and a run is a failure if any one of them does not hold. The checks fall into "
+  "three groups: counts that must match the published corpus, split-hygiene checks that would catch leakage "
+  "between train, validation and test, and reconciliations that prove no row was invented or lost between "
+  "layers. All 19 passed on the run captured in Figure 13.", after=4)
+T(["#", "Check", "What it would catch", "Expected", "Actual"],
+  [["1", "mast raw records", "A partial or over-long download: the paper reports 1,642 records.", "1,642", "1,642"],
+   ["2", "mast scorable records", "Wrong handling of the all-null records.", "1,638", "1,638"],
+   ["3", "mast excluded records (all-null)", "Silently dropping or silently scoring the 4 unlabelled records.", "4", "4"],
+   ["4", "mast key (trace_key, trace_id) duplicates", "A duplicated trace, which would double-count failures. `trace_id` alone is not unique.", "0", "0"],
+   ["5", "mast label values outside {0,1,NULL}", "A stray value from a future taxonomy or a parsing bug.", "0", "0"],
+   ["6", "mast null labels converted to 0 (null cells raw vs staging)", "The most damaging silent error available here: turning \"not labelled\" into \"no failure\".", "0", "0"],
+   ["7", "qmsum split train examples", "A split rebuilt with different sizes from the frozen manifest.", "1,257", "1,257"],
+   ["8", "qmsum split val examples", "As above, for validation.", "272", "272"],
+   ["9", "qmsum split test examples", "As above, for test.", "281", "281"],
+   ["10", "qmsum example ids in >1 split", "Direct example-level leakage between splits.", "0", "0"],
+   ["11", "qmsum meetings in >1 split (by id-derived meeting)", "Meeting-level leakage: two questions about the same meeting landing on opposite sides of the split.", "0", "0"],
+   ["12", "qmsum longest-context-span hashes shared across splits", "Near-duplicate context reused across splits even when ids and meetings differ.", "0", "0"],
+   ["13", "reconcile: raw qmsum = staging qmsum", "A row lost or added during cleaning.", "1,810", "1,810"],
+   ["14", "reconcile: staging qmsum = fact_m1_example", "A row lost or added during transformation.", "1,810", "1,810"],
+   ["15", "reconcile: staging traces = fact_trace", "A trace lost between staging and the fact table.", "1,638", "1,638"],
+   ["16", "reconcile: positive labels = fact_trace_failure rows", "A mismatch between the wide label columns and the long-form failure table.", "5,141", "5,141"],
+   ["17", "reconcile: sum(n_failures) = fact_trace_failure rows", "A per-trace failure count that disagrees with the rows it summarises.", "5,141", "5,141"],
+   ["18", "reconcile: category counts sum to n_failures", "A trace whose three category counts do not add up to its total.", "0", "0"],
+   ["19", "fact_trace rows with unmatched dimension key", "A fact row pointing at a framework, benchmark or model that is not in the dimension tables.", "0", "0"]],
+  [0.25, 2.1, 2.85, 0.65, 0.65], "The 19 quality checks asserted on every run, with the values recorded on 12 November 2026. A run fails if any check does not hold.", size=8)
+H("Monitoring and management", 3)
+P("Monitoring is built into the pipeline rather than bolted on. Every stage of every run writes a row to "
+  "`meta.pipeline_runs` recording the run id, stage, start time, duration, rows in, rows out, status, the git "
+  "commit the code was at, and the error text if it failed; every check writes a row to `meta.quality_checks`. "
+  "Because both tables are appended to and carry the git commit, a regression can be located in time and in "
+  "version: if a count changes, the run history shows which run and which commit it changed at. The "
+  "`--report` flag reads these tables back and prints the recent run history, the latest check results and "
+  "summary views of the marts. Management actions are ordinary commands rather than a user interface: "
+  "`--stage` re-runs a single stage, `--last` sets how many runs the report shows, `--data-root` and `--db` "
+  "point the pipeline at a different copy of the data or warehouse, and "
+  "deleting the DuckDB file rebuilds everything from the pinned sources. Section 4.2 explains why no workflow "
+  "scheduler is used yet and what would make Airflow worth its operational cost [22].", after=8)
+H("A real run", 3)
+P("Figure 13 is a screen capture of the pipeline running to completion on 12 November 2026 at commit "
+  "`1b3c78c`. The four stages run in order, the four source files are checksum-verified before anything is "
+  "loaded, all 19 quality checks report `[PASS]`, and the run ends `SUCCESS in 6.89s`. Nothing in the capture "
+  "is edited, and the same output in text form is committed in `infra/warehouse/SAMPLE_RUN.md` so that a reader "
+  "can compare an earlier run against this one; the counts are identical across both.", after=4)
+F("fig14_pipeline_run.png", "A successful end-to-end run of the data pipeline, from source files to warehouse: "
+  "checksum verification, the four stages, all 19 quality checks passing, and the run summary. Captured on "
+  "12 November 2026 at commit `1b3c78c`.", width=6.4)
+P("Figure 14 shows the monitoring side, printed by `--report` from the `meta` layer after three runs. The upper "
+  "table is `meta.pipeline_runs`: twelve rows, one per stage per run, each carrying its duration, row counts, "
+  "status and the git commit the code was at. The lower table is `meta.quality_checks`, listing all 19 "
+  "assertions with their expected and actual values. Together these are the audit trail: the run history shows "
+  "that the pipeline has been run repeatedly with stable row counts, and the check table shows that the "
+  "warehouse was verified rather than merely built.", after=4)
+F("fig15_pipeline_monitoring.png", "Pipeline monitoring from the `meta` layer. Above: `meta.pipeline_runs`, one "
+  "row per stage per run across three runs, with durations, row counts and the git commit. Below: "
+  "`meta.quality_checks`, all 19 checks with expected and actual values, every one PASS.", width=6.4)
+H("What this demonstration does not cover", 3)
+P("The pipeline is complete for the two public sources and only for those. MAST and QMSum are pinned, "
+  "downloaded, checksum-verified, cleaned, transformed, loaded and checked, and that path is what the output "
+  "above exercises. Ingestion of our own product sessions is not complete: the session export is still pending, "
+  "`data/sessions/raw/` is empty as of 11 November 2026, and no recorded session has entered the warehouse. "
+  "The ingestion stage has no session reader yet, so the row counts above contain no product-session data. "
+  "This matters for the project because the product-session corpus, not the public corpora, is what selects "
+  "the winner of every bake-off (section 3.5), and it is recorded as the first carry-forward risk at the end of "
+  "this workbook. What the demonstration establishes is that the path from source to warehouse works, is "
+  "checked, and is ready for that third source when the export lands.", after=8)
+H("4.6 First Model Implementation Status", 2)
+P("This section records what is implemented for Model 1 as of 12 November 2026, and is deliberately explicit "
+  "about what the evidence does and does not support.")
+P("The shared evaluation harness is merged. It landed on the main branch through pull request #25 (DAT-61), "
+  "with follow-up corrections in pull request #41 that time latency over all examples and count candidate "
+  "errors as invalid rather than skipping them. Review of #25 had found the comparison step applying the "
+  "safety gates to the mean of the three seeds; the merged version applies every gate to each seed "
+  "individually and compares the unsupported-claim rate against the m1-a run on the matching seed, as ADR-005 "
+  "requires.")
+P("The first candidate is also merged. M1-A, the parameter-free BM25 extractive control, is on the main branch "
+  "through pull request #26 (DAT-58) and exposes `models.m1_catchup.bm25:build_eval_runner` to the shared "
+  "harness; it is implemented and merged, not a draft. Running it through the harness produced 3 of 3 "
+  "schema-valid outputs on the synthetic `smoke_holdout` fixture.")
+P("That 3/3 result is integration evidence, not an evaluation result, and the distinction is the point of this "
+  "section. It shows that a candidate can be loaded by the harness, produce output that parses against the "
+  "`m1-output-v1` schema, and be scored without error: the wiring works. It is not a measurement of catch-up "
+  "quality, for three reasons. The fixture is synthetic and holds 3 examples. The M1-A ranking rules were "
+  "fitted on the synthetic smoke train and dev templates, so the fixture is not independent of the method "
+  "being run on it, and the number says nothing about generalisation. And none of the gates or ranking metrics "
+  "in Table 42 is computed on it, because the annotated product-session split those metrics are defined over "
+  "does not exist yet. A reportable Model 1 result requires the frozen split at `data/splits/m1_session_v1/` "
+  "and the production metric evaluator, and neither is on the main branch.")
+P("There is therefore no Model 1 winner, and this workbook does not name one. Table 46 records the status of "
+  "each of the four candidates. ADR-005 forbids a selection run before the annotated split is frozen, so the "
+  "absence of a winner is the contract working as designed rather than a slipped task.", after=4)
+T(["Candidate", "Architecture", "Status on 12 November 2026", "Reportable result?"],
+  [["`m1-a`", "BM25 ranker plus fixed template (classical, CPU, parameter-free)", "Merged on `main` (DAT-58, pull request #26). Smoke-only integration run passed 3/3 schema-valid examples on the synthetic `smoke_holdout` fixture.", "No. Integration evidence only; rules were fitted on the smoke templates."],
+   ["`m1-b`", "ModernBERT-base selector plus fixed template (full fine-tune)", "Candidate code remains off `main` on branch `m1-candidate-train-infer`, with no pull request. A 40-step GPU feasibility smoke passed.", "No. No training or evaluation result."],
+   ["`m1-c`", "Phi-4-mini-instruct, 4-bit QLoRA", "Candidate code off `main`. First feasibility run stopped after 2 of 15 steps at roughly 5 minutes per step and still needs diagnosis.", "No."],
+   ["`m1-d`", "Qwen3.5-4B, 4-bit QLoRA", "Candidate code off `main`. Feasibility run not started.", "No."]],
+  [0.65, 1.85, 2.9, 1.1], "Model 1 candidate status. No candidate has a reportable evaluation result and no winner has been selected.", size=8.5)
+P("One earlier run is sometimes mistaken for a candidate result and is listed here so that it is not. A "
+  "Qwen3-1.7B model was used to verify GPU loading, 4-bit NF4 QLoRA, checkpoint and resume, and inference; its "
+  "50-step run moved training loss from 3.90 to 2.14 and wrote a 133 MB adapter. Training loss is not catch-up "
+  "quality, and Qwen3-1.7B is not in the frozen candidate matrix at all. It is infrastructure feasibility "
+  "evidence only. Its configuration is preserved at `models/m1_catchup/feasibility/qwen3-1.7b.yaml`, and the "
+  "run notes remain in `docs/verification/m1_training_run.md` for anyone who wants to audit it.")
 
 # ------------------------------------------------------------------ references
 H("References", 1)
@@ -757,7 +940,7 @@ T(["Check", "Yes / No"],
   [["Every section above is written as report prose, not as notes", "Yes"],
    ["Splits are fixed, version-controlled, and the leakage check is reported", "Yes for Model 1 supervision: `data/splits/m1_v1/`, commit `330603f`; Table 29. The product-session split is not yet prepared (section 3.5)."],
    ["Metrics were committed before any results existed", "Yes. ADR-004, ADR-005; Table 42"],
-   ["Four models named, with the reproduced baseline listed separately", "Yes. Table 35"],
+   ["Five systems named: four product models, with the published baseline system listed separately", "Yes. Table 35. The baseline is selected for reproduction and has not been run (DAT-36)."],
    ["Every claim links to a commit, run, dataset version or Linear issue", "Yes for every count, split, metric and decision (`docs/reports/t4a6_data_facts.json` at commit `fbb3fdf`; ADRs; pull requests). Interpretive statements are argued in the prose."],
    ["Each section names the team member who wrote it", "Yes. Title page"]],
   [4.2, 2.3])
@@ -765,6 +948,8 @@ H("Self-assessment and gap register", 2)
 T(["Report section", "Our rating", "If below good: what is missing", "Owner", "Lands by (proposed)"],
   [["3.1 to 3.6", "Good", "Not below good, but not excellent: the product-session corpus that selects the Model 1 winner has no recorded sessions, so sections 3.2 to 3.5 describe it as planned.", "Naman", "2 Dec 2026"],
    ["4.1 to 4.4", "Good", "Not below good. Models 2 and 4 have no committed configuration files yet; their candidates are described from Workbook 1.", "Naman, Shriram", "298B, cycle 1"],
+   ["4.5 Data Pipeline Demo", "Good", "Not below good: the path from source to warehouse is complete, checked by 19 assertions, monitored through the `meta` layer and demonstrated live. It is not excellent because it covers two of the three sources; ingestion of our own product sessions is not built, and the session export is still pending.", "Shriram", "With the first sessions, 2 Dec 2026"],
+   ["4.6 First Model Implementation Status", "Good", "Not below good: the harness and the first candidate are merged and the status is reported without overstatement. It is not excellent because no candidate has a reportable evaluation result and no winner exists, which needs the frozen annotated session split.", "Ayush, Pramod", "7 Dec 2026"],
    ["References", "Good", "Not below good, but not excellent: every algorithm, dataset and metric source is cited, including [28] added in review, but the software libraries named in Table 38 (PyTorch, Transformers, PEFT) are not cited separately.", "Pramod", ""]],
   [1.0, 0.8, 2.9, 0.9, 0.9])
 H("Carry-forward from Workbook 1", 2)
@@ -774,7 +959,7 @@ T(["Item", "Why it did not land, or what changed", "Owner", "New target (propose
    ["QMSum size (DR-1; Table 9)", "Corrected. Workbook 1 quoted the published 1,808 query-summary pairs. The pinned release yields 1,810, and the splits are built from those.", "Naman", "Done"],
    ["Pilot session corpus (DR-2, DR-3)", "Not landed. No session has been recorded, because the end-to-end integration gate has not been passed. The risk-register trigger of fewer than five sessions by late October has fired; the documented fallback of internal sessions plus scripted cases is in effect, and 18 scripted smoke examples exist (DAT-53).", "Naman", "First sessions by 2 Dec 2026"],
    ["Automated session-level leakage check (DR-4)", "Partly landed. `make_splits.py` accepts a grouping option that the Model 1 path does not read, so the no-shared-meeting guarantee rests on QMSum's inherited partition and on the checks in Table 29, not on a grouping implementation. The session-level check is needed before `m1_session_v1` is built.", "Naman", "With the session split"],
-   ["Harness runs one candidate end to end (Progress Report 1)", "Partly landed. The shared Model 1 harness (DAT-61) was reviewed and merged on 11 November 2026 (pull request #25). Review had found the comparison step applying gates to the three-seed mean; the merged version applies every gate to each seed and compares unsupported claims with the matched m1-a seed, as ADR-005 requires. No candidate has been run through it end to end yet, because the candidate runners and the session split are not on main.", "Pramod", "With the first candidate runner"],
+   ["Harness runs one candidate end to end (Progress Report 1)", "Landed for integration, not for evaluation. The shared Model 1 harness (DAT-61) was merged on 11 November 2026 (pull request #25), with follow-ups in pull request #41. Review had found the comparison step applying gates to the three-seed mean; the merged version applies every gate to each seed and compares unsupported claims with the matched m1-a seed, as ADR-005 requires. M1-A is now also on main (pull request #26) and has run through the harness, passing 3 of 3 schema-valid examples on the synthetic smoke fixture. That is integration evidence only: it is not a reportable evaluation result, because the fixture is synthetic, the M1-A rules were fitted on it, and the annotated session split is still absent (section 4.6).", "Pramod", "Reportable run with the session split"],
    ["Model 1 bake-off and winner (AI-3)", "At risk. Training and inference paths and GPU feasibility are in progress, but ADR-005 forbids a selection run until the annotated product-session split is frozen. The final report will carry either the winner or the documented shortfall.", "Ayush", "7 Dec 2026"],
    ["MAST judge environment and final runs (DAT-25, DAT-26, DAT-27, DAT-36)", "Not landed. Prompt, parser, batch runner, provenance and metrics are on main; the pinned o1 judge environment and the clean-environment smoke test are open.", "Ayush, Shriram", "2 Dec 2026"],
    ["Cloud deployment (FR-8; Table 16)", "Deferred. The prototype runs locally under Docker Compose and no cloud cost has been incurred. Deployment is needed when participants outside the team join, which is the 298B controlled study (section 4.2).", "Ayush", "298B"],
