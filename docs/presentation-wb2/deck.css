@@ -54,6 +54,7 @@ body.audience.idle { cursor: none; }
   font: 700 22px var(--mono); letter-spacing: 0; color: var(--blue);
   background: var(--blue-soft); padding: 4px 12px; border-radius: 8px;
 }
+.kicker .kicker-text { white-space: nowrap; }
 .kicker .flag {
   margin-left: auto; font: 650 17px var(--sans); letter-spacing: 0.02em; text-transform: none;
   color: var(--amber-ink); background: var(--amber-soft); padding: 6px 14px; border-radius: 999px;
