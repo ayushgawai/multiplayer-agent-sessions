@@ -6,3 +6,5 @@ bitsandbytes>=0.44.0,<0.45
 datasets>=3.0.0,<3.1
 lightgbm>=4.5.0,<4.6
 accelerate>=0.34.0,<1
+fsspec>=2024.6.0
+s3fs>=2024.6.0

@@ -48,7 +48,6 @@ F_SUMMARY = "summary"
 F_TASK_COMPLETED = "task_completed"
 F_WARNINGS = "warnings"
 F_LABELS_OFFICIAL = "labels_official"
-F_TRACE_TEXT = "trace_text"
 
 M_GIT_SHA = "git_sha"
 M_START = "start_time_utc"
@@ -335,12 +334,6 @@ def build_html(
                 indent=2,
             )
         )
-        trace_block = ""
-        if rec.get(F_TRACE_TEXT):
-            trace_block = (
-                "<details><summary>trace text</summary>"
-                f"<pre>{_esc(rec.get(F_TRACE_TEXT))}</pre></details>"
-            )
         detail = f"""
 <details>
 <summary>detail {_esc(trace_id)}</summary>
@@ -360,7 +353,6 @@ def build_html(
 <div><b>predicted labels</b><pre>{pred_json}</pre></div>
 <div><b>raw_response</b><pre>{_esc(rec.get(F_RAW_RESPONSE))}</pre></div>
 <div><b>parsed fields</b><pre>{parsed_json}</pre></div>
-{trace_block}
 </details>
 """
         body_rows.append(
