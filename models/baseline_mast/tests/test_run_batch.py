@@ -53,7 +53,7 @@ def make_runner(result_dir: Path, judge: Any = None, **kw: Any) -> BatchRunner:
     return BatchRunner(
         judge=judge or StubJudge(),
         result_dir=result_dir,
-        dataset_version=kw.pop("dataset_version", "test-v1"),
+        eval_manifest_version=kw.pop("eval_manifest_version", "test-v1"),
         dataset_sha256=kw.pop("dataset_sha256", DATASET_SHA),
         run_id=kw.pop("run_id", "run-test-001"),
         log=lambda _msg: None,
