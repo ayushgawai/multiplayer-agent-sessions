@@ -17,8 +17,17 @@ from eval.harness import (
     run_candidate,
     verify_split_manifest,
 )
-from eval.run_contract import SeedRunResult
-from eval.tests.fake_m1_plugin import build_eval_runner, build_smoke_fixture_runner, evaluate
+from collections.abc import Mapping
+from typing import Any
+
+from eval.contracts.m1 import M1Input
+from eval.run_contract import PreparedCandidate, RunnerRequest, SeedRunResult
+from eval.tests.fake_m1_plugin import (
+    SmokeFixturePreparedCandidate,
+    build_eval_runner,
+    build_smoke_fixture_runner,
+    evaluate,
+)
 
 
 class StepTimer:
@@ -253,3 +262,93 @@ def test_reportable_run_must_evaluate_the_whole_manifest_split() -> None:
 def test_reportable_seeds_must_evaluate_the_same_examples() -> None:
     with pytest.raises(HarnessError, match="seeds evaluated different examples"):
         check_reportable_examples([_seed_run(13, 281, "1" * 64), _seed_run(29, 281, "3" * 64)], 281)
+
+
+class FakeClock:
+    def __init__(self) -> None:
+        self.now = 0.0
+
+    def __call__(self) -> float:
+        return self.now
+
+
+class CostedCandidate:
+    """Smoke-fixture candidate whose predict advances a fake clock by a per-example cost."""
+
+    def __init__(
+        self, inner: SmokeFixturePreparedCandidate, clock: FakeClock, fail_on: str | None = None
+    ) -> None:
+        self._inner = inner
+        self._clock = clock
+        self._fail_on = fail_on
+        self.dataset_version = inner.dataset_version
+        self.hardware = inner.hardware
+        self.examples = inner.examples
+        self.cost_ms = {
+            example.model_input.example_id: float(index + 1)
+            for index, example in enumerate(inner.examples)
+        }
+
+    def predict(self, model_input: M1Input) -> Mapping[str, Any]:
+        self._clock.now += self.cost_ms[model_input.example_id] / 1000.0
+        if model_input.example_id == self._fail_on:
+            raise RuntimeError("out of memory at 4,096 tokens")
+        return self._inner.predict(model_input)
+
+    def peak_vram_mb(self) -> float:
+        return 0.0
+
+    def close(self) -> None:
+        return None
+
+
+def _run_costed(tmp_path: Path, clock: FakeClock, fail_index: int | None = None) -> Any:
+    config, config_path = load_candidate_config("m1-a")
+    fixtures = Path("data/m1_smoke/fixtures")
+
+    def costed_runner(request: RunnerRequest) -> PreparedCandidate:
+        inner = SmokeFixturePreparedCandidate(request)
+        fail_on = None if fail_index is None else inner.examples[fail_index].model_input.example_id
+        return CostedCandidate(inner, clock, fail_on)
+
+    return run_candidate(
+        config=config,
+        config_path=config_path,
+        contract=load_contract(),
+        seeds=[13],
+        split="smoke",
+        dataset_path=fixtures,
+        output_dir=tmp_path / "results",
+        runner_factory=costed_runner,
+        evaluator=evaluate,
+        smoke=True,
+        max_examples=18,
+        timer=clock,
+    )
+
+
+def test_latency_is_measured_across_all_examples_not_one(tmp_path: Path) -> None:
+    # Example i costs i + 1 ms. Timing only examples[0] would report 1 ms at every percentile.
+    result = _run_costed(tmp_path, FakeClock())
+
+    assert result.runs[0].attempted_examples == 18
+    assert result.metrics["latency_p50_ms"].mean == pytest.approx(9.5)
+    assert result.metrics["latency_p95_ms"].mean == pytest.approx(17.15)
+
+
+def test_candidate_exception_counts_as_invalid_output_not_a_failed_seed(tmp_path: Path) -> None:
+    result = _run_costed(tmp_path, FakeClock(), fail_index=4)
+
+    run = result.runs[0]
+    assert run.attempted_examples == 18
+    assert run.valid_outputs == 17
+    assert result.metrics["schema_valid_rate"].mean == pytest.approx(17 / 18)
+    assert result.failures["invalid_schema"] == 1
+    records = [
+        json.loads(line)
+        for line in Path(run.prediction_file).read_text(encoding="utf-8").splitlines()
+    ]
+    failed = [record for record in records if not record["valid"]]
+    assert len(failed) == 1
+    assert failed[0]["output"] == {"_exception": "RuntimeError"}
+    assert failed[0]["validation_error"].startswith("candidate raised RuntimeError")

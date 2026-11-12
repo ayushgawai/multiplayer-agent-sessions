@@ -22,7 +22,13 @@ change those decisions.
 - refuses to overwrite an existing reportable result or prediction file;
 - rejects approved memory during candidate selection;
 - validates every prediction against `m1-output-v1` and its input evidence ids;
-- measures latency after warm-up and records peak VRAM reported by the runner;
+- predicts every evaluated example once and times each call after a few untimed warm-up calls
+  (1 for smoke, 10 for reportable runs), so `latency_p50_ms` and `latency_p95_ms` are percentiles
+  over all evaluated examples, including the long-context tail; records peak VRAM reported by the
+  runner;
+- records a candidate exception on an example as an invalid prediction for that example
+  (`output` is `{"_exception": "<type>"}`, counted under `invalid_schema` and in
+  `schema_valid_rate`) instead of aborting the seed; the failed call is still timed;
 - writes deterministic-key-order result JSON and prediction JSONL with checksums;
 - records the git SHA, config digest, pinned model revision, dataset version, hardware, failures,
   runtime, and per-seed metrics;
