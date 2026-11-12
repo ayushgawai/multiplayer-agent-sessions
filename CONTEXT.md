@@ -118,7 +118,7 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 - Linear tasks and git commits synced across the team (`docs/verification/linear_git_sync.md`).
 - LangGraph runtime on `main` (DAT-18 / PRs #6, #31). M1 smoke dataset on `main` (DAT-53 / PR #22).
 - Workbook 2 on `main`: `docs/reports/T4.A6.docx` (the earlier `T4.A5.docx` name was a typo and is removed). Built by `docs/reports/build_t4a6.py`; counts from `docs/reports/t4a6_data_facts.py`.
-- Team Meeting 2 deck on `main`: `docs/presentation-wb2/presenter.html` (opens `audience.html`; speaker notes and Q&A per slide) and `docs/slides/T4-Workbook2.pptx` (same slides as images, notes included). Who does what in the demo: `docs/demo/TEAM_MEETING_2_CHECKLIST.md`.
+- Team Meeting 2 deck on `main`: `docs/presentation-wb2/presenter.html` (opens `audience.html`; 15 slides, press F for full screen, speaker script and Q&A per slide) and `docs/slides/T4-Workbook2.pptx` (same slides as images, notes included). Who does what in the demo: `docs/demo/TEAM_MEETING_2_CHECKLIST.md`.
 - Source-to-warehouse pipeline demo on `main`: `infra/warehouse/pipeline.py` (DuckDB, 19 quality checks, run history; PR #33). Why no AWS or Airflow yet: `docs/reports/T4-TA-aws-airflow-justification.md`.
 - CI now runs agent-runtime and warehouse tests; lock refreshed; checkpoint utility accepts remote URIs (PR #32).
 - **No model is trained and no model result exists.** M1 candidate code for m1-b, m1-c, m1-d is on branch `m1-candidate-train-infer` (no PR yet). On the lab GPU: m1-b (ModernBERT) passed a 40-step feasibility smoke; m1-c (Phi-4-mini) failed after 2 of 15 steps at about 5 min per step, not diagnosed; m1-d (Qwen3.5-4B) not run.

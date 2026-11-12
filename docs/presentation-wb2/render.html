@@ -1,5 +1,16 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>render</title>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,520;12..96,640&family=Source+Serif+4:opsz,wght@8..60,460;8..60,560&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="deck.css"><style>.reveal{animation:none!important}</style></head>
-<body><main id="stage" class="stage"></main><script src="slides.js"></script>
-<script>document.getElementById("stage").innerHTML = window.DECK[Number(new URLSearchParams(location.search).get("i")||0)].html;</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>render</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="deck.css">
+</head>
+<body data-mode="render">
+<!-- Renders slide N with no chrome: render.html?i=N (used for screenshots). -->
+<div class="viewport" id="vp"><main class="stage" id="stage"></main></div>
+<script src="slides.js"></script>
+<script src="sync.js"></script>
+</body>
+</html>
