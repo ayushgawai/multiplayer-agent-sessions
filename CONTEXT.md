@@ -106,7 +106,7 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 
 ## Current status (update on pull / after each feature)
 
-**Last updated:** 2026-11-11 (Naman)
+**Last updated:** 2026-11-11, evening (Ayush)
 
 - Session service on `main`: durable event log (SQLAlchemy; SQLite in CI, Postgres in Compose) and Redis or in-process fan-out (ADR-002). OpenAPI routes unchanged.
 - React 18 client, CRDT server, and presence on `main` (DAT-15, DAT-16, DAT-17 / PRs #12, #13, #14).
@@ -116,9 +116,22 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 - QMSum downloaded and verified (DAT-11, 232 meetings, 1,810 query pairs, `STATS.md`); frozen `m1_v1` dataset splits committed (`MANIFEST.json`).
 - Qwen3-1.7B infrastructure pipeline verified 4-bit NF4 QLoRA, checkpointing and resume; its 50-step run dropped training loss from 3.90 to 2.14. This is feasibility evidence, not a final DAT-55 candidate result.
 - Linear tasks and git commits synced across the team (`docs/verification/linear_git_sync.md`).
-- **Not on `main` yet:** LangGraph runtime (PR #6), `eval/harness.py`, M2/M4 configs.
+- LangGraph runtime on `main` (DAT-18 / PRs #6, #31). M1 smoke dataset on `main` (DAT-53 / PR #22).
+- Workbook 2 on `main`: `docs/reports/T4.A6.docx` (the earlier `T4.A5.docx` name was a typo and is removed). Built by `docs/reports/build_t4a6.py`; counts from `docs/reports/t4a6_data_facts.py`.
+- Team Meeting 2 deck on `main`: `docs/presentation-wb2/presenter.html` (opens `audience.html`; speaker notes and Q&A per slide) and `docs/slides/T4-Workbook2.pptx` (same slides as images, notes included). Who does what in the demo: `docs/demo/TEAM_MEETING_2_CHECKLIST.md`.
+- Source-to-warehouse pipeline demo on `main`: `infra/warehouse/pipeline.py` (DuckDB, 19 quality checks, run history; PR #33). Why no AWS or Airflow yet: `docs/reports/T4-TA-aws-airflow-justification.md`.
+- CI now runs agent-runtime and warehouse tests; lock refreshed; checkpoint utility accepts remote URIs (PR #32).
+- **No model is trained and no model result exists.** M1 candidate code for m1-b, m1-c, m1-d is on branch `m1-candidate-train-infer` (no PR yet). On the lab GPU: m1-b (ModernBERT) passed a 40-step feasibility smoke; m1-c (Phi-4-mini) failed after 2 of 15 steps at about 5 min per step, not diagnosed; m1-d (Qwen3.5-4B) not run.
+- **Not on `main` yet:** `eval/harness.py` (PR #25), BM25 m1-a (draft PR #26), M2/M4 configs, any product session (`data/sessions/raw/` is empty).
 
-**Open PRs:** #6 DAT-18 (Shriram), #15 DAT-56 (Shriram).
+**Open PRs:** #25 DAT-61 harness (do not merge: `eval/compare.py` applies the gates to the three-seed mean, which ADR-005 forbids), #26 DAT-58 BM25 (draft), #15 DAT-56 (changes requested).
+
+**Pick up here next time (in order):**
+1. Fix and merge #25, then mark #26 ready. The M1 bake-off cannot start without the harness.
+2. Record and annotate product sessions; freeze `data/splits/m1_session_v1/`. ADR-005 blocks choosing an M1 winner until then.
+3. Diagnose the m1-c GPU smoke (probably memory at 4,096 tokens on 16 GB), run m1-d, write `docs/verification/m1_candidate_feasibility.md`, open the M1 PR.
+4. Run the MAST judge (DAT-25, DAT-26, DAT-27).
+5. Turn on branch protection for `main` (DAT-10).
 
 When you finish a feature, add one bullet here under your name and bump **Last updated**.
 
@@ -129,7 +142,8 @@ When you finish a feature, add one bullet here under your name and bump **Last u
 - Reviewed and merged client scaffold, CRDT server, presence, and ADR-003 PRs (#11, #12, #13, #14, #16).
 - Synchronized Linear board with git commits and automated tracking (`docs/verification/linear_git_sync.md`).
 - Workbook 1 figures: Gantt and PERT. MAST is parallel to the critical path, not on it.
-- Next: pin the MAST judge environment (DAT-25), judge metadata (DAT-26), clean-environment smoke test (DAT-27). Branch protection (DAT-10) is still open.
+- Workbook 2, the Team Meeting 2 deck, the warehouse pipeline demo, and the CI, lock and remote-checkpoint changes (PRs #32, #33, #35).
+- Next: see "Pick up here next time" above.
 
 ### Naman
 - On `main`: DAT-28 download and checksums, DAT-29 dictionary and taxonomy, DAT-30 eval manifest.

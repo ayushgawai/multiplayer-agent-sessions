@@ -16,11 +16,19 @@ window.DECK = [
       qa("What changed since Workbook 1?", "Two things, both in the carry-forward table. The M1 candidates are now BM25, ModernBERT, Phi-4-mini and Qwen3.5-4B. And M1 is selected on critical-fact recall behind safety gates, not on ROUGE-L alone.")
     ],
     html: `
-      <div class="title-stage">
-        <p class="kicker">Team 4 · DATA 298A · Workbook 2 · 12 November 2026</p>
-        <h1>The data is frozen.<br>The rules are committed.</h1>
-        <p class="lede">Report sections 3 and 4: data engineering and model development for a shared human-agent session.</p>
-        <div class="tape"><b>3</b> data sources <b>4</b> models <b>1</b> reproduced baseline <b>0</b> results claimed</div>
+      <div class="hero">
+        <div>
+          <p class="kicker">Team 4 · DATA 298A · Workbook 2 · 12 November 2026</p>
+          <h1>The data is frozen.<br>The rules are committed.</h1>
+          <p class="lede">Report sections 3 and 4: data engineering and model development for a shared session where several people and several agents work together.</p>
+          <div class="tape" style="position:static;margin-top:2rem"><b>Ayush</b> Naman <b>Manav</b> Shriram <b>Pramod</b></div>
+        </div>
+        <div class="g c2" style="height:70%">
+          <div class="card blue"><div class="big">3</div><p>data sources, pinned and checksummed</p></div>
+          <div class="card"><div class="big">4</div><p>models, sixteen candidates</p></div>
+          <div class="card"><div class="big">1</div><p>published baseline reproduced</p></div>
+          <div class="card ink"><div class="big">0</div><p>results claimed today</p></div>
+        </div>
       </div>${tag("Ayush")}`
   },
   {
@@ -38,9 +46,17 @@ window.DECK = [
       <p class="kicker">Working today, on main</p>
       <div class="sheet reveal">
         <h2>Two people, one document, one ordered log</h2>
-        <div class="pair">
-          <div><img class="shot" src="figures/crdt_two_tabs.png" alt="Two browser tabs editing the same document"><p class="cap">Concurrent editing through a Yjs CRDT. Each edit is also a doc_update event.</p></div>
-          <div><img class="shot" src="figures/rollback_before_after.png" alt="Event log before and after a rollback"><p class="cap">Rollback to seq 2 removes two events for everyone in the session.</p></div>
+        <div class="g" style="grid-template-columns:1.75fr 1fr">
+          <div class="col">
+            <div class="imgbox" style="flex:1.45"><img src="figures/crdt_two_tabs.png" alt="Two browser tabs editing the same document"></div>
+            <div class="imgbox"><img src="figures/rollback_before_after.png" alt="Event log before and after a rollback"></div>
+          </div>
+          <div class="col">
+            <div class="card blue"><small style="color:#cdd7ff">Top screenshot</small><h3>Edits merge, nothing is lost</h3><p>Ada and Ben type at once. A Yjs CRDT merges both.</p></div>
+            <div class="card"><small>Bottom screenshot</small><h3>Rollback to event 2</h3><p>Two instructions are removed for everyone in the session.</p></div>
+            <div class="card grn"><h3>Real service</h3><p>The client talks to the real session service, not a mock.</p></div>
+            <div class="card amb"><h3>Not yet</h3><p>No model output is shown in the client.</p></div>
+          </div>
         </div>
       </div>${tag("Manav")}`
   },
@@ -57,8 +73,12 @@ window.DECK = [
     html: `
       <p class="kicker">3.1 Data process</p>
       <div class="sheet reveal">
-        <h2>Each path is pinned and frozen separately</h2>
-        <img class="shot" src="figures/fig03_data_process.png" alt="Data process and lineage for three sources">
+        <h2>Three sources, the same five steps</h2>
+        <div class="lanes" style="grid-template-rows:auto 1fr 1fr 1fr">
+          <div></div><div class="hd">Collect</div><div class="hd">Pre-process</div><div class="hd">Transform</div><div class="hd">Prepare</div><div class="hd">Used for</div>
+          <div class="nm">MAST<br>baseline</div><div class="card soft"><h3 style="font-size:1.12rem">Pinned release</h3><p>1,642 traces, checksummed</p></div><div class="card soft"><h3 style="font-size:1.12rem">Validate labels</h3><p>0, 1 or null; 4 excluded</p></div><div class="card soft"><h3 style="font-size:1.12rem">Flatten</h3><p>1,638 rows × 26 columns</p></div><div class="card soft"><h3 style="font-size:1.12rem">Freeze</h3><p>Evaluation manifest v1.0.0</p></div><div class="card blue"><h3 style="font-size:1.12rem">Baseline</h3><p>MAST judge reproduction</p></div><div class="nm">QMSum<br>Model 1</div><div class="card soft"><h3 style="font-size:1.12rem">Pinned release</h3><p>232 meetings, 1,810 pairs</p></div><div class="card soft"><h3 style="font-size:1.12rem">Check fields</h3><p>0 rows removed</p></div><div class="card soft"><h3 style="font-size:1.12rem">To events</h3><p>One example per query</p></div><div class="card soft"><h3 style="font-size:1.12rem">Freeze splits</h3><p>1,257 / 272 / 281</p></div><div class="card blue"><h3 style="font-size:1.12rem">Training</h3><p>Model 1 supervision</p></div><div class="nm">Product<br>sessions</div><div class="card amb"><h3 style="font-size:1.12rem">Event log</h3><p>Planned: 0 sessions so far</p></div><div class="card amb"><h3 style="font-size:1.12rem">Pseudonymise</h3><p>Planned</p></div><div class="card amb"><h3 style="font-size:1.12rem">Annotate</h3><p>Planned: critical facts</p></div><div class="card amb"><h3 style="font-size:1.12rem">Split by session</h3><p>Planned</p></div><div class="card amb"><h3 style="font-size:1.12rem">Selection</h3><p>Picks every winner</p></div>
+        </div>
+        <div class="strip grn" style="margin-top:0.9rem"><b>Blue is built and on main. Amber is planned.</b> Every built stage also lands in a local warehouse with quality checks and run history.</div>
       </div>${tag("Naman")}`
   },
   {
@@ -75,21 +95,20 @@ window.DECK = [
     html: `
       <p class="kicker">3.2 Data collection · 3.3 Pre-processing</p>
       <div class="sheet reveal">
-        <h2>The counts match the papers, and the rules report their effect</h2>
-        <div class="nums">
-          <div class="num">1,642<span>MAST traces, equal to the paper</span></div>
-          <div class="num">1,810<span>QMSum query pairs, 232 meetings</span></div>
-          <div class="num">4<span>records removed, all 14 labels null</span></div>
-          <div class="num">0<span>invalid labels in 22,988 cells</span></div>
+        <h2>The counts match the papers, and every rule reports its effect</h2>
+        <div class="g c4" style="flex:0 0 34%">
+          <div class="card blue"><div class="big">1,642</div><p>MAST traces, equal to the paper</p></div>
+          <div class="card"><div class="big">1,810</div><p>QMSum query pairs from 232 meetings</p></div>
+          <div class="card"><div class="big">4</div><p>records removed: all 14 labels missing</p></div>
+          <div class="card ink"><div class="big">0</div><p>invalid labels in 22,988 cells</p></div>
         </div>
-        <table>
-          <tr><th>Rule</th><th>Effect on the pinned data</th></tr>
-          <tr><td>Checksum and record count equal the pinned values</td><td>Pass, 0 removed</td></tr>
-          <tr><td>Record key (trace.key, trace_id) is unique</td><td>1,642 unique, 0 duplicates</td></tr>
-          <tr><td>A null label stays null, never 0</td><td>56 null cells preserved</td></tr>
-          <tr><td>Exclude a record only if all 14 labels are null</td><td>4 removed (0.24%)</td></tr>
-          <tr><td>QMSum: non-empty query, context, summary; unique ids</td><td>0 removed of 1,810</td></tr>
-        </table>
+        <div class="col" style="flex:1;margin-top:0.9rem;gap:0.5rem">
+          <div class="rowline"><span>Checksum and record count equal the pinned values</span><span class="pill ok">pass · 0 removed</span></div>
+          <div class="rowline"><span>Record key (trace.key, trace_id) is unique</span><span class="pill ok">1,642 unique</span></div>
+          <div class="rowline"><span><b>A missing label stays missing. It is never read as 0.</b></span><span class="pill ok">56 cells preserved</span></div>
+          <div class="rowline"><span>Exclude a record only if all 14 labels are missing</span><span class="pill wait">4 removed · 0.24%</span></div>
+          <div class="rowline"><span>QMSum: non-empty query, context and summary; unique ids</span><span class="pill ok">0 removed of 1,810</span></div>
+        </div>
       </div>${tag("Naman")}`
   },
   {
@@ -105,15 +124,11 @@ window.DECK = [
     html: `
       <p class="kicker">3.4 Data transformation</p>
       <div class="sheet reveal">
-        <h2>Every transformation has a reason</h2>
-        <table>
-          <tr><th>From</th><th>To</th><th>Why</th></tr>
-          <tr><td>MAST nested labels</td><td>14 label columns, failure count, 3 category counts (1,638 × 26)</td><td>A flat table can be aggregated and compared with the paper</td></tr>
-          <tr><td>QMSum meeting with many queries</td><td>One example per query (1,810 rows)</td><td>Model 1 answers one query at a time</td></tr>
-          <tr><td>Context spans</td><td>Ordered events with stable ids</td><td>Same shape as a live session, so claims can cite events</td></tr>
-          <tr><td>Reference summary</td><td>Kept outside the input</td><td>A target inside the input leaks the answer</td></tr>
-        </table>
-        <div class="cmd">{"event_id": "qmsum_test_9_s3:span:0000", "sequence": 0, "event_type": "doc_update", "text": "Grad B: And they wouldn't look pretty . So ."}</div>
+        <h2>Same facts, a shape the model can use</h2>
+        <div class="g c4">
+          <div class="card"><small>From</small><p>MAST labels nested inside each record</p><div class="arrow">↓</div><h3>One flat table: 1,638 rows × 26 columns</h3><p class="muted"><i>Can be counted, plotted and compared with the paper</i></p></div><div class="card"><small>From</small><p>A meeting with many questions</p><div class="arrow">↓</div><h3>One example per question: 1,810 rows</h3><p class="muted"><i>Model 1 answers one question at a time</i></p></div><div class="card"><small>From</small><p>Pieces of transcript</p><div class="arrow">↓</div><h3>Ordered events, each with a stable id</h3><p class="muted"><i>Same shape as a live session, so every claim can cite its events</i></p></div><div class="card"><small>From</small><p>Reference summary</p><div class="arrow">↓</div><h3>Kept outside the input</h3><p class="muted"><i>A target inside the input would leak the answer</i></p></div>
+        </div>
+        <div class="strip ink mono" style="margin-top:0.9rem">{"event_id": "qmsum_test_9_s3:span:0000", "sequence": 0, "event_type": "doc_update", "text": "Grad B: And they wouldn't look pretty . So ."}</div>
       </div>${tag("Shriram")}`
   },
   {
@@ -131,10 +146,22 @@ window.DECK = [
     html: `
       <p class="kicker">3.5 Data preparation · 3.6 Data statistics</p>
       <div class="sheet reveal">
-        <h2>1,257 / 272 / 281, and no meeting crosses a split</h2>
-        <div class="pair">
-          <div><img class="shot" src="figures/fig6_qmsum_distributions.png" alt="QMSum distributions by split"><p class="cap">Model 1 data: the three splits overlap closely. Summaries are short; context is long-tailed.</p></div>
-          <div><img class="shot" src="figures/fig06_mast_prevalence.png" alt="MAST failure mode prevalence"><p class="cap">MAST: 14 failure modes range from 40.5% to 1.5% of traces.</p></div>
+        <h2>Frozen splits, and no meeting crosses a split</h2>
+        <div class="g" style="grid-template-columns:0.9fr 1.1fr">
+          <div class="col">
+            <div class="bar"><div style="flex:69.4;background:#1f3ad1">Train 1,257</div><div style="flex:15;background:#2a4fff">Val 272</div><div style="flex:15.5;background:#7f97ff">Test 281</div></div>
+            <div class="g c3" style="flex:0 0 30%">
+              <div class="card grn"><div class="mid" style="color:#07694a">0</div><p>meetings shared</p></div>
+              <div class="card grn"><div class="mid" style="color:#07694a">0</div><p>ids shared</p></div>
+              <div class="card grn"><div class="mid" style="color:#07694a">0</div><p>contexts shared</p></div>
+            </div>
+            <div class="card amb"><h3>What the check found</h3><p>Two duplicated reference summaries in the original release: 4 of 1,810 rows. Reported, left in place.</p></div>
+            <div class="card ink"><h3>Why it shaped our metrics</h3><p>Summaries are about 65 words, so one missing fact matters. MAST labels run from 40.5% down to 1.5%, so accuracy alone misleads.</p></div>
+          </div>
+          <div class="col">
+            <div class="imgbox"><img src="figures/fig6_qmsum_distributions.png" alt="QMSum distributions by split"></div>
+            <div class="imgbox" style="flex:1.5"><img src="figures/fig06_mast_prevalence.png" alt="MAST failure mode prevalence"></div>
+          </div>
         </div>
       </div>${tag("Manav")}`
   },
@@ -153,16 +180,14 @@ window.DECK = [
     html: `
       <p class="kicker">4.1 Model proposals</p>
       <div class="sheet reveal">
-        <h2>Every model has a control it must beat</h2>
-        <table>
-          <tr><th>Model</th><th>Problem it removes</th><th>Candidates (control first)</th><th>Built</th></tr>
-          <tr><td><b>M1</b> catch-up</td><td>A late joiner cannot cheaply learn the state</td><td>BM25 · ModernBERT · Phi-4-mini QLoRA · Qwen3.5-4B QLoRA</td><td>298A</td></tr>
-          <tr><td><b>M2</b> intent attribution</td><td>Unclear whom an instruction addresses</td><td>TF-IDF · DeBERTaV3 · ModernBERT · Qwen head</td><td>298B</td></tr>
-          <tr><td><b>M3</b> merge arbitration</td><td>Two people redirect one agent</td><td>Last-writer-wins · ModernBERT · Qwen LoRA · few-shot Qwen</td><td>298B</td></tr>
-          <tr><td><b>M4</b> decompose and route</td><td>Subtasks assigned by availability</td><td>Rules · planner + learned router · planner · single prompt</td><td>298B</td></tr>
-          <tr><td><b>Baseline</b> MAST judge</td><td>Do we measure failures correctly?</td><td>Published: accuracy 0.94, F1 0.80, kappa 0.77</td><td>298A</td></tr>
-        </table>
-        <p class="warn">New in Model 1: every claim cites the events that support it. No evidence, no claim.</p>
+        <h2>Four models. Each has a simple control it must beat.</h2>
+        <div class="g c4">
+          <div class="card blue" style="justify-content:center"><small style="color:#cdd7ff">Model 1 · 298A</small><h3 style="font-size:2.1rem">Catch-up</h3><p style="margin-bottom:0.7rem">A late joiner learns the session state.</p><div><span class="pill ctl">BM25</span><span class="pill">ModernBERT</span><span class="pill">Phi-4-mini QLoRA</span><span class="pill">Qwen3.5-4B QLoRA</span></div></div><div class="card " style="justify-content:center"><small style="">Model 2 · 298B</small><h3 style="font-size:2.1rem">Who is it for?</h3><p style="margin-bottom:0.7rem">Which participant an instruction addresses.</p><div><span class="pill ctl">TF-IDF</span><span class="pill">DeBERTaV3</span><span class="pill">ModernBERT</span><span class="pill">Qwen head</span></div></div><div class="card " style="justify-content:center"><small style="">Model 3 · 298B</small><h3 style="font-size:2.1rem">Arbitration</h3><p style="margin-bottom:0.7rem">Two people redirect one agent: accept, merge or escalate.</p><div><span class="pill ctl">Last writer wins</span><span class="pill">ModernBERT</span><span class="pill">Qwen LoRA</span><span class="pill">Few-shot Qwen</span></div></div><div class="card " style="justify-content:center"><small style="">Model 4 · 298B</small><h3 style="font-size:2.1rem">Routing</h3><p style="margin-bottom:0.7rem">Break a task down and assign each part.</p><div><span class="pill ctl">Rules</span><span class="pill">Planner + router</span><span class="pill">Planner</span><span class="pill">Single prompt</span></div></div>
+        </div>
+        <div class="g c2" style="flex:0 0 auto;margin-top:0.9rem">
+          <div class="strip ink"><b>Baseline, not one of the four:</b> the published MAST judge. Accuracy 0.94, F1 0.80, kappa 0.77.</div>
+          <div class="strip amb"><b>New in Model 1:</b> every claim cites the events that support it. No evidence, no claim.</div>
+        </div>
       </div>${tag("Ayush")}`
   },
   {
@@ -180,18 +205,18 @@ window.DECK = [
     html: `
       <p class="kicker">4.2 Model supports</p>
       <div class="sheet reveal">
-        <h2>Owners talk through a network call or a committed file</h2>
-        <div class="pair" style="grid-template-columns:1.25fr 0.75fr">
-          <div><img class="shot" src="figures/fig11_platform_architecture.png" alt="Platform architecture"></div>
-          <div>
-            <table>
-              <tr><th>AWS and Airflow?</th><th>Our workload</th></tr>
-              <tr><td>Scheduled?</td><td>No. Static, pinned data</td></tr>
-              <tr><td>Complex graph?</td><td>Four steps in a line</td></tr>
-              <tr><td>Large?</td><td>220 MB, about 6 s</td></tr>
-              <tr><td>GPU?</td><td>University lab, $0</td></tr>
-            </table>
-            <p class="warn">Adopt when ingestion recurs or outside users join (298B).</p>
+        <h2>The platform, and why it stays local this semester</h2>
+        <div class="g" style="grid-template-columns:1.35fr 1fr">
+          <div class="imgbox"><img src="figures/fig11_platform_architecture.png" alt="Platform architecture"></div>
+          <div class="col">
+            <div class="card ink" style="flex:0 0 auto"><h3>AWS and Airflow: evaluated, not adopted yet</h3></div>
+            <div class="g c2">
+              <div class="card"><small>Scheduled?</small><h3>No</h3><p>Two static, pinned datasets</p></div>
+              <div class="card"><small>Complex graph?</small><h3>No</h3><p>Four steps in a line</p></div>
+              <div class="card"><small>Too large?</small><h3>220 MB</h3><p>Runs in about 6 seconds</p></div>
+              <div class="card"><small>Cloud GPU?</small><h3>$0</h3><p>University lab GPU</p></div>
+            </div>
+            <div class="card amb" style="flex:0 0 auto"><h3>We adopt them when</h3><p>sessions are recorded more often than weekly, or people outside the team join (298B).</p></div>
           </div>
         </div>
       </div>${tag("Ayush")}`
@@ -211,14 +236,16 @@ window.DECK = [
     html: `
       <p class="kicker">4.3 Comparison and justification · 4.4 Evaluation methods</p>
       <div class="sheet reveal">
-        <h2>A fluent answer that invents a fact cannot win</h2>
-        <img class="shot" src="figures/fig13_selection_rule.png" alt="Model 1 selection rule" style="flex:0 1 46%">
-        <table style="margin-top:0.6rem">
-          <tr><th>Gate, on every seed</th><th>Threshold</th><th>Then rank by</th></tr>
-          <tr><td>Unsupported claims</td><td>at most 2%, and no worse than BM25</td><td>1. Critical-fact recall</td></tr>
-          <tr><td>Attribution and status</td><td>at least 95% each</td><td>2. BERTScore-F1</td></tr>
-          <tr><td>Valid structured output</td><td>at least 98%</td><td>3. ROUGE-L, then latency and memory</td></tr>
-        </table>
+        <h2>Safety first, then quality. Committed before any result.</h2>
+        <div class="g c5" style="flex:0 0 36%">
+          <div class="card soft"><small>Step 1</small><h3>4 candidates</h3><p>Three seeds each</p></div><div class="card amb"><small>Step 2</small><h3>All seeds done?</h3><p>Otherwise out</p></div><div class="card amb"><small>Step 3</small><h3>Safety gates</h3><p>On every single seed</p></div><div class="card soft"><small>Step 4</small><h3>Rank</h3><p>Recall, then BERTScore, then ROUGE-L</p></div><div class="card soft"><small>Step 5</small><h3>Human review</h3><p>Blinded, top two</p></div>
+        </div>
+        <div class="g c4" style="margin-top:0.9rem">
+          <div class="card"><div class="mid">≤ 2%</div><p>unsupported claims, and no worse than BM25</p></div>
+          <div class="card"><div class="mid">≥ 95%</div><p>correct attribution and correct status</p></div>
+          <div class="card"><div class="mid">≥ 98%</div><p>valid structured outputs</p></div>
+          <div class="card ink"><h3>Our preferred model loses if</h3><p>it invents a claim on one seed, or only ties BM25. If nothing passes, nothing is promoted.</p></div>
+        </div>
       </div>${tag("Pramod")}`
   },
   {
@@ -234,16 +261,13 @@ window.DECK = [
       qa("If the demo breaks", "Fall back to the committed transcript: infra/warehouse/SAMPLE_RUN.md. Before the meeting, run download_mast.py once so the raw file is on the laptop.")
     ],
     html: `
-      <p class="kicker">Data pipeline demo</p>
+      <p class="kicker">Data pipeline demo · live</p>
       <div class="sheet reveal">
-        <h2>Ingest, transform, load, check, and keep a history</h2>
-        <div class="row four">
-          <div class="lane"><b>1</b><h3>Ingest</h3><p>Pinned sources, SHA-256 verified, landed in raw.</p></div>
-          <div class="lane"><b>2</b><h3>Clean</h3><p>Validated into staging. 4 records excluded.</p></div>
-          <div class="lane"><b>3</b><h3>Transform</h3><p>Star schema in marts: 3 facts, 4 dimensions.</p></div>
-          <div class="lane"><b>4</b><h3>Monitor</h3><p>19 quality checks and per-stage run history.</p></div>
+        <h2>From source to warehouse in about six seconds</h2>
+        <div class="g c4">
+          <div class="card"><div class="mid">1</div><h3>Ingest</h3><p>Pinned sources, checksums verified, landed as raw.</p><div style="margin-top:0.5rem"><span class="pill">raw · 1,642 + 1,810 rows</span></div></div><div class="card"><div class="mid">2</div><h3>Clean</h3><p>Validated into staging. Bad labels stop the run.</p><div style="margin-top:0.5rem"><span class="pill">staging · 1,638 traces</span></div></div><div class="card"><div class="mid">3</div><h3>Transform</h3><p>A star schema: 3 fact tables, 4 dimensions.</p><div style="margin-top:0.5rem"><span class="pill">marts · 5,141 failure rows</span></div></div><div class="card"><div class="mid">4</div><h3>Monitor</h3><p>Quality checks and a history of every run.</p><div style="margin-top:0.5rem"><span class="pill">19 of 19 checks pass</span></div></div>
         </div>
-        <div class="cmd">python infra/warehouse/pipeline.py<br>python infra/warehouse/pipeline.py --report</div>
+        <div class="strip ink mono" style="margin-top:0.9rem;font-size:1.25rem;line-height:1.6">$ python infra/warehouse/pipeline.py<br>$ python infra/warehouse/pipeline.py --report</div>
       </div>${tag("Shriram")}`
   },
   {
@@ -260,16 +284,11 @@ window.DECK = [
     html: `
       <p class="kicker">Carry-forward and next steps</p>
       <div class="sheet reveal">
-        <h2>The session corpus is the critical dependency</h2>
-        <table>
-          <tr><th>Open item</th><th>Status</th><th>Owner</th></tr>
-          <tr><td>Product-session corpus</td><td>0 sessions; fallback in effect</td><td>Naman</td></tr>
-          <tr><td>Shared evaluation harness</td><td>In review; per-seed gate fix</td><td>Pramod</td></tr>
-          <tr><td>Model 1 bake-off and winner</td><td>At risk; needs the session split</td><td>Ayush</td></tr>
-          <tr><td>MAST judge runs</td><td>Tooling done; judge not yet run</td><td>Ayush, Shriram, Pramod</td></tr>
-          <tr><td>Cloud deployment</td><td>Deferred to the 298B study</td><td>Ayush</td></tr>
-        </table>
-        <p class="muted" style="margin-top:auto">Final report, 7 December: a winner, or the documented shortfall.</p>
+        <h2>What is not done, and who owns it</h2>
+        <div class="col" style="flex:1;gap:0.55rem">
+          <div class="rowline" style="grid-template-columns:1.3fr 1.4fr auto"><b>Product-session corpus</b><span>0 sessions recorded. This is the critical dependency.</span><span class="pill bad">Naman</span></div><div class="rowline" style="grid-template-columns:1.3fr 1.4fr auto"><b>Shared evaluation harness</b><span>In review. Per-seed gate fix needed.</span><span class="pill wait">Pramod</span></div><div class="rowline" style="grid-template-columns:1.3fr 1.4fr auto"><b>Model 1 bake-off and winner</b><span>At risk. Needs the session split.</span><span class="pill bad">Ayush</span></div><div class="rowline" style="grid-template-columns:1.3fr 1.4fr auto"><b>MAST judge runs</b><span>Tooling is done. The judge has not been run.</span><span class="pill wait">Ayush · Shriram · Pramod</span></div><div class="rowline" style="grid-template-columns:1.3fr 1.4fr auto"><b>Cloud deployment</b><span>Deferred to the 298B study.</span><span class="pill wait">Ayush</span></div>
+        </div>
+        <div class="strip ink" style="margin-top:0.9rem;font-size:1.35rem"><b>Final report, 7 December:</b> a winner, or the documented shortfall.</div>
       </div>${tag("Pramod")}`
   }
 ];
