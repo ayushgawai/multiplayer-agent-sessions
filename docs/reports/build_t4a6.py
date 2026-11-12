@@ -400,6 +400,16 @@ P("Two other prepared sets exist and neither is a training split. The MAST evalu
   "(`data/m1_smoke/fixtures/`, 12 train, 3 dev and 3 hold-out examples, split by `session_id` with seed 13) "
   "carry the full product schema including critical facts and evidence event ids; they exist to exercise the "
   "pipeline end to end and are barred by their own manifest from ever being used as an evaluation split.")
+P("Table 31 shows what a record of the product schema looks like, using one smoke fixture. It carries what "
+  "QMSum lacks: typed events with actors, gold critical facts with a status category, and the event ids that "
+  "justify each fact. The annotated product-session split will have exactly this shape.")
+T(["Field", "Value (smoke example `smoke-s01-x1`, session `smoke-s01`, 16 events, 5 critical facts)"],
+  [["query", "Catch me up on what happened while I was away."],
+   ["events[11]", "{\"source_event_id\": \"smoke-s01-e011\", \"sequence\": 11, \"event_type\": \"tool_result\", \"actor_id\": \"agent-beacon\", \"text\": \"4 passed, 1 failed: test_large_payload exceeds the 2 s timeout.\"}"],
+   ["events[12]", "{\"source_event_id\": \"smoke-s01-e012\", \"sequence\": 12, \"event_type\": \"agent_step\", \"actor_id\": \"agent-beacon\", \"text\": \"test_large_payload needs the archive fixture, which only Omar can provision. I cannot continue that test.\"}"],
+   ["critical_facts[3]", "{\"fact_id\": \"smoke-s01-f04\", \"category\": \"blocked\", \"text\": \"test_large_payload is blocked on the archive fixture\", \"evidence_event_ids\": [\"smoke-s01-e011\", \"smoke-s01-e012\"]}"],
+   ["reference.blocked[0]", "{\"text\": \"Beacon is blocked on test_large_payload because only Omar can provision the archive fixture.\", \"source_event_ids\": [\"smoke-s01-e011\", \"smoke-s01-e012\"]}"]],
+  [1.4, 5.1], "One smoke-fixture record in the product schema (data/m1_smoke/fixtures/train.jsonl). Scripted, not recorded; never an evaluation split.", mono_cols=(0, 1))
 P("The split that will select the Model 1 winner, `data/splits/m1_session_v1/`, is not prepared yet because the "
   "sessions it is made from are not recorded yet. Its rules are already frozen in ADR-005: split by "
   "`session_id` so that no session appears in more than one split, freeze files, critical facts, evidence links "
@@ -407,7 +417,7 @@ P("The split that will select the Model 1 winner, `data/splits/m1_session_v1/`, 
 
 # ------------------------------------------------------------------ 3.6
 H("3.6 Data Statistics", 2)
-P("Table 31 summarises what each stage produced. Read down a column and the row counts reconcile: MAST loses "
+P("Table 32 summarises what each stage produced. Read down a column and the row counts reconcile: MAST loses "
   "exactly the four unscorable records between raw and pre-processed and nothing afterwards, and the 1,810 "
   "QMSum queries present in the raw files are the 1,810 rows of the prepared splits.")
 T(["Stage", "Rows", "Columns", "Notes"],
@@ -492,7 +502,7 @@ T(["Gap", "Evidence", "Who it would disadvantage if the system were deployed", "
 H("4. Model Development", 1)
 H("4.1 Model Proposals", 2)
 P("The project proposes four learned models, each of which removes one coordination cost identified in section "
-  "2.2.1, and reproduces one published baseline that is deliberately not one of the four. Table 34 lists them. "
+  "2.2.1, and reproduces one published baseline that is deliberately not one of the four. Table 35 lists them. "
   "Model 1 is built in DATA 298A and Models 2 to 4 in DATA 298B.")
 T(["#", "Model", "Concept / architecture", "Built in", "Owner"],
   [["1", "M1 Session-state catch-up", "Given the ordered event log of a session and a query, produce a structured catch-up in five categories (completed, in progress, blocked, decisions, pending actions) in which every claim cites the event ids that support it. Four candidates: BM25 extractive, ModernBERT extractive selector, Phi-4-mini with QLoRA, Qwen3.5-4B with QLoRA.", "298A", "Ayush"],
@@ -511,7 +521,7 @@ P("Problem. A participant or agent who joins a session in progress must learn it
   "whole history. Input is an `m1-input-v1` record: a query and the ordered events of the session, each with a "
   "stable event id. Output is an `m1-output-v1` record: five lists of claims, where every claim has non-blank "
   "text and one or more `source_event_ids` drawn from the input. Free text is invalid until it parses into that "
-  "schema. Table 35 gives the four candidates.")
+  "schema. Table 36 gives the four candidates.")
 T(["ID", "Candidate", "Architecture and algorithm", "Features and training", "Role in the comparison"],
   [["m1-a", "BM25 event ranker + fixed template", "Okapi BM25 [18] scores each event against the query using term frequency, inverse document frequency and length normalisation; the top-ranked events fill a fixed structured template. No learned parameters, CPU only.",
     "Sparse lexical features over event text. No training; no GPU settings.", "Transparent floor. Every claim is a verbatim event, so it sets the matched-seed bar for unsupported claims."],
@@ -532,7 +542,7 @@ P("Three elements of Model 1 go beyond the published systems surveyed in section
   "evidence for a session fact; the selected candidate is measured with memory disabled and enabled, and test "
   "feedback is barred from entering memory.")
 H("Models 2 to 4 (298B)", 3)
-P("Table 36 gives the candidates for the three models built in DATA 298B. In each, candidate (a) is a control "
+P("Table 37 gives the candidates for the three models built in DATA 298B. In each, candidate (a) is a control "
   "with no learned language model, so that the learned arms have something concrete to beat. The Model 3 "
   "configurations are already committed as `eval/configs/m3-a.yaml` to `m3-d.yaml`; those for Models 2 and 4 "
   "follow the same schema and are written at the start of 298B. Training data for all three comes from the "
@@ -562,7 +572,7 @@ P("The baseline is the LLM-as-a-Judge annotation pipeline of MAST [3]: a languag
 
 # ------------------------------------------------------------------ 4.2
 H("4.2 Model Supports", 2)
-P("Figure 10 shows the supporting platform in four planes, and Table 37 lists the environment and tools behind "
+P("Figure 10 shows the supporting platform in four planes, and Table 38 lists the environment and tools behind "
   "each model. One rule holds across the diagram: components owned by different people communicate through a "
   "network call or a committed file format, never through shared process memory, which is what lets five people "
   "build in parallel against frozen contracts.")
@@ -582,7 +592,7 @@ T(["Model", "Development environment", "Libraries and tools", "Execution and ser
   [0.9, 1.9, 2.0, 1.7], "Platform, environment and tools supporting each model.", size=8.5)
 P("The session plane is what produces our own data. The React client edits a shared Yjs document through the "
   "CRDT server, and every action that matters is posted to the session service, a FastAPI application that "
-  "enforces roles and appends a totally ordered `SessionEvent` to PostgreSQL, with Redis fanning events out to "
+  "enforces roles and appends a totally ordered `SessionEvent` to PostgreSQL, an event-sourced log from which state is derived by replay [23], with Redis fanning events out to "
   "connected clients. The agent runtime is a LangGraph plan, act, observe loop restricted to five fixed tools. "
   "The serving layer exposes one predict route per model; today the four adapters are stubs that honour the "
   "frozen interface, and each is replaced by a real model only when its bake-off winner is locked.")
@@ -596,7 +606,7 @@ P("Figure 11 traces one candidate through the model plane. Training is adapter-o
   "infrastructure evidence only. The model is not one of the four candidates and the loss is not a result. The same check for each real candidate (load at the pinned revision, memory at 4,096 tokens, checkpoint, resume, share of outputs that parse) is in progress on branch `m1-candidate-train-infer` and is required by ADR-005 before the bake-off.")
 H("Why the platform is local, and why there is no workflow scheduler", 3)
 P("We were asked to consider Amazon Web Services and Apache Airflow [22] for the data pipeline. We evaluated "
-  "both against what the pipeline actually has to do and chose not to adopt either in DATA 298A. Table 38 "
+  "both against what the pipeline actually has to do and chose not to adopt either in DATA 298A. Table 39 "
   "records the reasoning, because a tool that is declined should be declined for stated reasons.")
 T(["Question", "What our workload looks like", "Decision"],
   [["Is anything scheduled?", "No. Both public datasets are static, pinned to a commit and verified by digest. They do not change, so there is no daily or hourly run, no backfill and no late-arriving data. The pipeline runs when a person changes it.",
@@ -627,7 +637,7 @@ P("The decision is scoped, not permanent, and the design keeps the door open. Th
 
 # ------------------------------------------------------------------ 4.3
 H("4.3 Model Comparison and Justification", 2)
-P("Table 39 compares the four models and the baseline; Table 40 compares the four Model 1 candidates, which is "
+P("Table 40 compares the four models and the baseline; Table 41 compares the four Model 1 candidates, which is "
   "the comparison that will actually be run this semester.")
 T(["Model", "Targeted problem", "Input features", "Approach", "Strengths", "Limitations"],
   [["M1 catch-up", "Late joiner cannot cheaply learn session state", "Ordered event text, event ids, query", "Statistics (BM25), deep learning (encoder; QLoRA generators)", "Every claim is checkable against cited events; safety-gated selection", "Needs annotated sessions to select; long sessions exceed 4,096 tokens"],
@@ -682,7 +692,7 @@ P("All metrics are computed in one place, the shared evaluation layer under `eva
   "across seeds before a metric is computed, and the contract requires eligibility gates to hold on every seed individually so that one "
   "unsafe seed cannot be hidden by two good ones. With three seeds the interval has two degrees of freedom and is wide by construction; it describes seed-to-seed variation, not sampling error over test examples, which is why the per-seed values are always shown beside it. Each result file records the contract version, configuration "
   "hash, dataset manifest hashes, git commit, model revision, seed, hardware and package versions.")
-P("The metrics in Table 41 are committed here, before any comparative result exists. As of 11 November 2026 no "
+P("The metrics in Table 42 are committed here, before any comparative result exists. As of 11 November 2026 no "
   "Model 1 candidate has been scored on a test split and no baseline agreement figure has been computed. The "
   "Model 1 definitions are machine-readable in `eval/configs/m1-contract.yaml`, and ADR-005 states that the "
   "definitions and the winner policy cannot change after test results are seen without a new contract version.")
@@ -742,9 +752,9 @@ d.add_page_break()
 H("Submission checklist (not part of the report)", 2)
 T(["Check", "Yes / No"],
   [["Every section above is written as report prose, not as notes", "Yes"],
-   ["Splits are fixed, version-controlled, and the leakage check is reported", "Yes. `data/splits/m1_v1/`, commit `330603f`; Table 29"],
-   ["Metrics were committed before any results existed", "Yes. ADR-004, ADR-005; Table 41"],
-   ["Four models named, with the reproduced baseline listed separately", "Yes. Table 34"],
+   ["Splits are fixed, version-controlled, and the leakage check is reported", "Yes for Model 1 supervision: `data/splits/m1_v1/`, commit `330603f`; Table 29. The product-session split is not yet prepared (section 3.5)."],
+   ["Metrics were committed before any results existed", "Yes. ADR-004, ADR-005; Table 42"],
+   ["Four models named, with the reproduced baseline listed separately", "Yes. Table 35"],
    ["Every claim links to a commit, run, dataset version or Linear issue", "Yes for every count, split, metric and decision (`docs/reports/t4a6_data_facts.json` at commit `fbb3fdf`; ADRs; pull requests). Interpretive statements are argued in the prose."],
    ["Each section names the team member who wrote it", "Yes. Title page"]],
   [4.2, 2.3])

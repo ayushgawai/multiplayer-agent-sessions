@@ -1,6 +1,6 @@
 # Why the data pipeline does not use AWS or Airflow (yet)
 
-DATA 298A, Team 4. Prepared for Team Meeting 2, 12 November 2026. The same argument is in Workbook 2, section 4.2, Table 38.
+DATA 298A, Team 4. Prepared for Team Meeting 2, 12 November 2026. The same argument is in Workbook 2, section 4.2, Table 39.
 
 ## Short answer
 
