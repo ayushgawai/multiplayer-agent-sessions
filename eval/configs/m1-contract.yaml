@@ -1,0 +1,88 @@
+contract_version: m1-experiment-v1
+task: m1_catchup
+schemas:
+  input: m1-input-v1
+  output: m1-output-v1
+seeds: [13, 29, 47]
+split:
+  qmsum_path: data/splits/m1_v1/
+  qmsum_manifest: data/splits/m1_v1/MANIFEST.json
+  session_path: data/splits/m1_session_v1/
+  grouping_key: session_id
+  test_policy: frozen_no_tuning
+  candidate_selection_split: session_test
+fairness:
+  candidate_selection_condition: memory_disabled
+  extension_conditions: [memory_disabled, approved_memory]
+  same_test_examples: true
+  same_preprocessing: true
+  same_generation_limits: true
+  learned_shared_train_fields: [epochs, max_seq_len, effective_batch_size]
+  test_feedback_may_enter_memory: false
+metrics:
+  schema_valid_rate:
+    direction: maximize
+    scale: unit_interval
+    definition: valid_outputs / attempted_examples
+  critical_fact_recall:
+    direction: maximize
+    scale: unit_interval
+    definition: supported_gold_critical_facts_covered / gold_critical_facts
+  unsupported_claim_rate:
+    direction: minimize
+    scale: unit_interval
+    definition: claims_without_support_in_cited_events / emitted_claims
+  attribution_accuracy:
+    direction: maximize
+    scale: unit_interval
+    definition: claims_with_correct_supporting_source_event_ids / emitted_claims
+  status_consistency:
+    direction: maximize
+    scale: unit_interval
+    definition: claims_in_correct_status_category / status_annotated_claims
+  rouge_l:
+    direction: maximize
+    scale: percentage_0_100
+    convention: m1_rouge_macro_v1
+    definition: macro_f1_percentage_using_m1_rouge_macro_v1
+  bertscore_f1:
+    direction: maximize
+    scale: unit_interval
+    library: bert-score==0.3.13
+    model_repo: FacebookAI/roberta-large
+    model_revision: 722cf37b1afa9454edce342e7895e588b6ff1d59
+    num_layers: 17
+    idf: false
+    rescale_with_baseline: false
+    definition: macro_f1_across_examples
+  human_edit_rate:
+    direction: minimize
+    scale: unit_interval
+    definition: reviewer_token_edits_to_acceptable_output / tokens_in_accepted_output
+  latency_p50_ms:
+    direction: minimize
+    scale: milliseconds
+    definition: median_end_to_end_inference_latency_ms_after_warmup
+  latency_p95_ms:
+    direction: minimize
+    scale: milliseconds
+    definition: p95_end_to_end_inference_latency_ms_after_warmup
+  peak_vram_mb:
+    direction: minimize
+    scale: mebibytes
+    definition: max_allocated_cuda_memory_mb_during_inference
+selection:
+  eligible_if:
+    all_three_seed_runs_complete: true
+    schema_valid_rate_min: 0.98
+    unsupported_claim_rate_max: 0.02
+    unsupported_claim_rate_no_worse_than_m1_a: true
+    attribution_accuracy_min: 0.95
+    status_consistency_min: 0.95
+  rank_eligible_by:
+    - critical_fact_recall
+    - bertscore_f1
+    - rouge_l
+  quality_tie_margin: 0.01
+  tie_break_by: [latency_p95_ms, peak_vram_mb]
+  final_confirmation: blinded_human_review_of_top_two
