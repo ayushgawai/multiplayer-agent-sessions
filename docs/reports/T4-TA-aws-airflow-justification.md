@@ -30,7 +30,7 @@ What we built instead covers the same four things the rubric asks for:
 
 1. **Recurring ingestion.** When product sessions are recorded more often than weekly, the nightly export from the PostgreSQL event log to the warehouse becomes a real schedule with a freshness requirement. First a scheduled CI job, then Airflow if dependencies grow.
 2. **First participant outside the team.** The 298B controlled study needs the platform reachable beyond the team. That is when the cloud deployment (FR-8) lands, with managed PostgreSQL.
-3. **Checkpoints.** The shared checkpoint utility is being extended to accept `s3://` URIs (PR #32), so adapter checkpoints can move to S3 without touching a trainer.
+3. **Checkpoints.** The shared checkpoint utility accepts `s3://` URIs (PR #32, merged), so adapter checkpoints can move to S3 without touching a trainer.
 
 Mapping if we migrate: raw files to S3, stage functions to Airflow tasks, DuckDB schemas to Redshift or Athena, `meta.pipeline_runs` to Airflow's run history.
 
