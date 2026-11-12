@@ -122,12 +122,13 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 - Source-to-warehouse pipeline demo on `main`: `infra/warehouse/pipeline.py` (DuckDB, 19 quality checks, run history; PR #33). Why no AWS or Airflow yet: `docs/reports/T4-TA-aws-airflow-justification.md`.
 - CI now runs agent-runtime and warehouse tests; lock refreshed; checkpoint utility accepts remote URIs (PR #32).
 - **No model is trained and no model result exists.** M1 candidate code for m1-b, m1-c, m1-d is on branch `m1-candidate-train-infer` (no PR yet). On the lab GPU: m1-b (ModernBERT) passed a 40-step feasibility smoke; m1-c (Phi-4-mini) failed after 2 of 15 steps at about 5 min per step, not diagnosed; m1-d (Qwen3.5-4B) not run.
-- **Not on `main` yet:** `eval/harness.py` (PR #25), BM25 m1-a (draft PR #26), M2/M4 configs, any product session (`data/sessions/raw/` is empty).
+- Shared M1 evaluation harness on `main` (DAT-61 / PR #25, merged 11 Nov with per-seed gates); no candidate has been run through it yet.
+- **Not on `main` yet:** BM25 m1-a (draft PR #26), M2/M4 configs, any product session (`data/sessions/raw/` is empty).
 
-**Open PRs:** #25 DAT-61 harness (retargeted to `main`; the per-seed gate fix for ADR-005 is pushed and awaits review), #26 DAT-58 BM25 (draft), #15 DAT-56 (changes requested).
+**Open PRs:** #26 DAT-58 BM25 (draft), #15 DAT-56 (changes requested).
 
 **Pick up here next time (in order):**
-1. Fix and merge #25, then mark #26 ready. The M1 bake-off cannot start without the harness.
+1. Mark #26 ready and merge it; wire the m1-b/c/d runners into the merged harness.
 2. Record and annotate product sessions; freeze `data/splits/m1_session_v1/`. ADR-005 blocks choosing an M1 winner until then.
 3. Diagnose the m1-c GPU smoke (probably memory at 4,096 tokens on 16 GB), run m1-d, write `docs/verification/m1_candidate_feasibility.md`, open the M1 PR.
 4. Run the MAST judge (DAT-25, DAT-26, DAT-27).
