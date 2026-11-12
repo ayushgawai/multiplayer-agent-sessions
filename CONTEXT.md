@@ -74,7 +74,7 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 | Repo, pins, CI live | Ayush | Done |
 | SessionEvent frozen + OpenAPI committed | Ayush | Done |
 | Serving stubs m1–m4 | Ayush | Done |
-| M1 experiment contract and configs `m1-a`…`m1-d` | Pramod (DAT-55) | Contract implementation prepared; independent PR review required before the bake-off |
+| M1 experiment contract and configs `m1-a`…`m1-d` | Pramod (DAT-55) | Done on `main`: contract and configs via PR #20; shared harness via PR #25 with PR #41 follow-ups; M1-A CPU runner via PR #26. No reportable bake-off result yet. |
 | Docker Compose skeleton | Ayush | Done |
 | Progress Report 1 (`T4.A3`) | Team | Submitted / past due |
 | Workbook 1 (`T4.A4.docx`) | Team | On `main` at `docs/reports/T4.A4.docx`. Canvas upload is the team's copy of that file. |
@@ -88,9 +88,9 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 | M2 / M4 configs | Naman, Shriram | Not started |
 | MAST judge prompt / parser / viewer | Manav (DAT-31/32/33, PRs #7 #8 #9) | Done on `main` under `models/baseline_mast/` |
 | MAST batch + provenance | Shriram (DAT-34/35, PR #5) | Done on `main`: `run_batch.py`, `provenance.py` |
-| Client / CRDT / presence | Manav (DAT-15/16/17) | In review: PRs #12, #13, #14. `client/` on `main` is still the scaffold. |
-| Agent runtime on fixture | Shriram (DAT-18) | In review: PR #6 |
-| Stub label `escalate_human` to `escalate` | Manav (DAT-40 follow-up) | Open PR #11. Serving owner reviews. |
+| Client / CRDT / presence | Manav (DAT-15/16/17) | Done on `main`: PRs #12, #13, #14. |
+| Agent runtime on fixture | Shriram (DAT-18) | Done on `main`: PRs #6 and #31. |
+| Stub label `escalate_human` to `escalate` | Manav (DAT-40 follow-up) | Done on `main`: PR #11. |
 
 ### Part C — fill your row in the report
 
@@ -106,7 +106,7 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 
 ## Current status (update on pull / after each feature)
 
-**Last updated:** 2026-11-12 (Pramod for DAT-61; previous: 2026-11-11 evening, Ayush)
+**Last updated:** 2026-11-12 (post-merge reconciliation after PRs #25, #41, and #26)
 
 - Session service on `main`: durable event log (SQLAlchemy; SQLite in CI, Postgres in Compose) and Redis or in-process fan-out (ADR-002). OpenAPI routes unchanged.
 - React 18 client, CRDT server, and presence on `main` (DAT-15, DAT-16, DAT-17 / PRs #12, #13, #14).
@@ -121,18 +121,19 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 - Team Meeting 2 deck on `main`: `docs/presentation-wb2/presenter.html` (opens `audience.html`; 15 slides, press F for full screen, speaker script and Q&A per slide) and `docs/slides/T4-Workbook2.pptx` (same slides as images, notes included). Who does what in the demo: `docs/demo/TEAM_MEETING_2_CHECKLIST.md`.
 - Source-to-warehouse pipeline demo on `main`: `infra/warehouse/pipeline.py` (DuckDB, 19 quality checks, run history; PR #33). Why no AWS or Airflow yet: `docs/reports/T4-TA-aws-airflow-justification.md`.
 - CI now runs agent-runtime and warehouse tests; lock refreshed; checkpoint utility accepts remote URIs (PR #32).
-- **No model is trained and no model result exists.** M1 candidate code for m1-b, m1-c, m1-d is on branch `m1-candidate-train-infer` (no PR yet). On the lab GPU: m1-b (ModernBERT) passed a 40-step feasibility smoke; m1-c (Phi-4-mini) failed after 2 of 15 steps at about 5 min per step, not diagnosed; m1-d (Qwen3.5-4B) not run.
+- **No learned final candidate has completed reportable training, and no M1 winner exists.** M1-A is a parameter-free BM25 control, now on `main`; its 3/3 smoke run is a pipeline diagnostic, not an evaluation result. Candidate code for m1-b, m1-c, and m1-d remains on branch `m1-candidate-train-infer` with no PR. On the lab GPU, m1-b (ModernBERT) passed a 40-step feasibility smoke; m1-c (Phi-4-mini) stopped after 2 of 15 steps at about 5 min per step and still needs diagnosis; m1-d (Qwen3.5-4B) has not run.
 - Shared M1 evaluation harness on `main` (DAT-61 / PR #25, merge `fe188b9`, per-seed gates; follow-ups in PR #41: latency timed over every evaluated example, candidate exceptions counted as invalid outputs). No reportable candidate run yet; M1-A has run through it on the smoke split only.
-- **Not on `main` yet:** BM25 m1-a (PR #26, evaluation contract review in progress), M2/M4 configs, any product session (`data/sessions/raw/` is empty).
+- M1-A BM25 extractive CPU baseline on `main` (DAT-58 / PR #26). Its rules were fitted only to the synthetic smoke train/dev fixtures; the smoke-holdout harness run verifies schema and integration, not generalization. It cannot be promoted or compared until the frozen, annotated product-session split and real evaluator are available.
+- **Not on `main` yet:** m1-b/m1-c/m1-d candidate runners, M2/M4 configs, any product session (`data/sessions/raw/` is empty), or `data/splits/m1_session_v1/`.
 
-**Open PRs:** #26 DAT-58 BM25 (evaluation contract review in progress), #15 DAT-56 (changes requested).
+**Known open PR:** #15 DAT-56 `LearningEvent` self-improvement foundation (changes requested). PR #26 is merged.
 
 **Pick up here next time (in order):**
-1. Finish the contract review of #26 and merge it; wire the m1-b/c/d runners into the merged harness. A reportable run still needs the reviewed metric evaluator and the session split.
+1. Implement the real M1 metric evaluator and wire the m1-b/c/d runners into the merged harness. A reportable run still needs this evaluator and the frozen session split.
 2. Record and annotate product sessions; freeze `data/splits/m1_session_v1/`. ADR-005 blocks choosing an M1 winner until then.
 3. Diagnose the m1-c GPU smoke (probably memory at 4,096 tokens on 16 GB), run m1-d, write `docs/verification/m1_candidate_feasibility.md`, open the M1 PR.
 4. Run the MAST judge (DAT-25, DAT-26, DAT-27).
-5. Turn on branch protection for `main` (DAT-10).
+5. Resolve and complete PR #15 for the human-governed learning-memory path, and turn on branch protection for `main` (DAT-10).
 
 When you finish a feature, add one bullet here under your name and bump **Last updated**.
 
@@ -161,12 +162,12 @@ When you finish a feature, add one bullet here under your name and bump **Last u
 - On `main`, CRDT editor (DAT-16): TipTap 2.8 editor bound to a shared Yjs document through `crdt-server` (y-websocket at `ws://localhost:1234/crdt/{session_id}`); a bridge posts one debounced `doc_update` event (800 ms) to the session-service log; observers can read but not edit. 4 crdt-server convergence tests.
 - On `main`, presence (DAT-17): presence bar and collaboration cursors from Yjs awareness; each display name maps to a stable colour from a fixed palette, so it survives a rejoin. Browser-tested with up to three participants.
 - Not integrated: the client does not call or display any model output. `catchup_summary` from join is not rendered (the mock returns null), and there is no M1 or M3 UI while `serving/adapters/m1.py` to `m4.py` are stubs.
-- In review: M1-A BM25 extractive baseline (DAT-58, draft PR #26). It stays draft until #20 (DAT-55), #22 (DAT-53) and #25 (DAT-61) land; then main is merged into the branch so the PR holds only the BM25 code and tests, and the evaluation owner completes the contract review. The real evaluator and reportable metric run are handled separately. Removal of the optional `trace_text` field from the result viewer is in PR #28.
-- Next: M1 catch-up panel in the client once the M1 contract (#25) and M1 serving land; end-to-end wiring with the session service, agent runtime and serving; demo script and deck under `docs/slides/` with the environment owner.
+- On `main`: M1-A BM25 extractive baseline (DAT-58 / PR #26), reviewed against the DAT-55 contract. The 3/3 smoke-holdout run is integration evidence only; the real evaluator and reportable product-session run remain separate work. Removal of the optional `trace_text` field from the result viewer is in PR #28.
+- Next: M1 catch-up panel in the client once an M1 winner is served; end-to-end wiring with the session service, agent runtime and serving; maintain the demo script and deck under `docs/slides/` with the environment owner.
 
 ### Shriram
 - On `main`: resumable MAST batch and run provenance (DAT-34/35, PR #5). Notes in `docs/verification/dat-34-dat-35-batch-execution.md`.
-- In review: LangGraph plan, act, observe loop (DAT-18, PR #6). `agent-runtime/` on `main` is still the scaffold.
+- On `main`: LangGraph plan, act, observe loop (DAT-18 / PRs #6 and #31), including runtime state, event contracts, loop implementation, and tests.
 - Still open: final MAST runs (DAT-36), `doc_read` and `calc` (DAT-19), end-to-end loop on a fixture (DAT-20).
 
 ### Pramod
@@ -180,7 +181,10 @@ When you finish a feature, add one bullet here under your name and bump **Last u
   `session_test` can select. It does not contain model results or declare a winner.
 - On `main`: DAT-61 follow-ups (PR #41): latency is timed over all evaluated examples, and a
   candidate exception counts as an invalid output instead of aborting the seed.
-- Still open: published comparison (DAT-38, due 5 Nov), error analysis (DAT-39, due 11 Nov), dataset screenshot (DAT-12), locking the ROUGE call (DAT-13).
+- On `main`: DAT-13 locked M1 ROUGE scoring convention (PR #19), including deterministic
+  macro aggregation, 0–100 reporting scale, audit details, and tests.
+- On `main`: DAT-12 source-to-DuckDB warehouse pipeline and visual dataset evidence (PR #33).
+- Still open: published comparison (DAT-38, due 5 Nov) and error analysis (DAT-39, due 11 Nov).
 
 ---
 
@@ -199,14 +203,14 @@ Two kinds of state, on purpose.
 
 | State | Mechanism | Why |
 |-------|-----------|-----|
-| Document | Yjs CRDT (Manav, in review: PR #13) | Replicas converge without a central transform server. |
+| Document | Yjs CRDT (Manav, on `main`: PR #13) | Replicas converge without a central transform server. |
 | Commands | Append-only SQL event log (Ayush, on `main`, ADR-002) | Order, audit, interrupt, and rollback. A CRDT does not decide whose instruction was intended. |
 
 ```
 humans + agents
     |
     v
-client (Vite + React, Yjs, presence)     <-- PRs #12 #13 #14, not on main
+client (Vite + React, Yjs, presence)     <-- PRs #12 #13 #14, on main
     |  HTTP + WebSocket
     v
 session-service (FastAPI)                 <-- on main
@@ -214,7 +218,7 @@ session-service (FastAPI)                 <-- on main
     SQLite in CI, Postgres 16 in Compose
     Redis pub/sub, or in-process if REDIS_URL is unset
     |
-    +--> agent-runtime (LangGraph plan, act, observe)   <-- PR #6, not on main
+    +--> agent-runtime (LangGraph plan, act, observe)   <-- PRs #6 #31, on main
     |         five tools: web_search, doc_read, doc_write, table_build, calc
     |
     +--> serving  POST /v1/models/{model_id}/predict    <-- stubs on main
@@ -293,7 +297,7 @@ The M1 matrix below is frozen by DAT-55 together with its schemas, metrics, spli
 
 Selection is not ROUGE-only. Freeze the rule before running experiments, then compare critical-fact recall, unsupported-claim rate, attribution accuracy, ROUGE-L, BERTScore-F1, latency, and peak VRAM over seeds 13, 29, and 47. A candidate that improves ROUGE but increases unsupported claims cannot win on ROUGE alone. Learned candidates use the same frozen split and shared training settings wherever the model class permits. The extractive CPU control has no epochs or GPU batch size and must be identified as non-neural.
 
-**Execution warning:** `eval/configs/m1-*.yaml` now represent the DAT-55 target matrix, but the bake-off must wait for independent review plus candidate-specific implementation and feasibility checks. The DAT-57 Qwen3-1.7B notebook is an infrastructure-only QLoRA, checkpoint, resume, and GPU feasibility test. Its executed config is preserved under `models/m1_catchup/feasibility/`; it is not evidence that Qwen3-1.7B is a final candidate and must not enter comparative results.
+**Execution warning:** `eval/configs/m1-*.yaml` represent the reviewed DAT-55 target matrix, and M1-A is implemented on `main`; the bake-off still waits for the real evaluator, frozen product-session split, and candidate-specific m1-b/m1-c/m1-d implementations and feasibility checks. The DAT-57 Qwen3-1.7B notebook is an infrastructure-only QLoRA, checkpoint, resume, and GPU feasibility test. Its executed config is preserved under `models/m1_catchup/feasibility/`; it is not evidence that Qwen3-1.7B is a final candidate and must not enter comparative results.
 
 ### Human-governed self-improvement loop
 
@@ -324,7 +328,7 @@ No winner and no comparative four-candidate run. Numbers below are acceptance ta
 
 | ID | Task | Plan / implementation state | Target | When |
 |----|------|--------------------|--------|------|
-| M1 | Catch-up summary for a late joiner | DAT-55 matrix: BM25, ModernBERT-base, Phi-4-mini-instruct with QLoRA, and Qwen3.5-4B with QLoRA. Contract and configs require independent review; candidate implementations are not all complete. | Safety gates first, then critical-fact recall, BERTScore-F1 and ROUGE-L over three seeds with 95% CI. Also report attribution, status consistency, latency, and VRAM. The QMSum ROUGE-L 28.2 reference floor is contextual, not a result we posted or the sole promotion rule. | 298A |
+| M1 | Catch-up summary for a late joiner | DAT-55 matrix: BM25, ModernBERT-base, Phi-4-mini-instruct with QLoRA, and Qwen3.5-4B with QLoRA. Contract, configs, harness, and M1-A are on `main`; m1-b/m1-c/m1-d, the real evaluator, and frozen product-session split are incomplete. | Safety gates first, then critical-fact recall, BERTScore-F1 and ROUGE-L over three seeds with 95% CI. Also report attribution, status consistency, latency, and VRAM. The QMSum ROUGE-L 28.2 reference floor is contextual, not a result we posted or the sole promotion rule. | 298A |
 | M2 | Which participant an instruction addresses | Configs not written. Plan: TF-IDF control, DeBERTa and ModernBERT cross-encoders, Qwen classification head. | macro-F1 at least 0.75 | 298B |
 | M3 | Accept A, accept B, merge, or escalate | `m3-a` last-writer-wins. `m3-b` ModernBERT-base pairwise. `m3-c` Qwen3.5-4B + LoRA. `m3-d` few-shot Qwen3.5-4B. Configs in `eval/configs/m3-*.yaml`. | macro-F1 at least 0.70 and safer than last-writer-wins | 298B |
 | M4 | Decompose and route | Configs not written. Plan: rules-only control, then planner and router arms. | Must emit a valid DAG before accuracy, latency, and cost count | 298B |
@@ -479,7 +483,7 @@ Schema, integration, sessions, frozen splits, study, defence.
 
 - That M1 through M4 are trained, scored, or have a winner.
 - That the MAST judge has been reproduced to 0.94, 0.80, or 0.77.
-- That the client or the LangGraph runtime is on `main`. They are open pull requests.
+- That the client or LangGraph runtime is integrated with a selected M1 model. Both foundations are on `main`, but M1 serving and UI wiring are not complete.
 - That the 1,642 MAST labels are human labels. They are LLM-judge labels. The human file has 19 rows.
 - That null labels become 0 anywhere. The EDA script (since DAT-54) and the judge parser both leave them null. The 4 fully-null records are excluded from scoring.
 - A paid cloud GPU price, or a specific lab GPU model, unless the workbook on the table says it.
