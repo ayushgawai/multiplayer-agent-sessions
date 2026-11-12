@@ -176,7 +176,7 @@ g. Adding a field is allowed if every reader ignores unknown fields. Renaming or
   prompt version and a new protocol version.
 - Manifest counts are not accumulated across invocations, because accumulating would double
   count on resume without per-invocation history. Readers that need totals count lines.
-- The record does not carry trajectory text. The viewer's optional `trace_text` field will be
-  removed in a viewer follow-up; a reader that needs the text joins on `trace_key` and
+- The record does not carry trajectory text. The viewer no longer reads an optional
+  `trace_text` field; a reader that needs the text joins on `trace_key` and
   `trace_index` against the dataset file pinned by `dataset_sha256`.
 - Status stays Proposed until the execution owner and the environment owner have reviewed it.
