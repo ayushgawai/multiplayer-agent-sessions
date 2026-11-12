@@ -330,7 +330,8 @@ def run_trainer(
         per_device_train_batch_size=per_device_batch,
         gradient_accumulation_steps=max(1, int(train_cfg["effective_batch_size"]) // per_device_batch),
         learning_rate=float(train_cfg["lr"]),
-        warmup_ratio=float(train_cfg["warmup_ratio"]),
+        # transformers 5.x dropped warmup_ratio; a warmup_steps value below 1 is read as a ratio
+        warmup_steps=float(train_cfg["warmup_ratio"]),
         lr_scheduler_type="cosine",
         logging_steps=1 if max_steps is not None else 10,
         save_strategy="steps",

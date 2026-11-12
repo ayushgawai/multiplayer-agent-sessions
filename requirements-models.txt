@@ -1,8 +1,12 @@
 # Training and LoRA stack. Install on GPU hosts / Colab only.
-torch>=2.4.0,<2.5
-transformers>=4.44.0,<4.45
-peft>=0.13.0,<0.14
-bitsandbytes>=0.44.0,<0.45
-datasets>=3.0.0,<3.1
+# Ranges are the versions installed on the M1 GPU host (RTX 5080 Laptop GPU, 16 GB), on which the
+# m1-b feasibility smoke passed; m1-c and m1-d are not yet verified. Floors: ModernBERT needs
+# transformers>=4.48, Phi-4-mini-instruct >=4.49, Qwen3.5 (qwen3_5) >=5.2.0. RTX 50-series
+# (sm_120) needs a CUDA 12.8 torch build, e.g. --index-url https://download.pytorch.org/whl/cu128
+torch>=2.11.0,<2.12
+transformers>=5.22.1,<5.23
+peft>=0.21.2,<0.22
+bitsandbytes>=0.50.2,<0.51
+datasets>=5.1.0,<5.2
 lightgbm>=4.5.0,<4.6
-accelerate>=0.34.0,<1
+accelerate>=1.15.0,<1.16
