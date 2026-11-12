@@ -19,7 +19,7 @@ jobs:
           python -m pip install -U pip
           pip install -r requirements.txt
       - name: Ruff
-        run: ruff check session-service serving models eval
+        run: ruff check session-service serving models eval agent-runtime
       - name: Mypy
         run: |
           mypy --ignore-missing-imports session-service/app
@@ -37,5 +37,10 @@ jobs:
         run: pytest -q eval/tests
       - name: Pytest MAST baseline
         run: pytest -q models/baseline_mast/tests
+      - name: Pytest agent-runtime
+        working-directory: agent-runtime
+        run: pytest -q
+      - name: Pytest M1 candidates
+        run: if [ -d models/m1_catchup/tests ]; then pytest -q models/m1_catchup/tests; fi
       - name: Checkpointing self-check
         run: PYTHONPATH=. python models/common/check_checkpointing.py
