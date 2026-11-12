@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Presenter · Workbook 2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,520;12..96,640&family=Source+Serif+4:opsz,wght@8..60,460;8..60,560&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="deck.css">
+</head>
+<body class="presenter">
+  <div class="presenter-shell">
+    <header class="p-top">
+      <div>
+        <strong id="meta">Workbook 2</strong>
+        <span id="timer" style="margin-left:1rem">00:00</span>
+      </div>
+      <button id="open-audience" type="button">Open the room window</button>
+    </header>
+    <article id="notes" class="notes"></article>
+    <aside>
+      <div class="preview-frame"><div class="preview-scale" id="preview"></div></div>
+      <p style="font-family:var(--display);color:#8b95a8;margin-top:0.8rem">Arrow keys move both windows. Blue blocks are answers for likely questions. Do not read them aloud.</p>
+    </aside>
+    <footer class="p-bot">
+      <div>Next <span class="next-label" id="next"></span></div>
+      <div>Say this, then advance</div>
+    </footer>
+  </div>
+  <script src="slides.js"></script>
+  <script src="sync.js"></script>
+</body>
+</html>
