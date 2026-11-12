@@ -74,7 +74,7 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 | Repo, pins, CI live | Ayush | Done |
 | SessionEvent frozen + OpenAPI committed | Ayush | Done |
 | Serving stubs m1–m4 | Ayush | Done |
-| Legacy M1 configs `m1-a`…`m1-d` | Ayush | On `main`; DAT-55 must migrate them to the approved target matrix before the bake-off |
+| M1 experiment contract and configs `m1-a`…`m1-d` | Pramod (DAT-55) | Contract implementation prepared; independent PR review required before the bake-off |
 | Docker Compose skeleton | Ayush | Done |
 | Progress Report 1 (`T4.A3`) | Team | Submitted / past due |
 | Workbook 1 (`T4.A4.docx`) | Team | On `main` at `docs/reports/T4.A4.docx`. Canvas upload is the team's copy of that file. |
@@ -114,7 +114,7 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 - M3 stub label fix on `main` (DAT-40 / PR #11 merged).
 - MAST track on `main` through download, dictionary, manifest, prompt, parser, viewer, batch, provenance, and classification metrics.
 - QMSum downloaded and verified (DAT-11, 232 meetings, 1,810 query pairs, `STATS.md`); frozen `m1_v1` dataset splits committed (`MANIFEST.json`).
-- M1 full training pipeline and 4-bit NF4 QLoRA completed (DAT-55); 50-step high power training run dropped loss from 3.90 to 2.14 with verified checkpoint-50.
+- Qwen3-1.7B infrastructure pipeline verified 4-bit NF4 QLoRA, checkpointing and resume; its 50-step run dropped training loss from 3.90 to 2.14. This is feasibility evidence, not a final DAT-55 candidate result.
 - Linear tasks and git commits synced across the team (`docs/verification/linear_git_sync.md`).
 - **Not on `main` yet:** LangGraph runtime (PR #6), `eval/harness.py`, M2/M4 configs.
 
@@ -123,9 +123,9 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 When you finish a feature, add one bullet here under your name and bump **Last updated**.
 
 ### Ayush
-- Foundation, ADR-001/002, durable event log and fan-out, serving stubs, legacy M1 configs, Compose, CI.
+- Foundation, ADR-001/002, durable event log and fan-out, serving stubs, initial exploratory M1 configs, Compose, CI.
 - QMSum download + verification (DAT-11) and frozen m1_v1 split generation (`data/splits/m1_v1/`).
-- M1 GPU feasibility verification (M1-04) and full QLoRA training pipeline (DAT-55); 50-step run reached loss 2.14, verified checkpoint-50 saved.
+- M1 GPU infrastructure verification (M1-04); the legacy Qwen3-1.7B 50-step run reached training loss 2.14 and saved a verified checkpoint. It is not a final-candidate quality result.
 - Reviewed and merged client scaffold, CRDT server, presence, and ADR-003 PRs (#11, #12, #13, #14, #16).
 - Synchronized Linear board with git commits and automated tracking (`docs/verification/linear_git_sync.md`).
 - Workbook 1 figures: Gantt and PERT. MAST is parallel to the critical path, not on it.
@@ -134,15 +134,19 @@ When you finish a feature, add one bullet here under your name and bump **Last u
 ### Naman
 - On `main`: DAT-28 download and checksums, DAT-29 dictionary and taxonomy, DAT-30 eval manifest.
 - Done on `main`: QMSum download (DAT-11, 232 meetings, 1,810 query pairs in `data/qmsum/STATS.md`, splits frozen in `data/splits/m1_v1/`).
-- DAT-53 (M1-02, PR #22, in review): deterministic M1 smoke dataset in `data/m1_smoke/` (18 synthetic examples, 12 sessions, splits `train`, `dev`, `smoke_holdout`, disjoint by `session_id`) with an event-based `M1SmokeExample` (`m1-smoke-v1`), loader, and tests. Reproduce: `python data/scripts/make_m1_smoke.py --seed 13 --out data/m1_smoke/fixtures`. Smoke fixtures only, never an evaluation split, and there is no split named test. The session-service `CatchupExample` is unchanged. Review decisions: the rollback scenario is the post-rollback log the live service would hold (events after `to_seq` deleted, sequences gap-free); the third split was renamed from test to `smoke_holdout`; the class was renamed from `CatchupExample` to `M1SmokeExample`. Contract alignment: `to_m1_input` and `gold_reference` validate against the DAT-55 `m1-input-v1`/`m1-output-v1` models on Pramod's branch (PR #20); the compat test skips until `eval/contracts/m1.py` is on `main`.
+- DAT-54 (MAST-17, PR #21): `eda_mast.py` keeps null labels null, keys records by (`trace.key`, `trace_id`), excludes the 4 fully-null records (1,642 raw, 1,638 scorable), and writes the committed `data/mast/EDA_SUMMARY.json`. Tests in `data/tests/test_eda_mast.py`.
+- DAT-53 (M1-02, PR #22, in review): deterministic M1 smoke dataset in `data/m1_smoke/` (18 synthetic examples, 12 sessions, splits `train`, `dev`, `smoke_holdout`, disjoint by `session_id`) with an event-based `M1SmokeExample` (`m1-smoke-v1`), loader, and tests. Reproduce: `python data/scripts/make_m1_smoke.py --seed 13 --out data/m1_smoke/fixtures`. Smoke fixtures only, never an evaluation split, and there is no split named test. The session-service `CatchupExample` is unchanged. Review decisions: the rollback scenario is the post-rollback log the live service would hold (events after `to_seq` deleted, sequences gap-free); the third split was renamed from test to `smoke_holdout`; the class was renamed from `CatchupExample` to `M1SmokeExample`. Contract alignment: `to_m1_input` and `gold_reference` validate against the DAT-55 `m1-input-v1`/`m1-output-v1` models in `eval/contracts/m1.py` (PR #20, on `main`); the compat test now runs.
 - Constraint on the real M1 session dataset (`m1_session_v1`, the product-session data): it must use scenarios different from the `m1-smoke-v1` templates, because Manav's M1-A baseline rules were fitted on the smoke templates. Reusing them would leak. No Linear issue for it exists yet as of 2026-11-11.
 - Still open: six scenario briefs (DAT-21), team sign-off (DAT-22).
 
 ### Manav
-- On `main`: judge prompt `mast-judge-v1`, parser `mast-parser-v1.1`, result viewer, M3 configs `m3-a` through `m3-d`, serving stub label `escalate` (DAT-40, PR #11).
-- On `main`: client scaffold (DAT-15, PR #12), Yjs editor and crdt-server (DAT-16), presence (DAT-17). Browser-tested with up to three participants.
-- ADR-003 (DAT-52): merged to `main` with runner owner review changes incorporated (PR #16).
-- Next: M1-03 extractive CPU baseline (DAT-58, due Nov 4); location of M1-A code to be agreed with the M1 and evaluation owners first.
+- On `main`: MAST judge prompt `mast-judge-v1`, parser `mast-parser-v1.1` and result viewer (DAT-31 to DAT-33), M3 configs `m3-a` to `m3-d` (DAT-40), serving stub label `escalate` (PR #11), and ADR-003 prediction record (DAT-52, first version `19a115c`, review changes `48d1bb9`).
+- On `main`, client (DAT-15, PR #12): Vite 5, React 18 and strict TypeScript; API types generated from the session-service OpenAPI; mock or real backend through `VITE_USE_MOCK`; lobby to create or join a session; live event list (stream with periodic reconcile, polling fallback); instruction box; rollback panel; timestamps without a zone read as UTC. 41 Vitest tests.
+- On `main`, CRDT editor (DAT-16): TipTap 2.8 editor bound to a shared Yjs document through `crdt-server` (y-websocket at `ws://localhost:1234/crdt/{session_id}`); a bridge posts one debounced `doc_update` event (800 ms) to the session-service log; observers can read but not edit. 4 crdt-server convergence tests.
+- On `main`, presence (DAT-17): presence bar and collaboration cursors from Yjs awareness; each display name maps to a stable colour from a fixed palette, so it survives a rejoin. Browser-tested with up to three participants.
+- Not integrated: the client does not call or display any model output. `catchup_summary` from join is not rendered (the mock returns null), and there is no M1 or M3 UI while `serving/adapters/m1.py` to `m4.py` are stubs.
+- In review: M1-A BM25 extractive baseline (DAT-58, draft PR #26). It stays draft until #20 (DAT-55), #22 (DAT-53) and #25 (DAT-61) land; then main is merged into the branch so the PR holds only the BM25 code and tests, and the evaluation owner completes the contract review. The real evaluator and reportable metric run are handled separately. Removal of the optional `trace_text` field from the result viewer is in PR #28.
+- Next: M1 catch-up panel in the client once the M1 contract (#25) and M1 serving land; end-to-end wiring with the session service, agent runtime and serving; demo script and deck under `docs/slides/` with the environment owner.
 
 ### Shriram
 - On `main`: resumable MAST batch and run provenance (DAT-34/35, PR #5). Notes in `docs/verification/dat-34-dat-35-batch-execution.md`.
@@ -253,18 +257,18 @@ An exact MAST reproduction result and a memory-assisted extension result must be
 
 ### M1 best-of-four decision
 
-The intended M1 matrix below is the approved direction for DAT-55. DAT-55 must freeze its schemas, metrics, split rules, and candidate-selection rule before comparative runs begin.
+The M1 matrix below is frozen by DAT-55 together with its schemas, metrics, split rules, and candidate-selection rule. Comparative runs must use the reviewed DAT-55 contract version.
 
 | Candidate | Approach | Why it is included |
 |-----------|----------|--------------------|
-| `m1-a` | BM25 or TF-IDF event ranking plus a fixed structured template | Transparent CPU-only non-neural floor. Shows whether learned models are needed. |
+| `m1-a` | BM25 event ranking plus a fixed structured template | Transparent CPU-only non-neural floor. Shows whether learned models are needed. |
 | `m1-b` | ModernBERT-base extractive event selector plus the same structured template | Measures the gain from a learned encoder while keeping generation out of the comparison. |
 | `m1-c` | Phi-4-mini-instruct with QLoRA | Compact generative model from a different family; tests evidence-linked abstractive summarization at moderate GPU cost. |
 | `m1-d` | Qwen3.5-4B with QLoRA | Larger generative candidate; tests whether added capacity and model family improve grounded catch-up quality enough to justify latency and VRAM. |
 
 Selection is not ROUGE-only. Freeze the rule before running experiments, then compare critical-fact recall, unsupported-claim rate, attribution accuracy, ROUGE-L, BERTScore-F1, latency, and peak VRAM over seeds 13, 29, and 47. A candidate that improves ROUGE but increases unsupported claims cannot win on ROUGE alone. Learned candidates use the same frozen split and shared training settings wherever the model class permits. The extractive CPU control has no epochs or GPU batch size and must be identified as non-neural.
 
-**Migration warning:** the current `eval/configs/m1-*.yaml` files still contain the earlier ModernBERT, Qwen3-1.7B, Qwen3.5-4B, and Gemma 4 mapping. Do not run or report the final M1 bake-off until DAT-55 updates and reviews those configs. The DAT-57 Qwen3-1.7B notebook is an infrastructure-only QLoRA, checkpoint, resume, and GPU feasibility test. It is not evidence that Qwen3-1.7B is a final M1 candidate, and its temporary `m1-b` identifier must not be used in comparative results after the contract migration.
+**Execution warning:** `eval/configs/m1-*.yaml` now represent the DAT-55 target matrix, but the bake-off must wait for independent review plus candidate-specific implementation and feasibility checks. The DAT-57 Qwen3-1.7B notebook is an infrastructure-only QLoRA, checkpoint, resume, and GPU feasibility test. Its executed config is preserved under `models/m1_catchup/feasibility/`; it is not evidence that Qwen3-1.7B is a final candidate and must not enter comparative results.
 
 ### Human-governed self-improvement loop
 
@@ -291,11 +295,11 @@ M2 through M4 may have contracts and interfaces documented in 298A, but their tr
 
 ## Models
 
-No winner. No training run. Numbers below are acceptance targets.
+No winner and no comparative four-candidate run. Numbers below are acceptance targets.
 
 | ID | Task | Plan / implementation state | Target | When |
 |----|------|--------------------|--------|------|
-| M1 | Catch-up summary for a late joiner | Target matrix: BM25 or TF-IDF, ModernBERT-base, Phi-4-mini-instruct with QLoRA, and Qwen3.5-4B with QLoRA. The on-disk configs still contain the earlier mapping and must be migrated under DAT-55 before the bake-off. | Held-out mean ROUGE-L at least 28.2 over three seeds, 95% CI. Also report grounding, attribution, unsupported claims, ROUGE-1, ROUGE-2, BERTScore-F1, latency, and VRAM. 28.2 is a QMSum reference floor, not a result we posted. | 298A |
+| M1 | Catch-up summary for a late joiner | DAT-55 matrix: BM25, ModernBERT-base, Phi-4-mini-instruct with QLoRA, and Qwen3.5-4B with QLoRA. Contract and configs require independent review; candidate implementations are not all complete. | Safety gates first, then critical-fact recall, BERTScore-F1 and ROUGE-L over three seeds with 95% CI. Also report attribution, status consistency, latency, and VRAM. The QMSum ROUGE-L 28.2 reference floor is contextual, not a result we posted or the sole promotion rule. | 298A |
 | M2 | Which participant an instruction addresses | Configs not written. Plan: TF-IDF control, DeBERTa and ModernBERT cross-encoders, Qwen classification head. | macro-F1 at least 0.75 | 298B |
 | M3 | Accept A, accept B, merge, or escalate | `m3-a` last-writer-wins. `m3-b` ModernBERT-base pairwise. `m3-c` Qwen3.5-4B + LoRA. `m3-d` few-shot Qwen3.5-4B. Configs in `eval/configs/m3-*.yaml`. | macro-F1 at least 0.70 and safer than last-writer-wins | 298B |
 | M4 | Decompose and route | Configs not written. Plan: rules-only control, then planner and router arms. | Must emit a valid DAG before accuracy, latency, and cost count | 298B |
@@ -361,7 +365,7 @@ python data/scripts/download_mast.py
 python data/scripts/eda_mast.py
 ```
 
-Success line: `QUALITY GATE: all checks passed`. The cleaner keeps all 1,642 rows. Null annotation cells become 0 in that demo script. That coercion is for the EDA quality gate. The judge parser does not do the same thing. Runbook: `docs/demo1-data-pipeline.md`.
+Success line: `QUALITY GATE: all checks passed`. The cleaner reports 1,642 raw records and scores 1,638. The 4 fully-null records are excluded, and null labels stay null (never 0) in the EDA script and in the judge parser. Runbook: `docs/demo1-data-pipeline.md`.
 
 ## Requirements worth quoting
 
@@ -452,7 +456,7 @@ Schema, integration, sessions, frozen splits, study, defence.
 - That the MAST judge has been reproduced to 0.94, 0.80, or 0.77.
 - That the client or the LangGraph runtime is on `main`. They are open pull requests.
 - That the 1,642 MAST labels are human labels. They are LLM-judge labels. The human file has 19 rows.
-- That null labels in the judge parser become 0. Only the EDA script does that.
+- That null labels become 0 anywhere. The EDA script (since DAT-54) and the judge parser both leave them null. The 4 fully-null records are excluded from scoring.
 - A paid cloud GPU price, or a specific lab GPU model, unless the workbook on the table says it.
 - That synthetic data is in any test split.
 
@@ -478,9 +482,9 @@ The success line is `QUALITY GATE: all checks passed`.
 | Flatten | `stage3_preprocess` | writes `data/mast/processed/mast_clean_summary.csv` |
 | Gate and EDA | `stage4_quality` | same file |
 
-Cleaning keeps all 1,642 rows. 56 null label cells become 0. Zero rows dropped on the pinned file. `trace_id` is not unique (206 distinct values; composite key 1,552 of 1,642), so the id is `row_id`. Preprocessing adds `fail_1_1` through `fail_3_3`, `failure_codes`, and three category counts. The gate checks count, unique `row_id`, schema, binary labels, the taxonomy file, and 19 human rows.
+Cleaning reports 1,642 raw records and 1,638 scorable. The 56 null label cells (4 records x 14 codes) stay null and those 4 records are excluded. `trace_id` is not unique (206 distinct values), so the record key is (`trace.key`, `trace_id`), unique over all 1,642. `row_id` is gone. Preprocessing adds `trace_key`, `fail_1_1` through `fail_3_3` (null is an empty cell), `n_null_labels`, `failure_codes`, and three category counts. The gate checks raw, scorable and excluded counts against `eval_manifest.json`, key uniqueness, schema, label domain (0, 1, null), the taxonomy file, and 19 human rows. A deterministic summary is committed at `data/mast/EDA_SUMMARY.json`.
 
-EDA on that file: 1,237 traces (75.3%) have at least one failure. Top positive labels are 1.3 (664), 3.3 (658), 2.6 (610). Trace length min 1,262, median 9,746, max 2,004,123 characters. This null-to-zero step is only in `stage2_clean`. `parse_judge_response` in `models/baseline_mast/parse_judge.py` leaves missing codes null.
+EDA on the 1,638 scorable records: 1,237 traces (75.5%) have at least one failure. Top positive labels are 1.3 (664), 3.3 (658), 2.6 (610). Trace length min 1,262, median 9,739, max 2,004,123 characters. `parse_judge_response` in `models/baseline_mast/parse_judge.py` also leaves missing codes null.
 
 There is no train split and no augmentation in this demo. QMSum is still DAT-11.
 
@@ -490,7 +494,7 @@ Do **not** budget paid cloud GPU for 298A unless the GPU lab is unavailable.
 
 | Resource | Detail | Cost |
 |----------|--------|------|
-| GPU lab | NVIDIA GeForce RTX 5080 Laptop, 16 GB. Model settings come from `eval/configs/m1-b.yaml`. | $0 |
+| GPU lab | University GPU lab for final candidates; the prior feasibility run used an RTX 5080 Laptop, 16 GB. | $0 |
 | LLM APIs | OpenRouter and/or OpenAI / Anthropic / Kiro CLI as needed for MAST judge and prompted arms | pay-as-you-go; keep receipts; no fixed $100–$250 commitment |
 
 Workbook section 2.3 should say training runs in the GPU lab at $0, not invented cloud GPU spend. Colab is fallback only if the GPU lab is unavailable.
@@ -501,11 +505,11 @@ Workbook section 2.3 should say training runs in the GPU lab at $0, not invented
 
 **Runner / evidence owner:** Ayush
 
-**Candidate covered:** current legacy config `m1-b`, `Qwen/Qwen3-1.7B` with QLoRA; infrastructure validation only, not a final DAT-55 candidate
+**Candidate covered:** archived Qwen3-1.7B QLoRA feasibility configuration; infrastructure validation only, not a final DAT-55 candidate
 
-**Status:** ran on 2026-10-21 on an RTX 5080 Laptop, 16 GB, using `eval/configs/m1-b.yaml`. `smoke_passed` is true. Weights were not committed. The manifest and executed notebook stay outside the repo. Linear M1-04 still needs that evidence attached before it can be marked Done.
+**Status:** ran on 2026-10-21 on an RTX 5080 Laptop, 16 GB, using the configuration now preserved at `models/m1_catchup/feasibility/qwen3-1.7b.yaml`. `smoke_passed` is true. Weights were not committed. The manifest and executed notebook stay outside the repo. Linear M1-04 still needs that evidence attached before it can be marked Done.
 
-This is an infrastructure feasibility verification, not a benchmark and not the four-candidate M1 bake-off. It uses the smallest generative candidate in the current on-disk configs to validate QLoRA, checkpoint, resume, inference, and 4,096-token execution. The notebook reads the model repo, full model revision, learning rate, and LoRA settings directly from `eval/configs/m1-b.yaml` so the smoke run cannot silently drift from that committed feasibility configuration. DAT-55 will replace the legacy candidate mapping before comparative runs.
+This is an infrastructure feasibility verification, not a benchmark and not the four-candidate M1 bake-off. It validates QLoRA, checkpoint, resume, inference, and long-context execution. The notebook reads the model repo, full revision, learning rate, and LoRA settings from the archived feasibility config so migration of the final `m1-b` identifier to ModernBERT cannot silently change this historical procedure.
 
 ### Important environment exception
 
@@ -517,7 +521,7 @@ Before starting Jupyter, set `HF_HOME` and `M1_SMOKE_ARTIFACT_ROOT` to lab scrat
 
 1. CUDA is available on the lab RTX 5080 Laptop (16 GB, at least 12 GiB free), and a real CUDA matrix operation succeeds.
 2. The pinned Hugging Face revision resolves exactly.
-3. Qwen3-1.7B loads in 4-bit NF4 mode with the configured `q_proj` and `v_proj` LoRA targets.
+3. Qwen3-1.7B loads in 4-bit NF4 mode with the configured all-linear LoRA targets.
 4. Short backward training produces a finite loss.
 5. The checkpoint contains adapter weights, optimizer state, scheduler state, and Trainer state.
 6. A new Trainer resumes the checkpoint and reaches the expected next global step.
@@ -530,7 +534,7 @@ Response-contract validity is recorded as a quality signal but is not an infrast
 
 ### Ayush run procedure
 
-From a clean repository checkout on the RTX 5080 Laptop (16 GB), using `eval/configs/m1-b.yaml`:
+From a clean repository checkout on the RTX 5080 Laptop (16 GB), using the archived feasibility configuration:
 
 ```bash
 jupyter lab models/m1_catchup/notebooks/m1_qwen3_gpu_verification.ipynb

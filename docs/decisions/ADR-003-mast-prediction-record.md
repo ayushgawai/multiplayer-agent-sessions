@@ -49,7 +49,7 @@ Versions
 
 | field | type | meaning | written by |
 |---|---|---|---|
-| dataset_version | string | `manifest_version` of the frozen evaluation manifest, or `"unknown"`. It names the manifest, not the Hugging Face revision. Planned rename to `eval_manifest_version` in a runner follow-up before the first judge run. No judge artifacts exist yet, so the rename does not need a record version bump under rule (f). | runner |
+| eval_manifest_version | string | `manifest_version` of the frozen evaluation manifest, or `"unknown"`. It names the manifest, not the Hugging Face revision, which `run_manifest.json` carries as `dataset_revision`. Renamed from `dataset_version` before the first judge run; no judge artifacts existed, so no record version bump was needed under rule (f). | runner |
 | dataset_sha256 | string | SHA-256 of the dataset file named by the evaluation manifest. | runner |
 | prompt_version | string | Prompt version, `mast-judge-v1`. Repeated in the parsed block. | runner, parser |
 | prompt_sha256 | string | SHA-256 of `judge_prompt.txt`. | runner |
@@ -140,7 +140,7 @@ parser_version, model_id, model_settings, start_time_utc, end_time_utc, parse_st
 predictions_file. The whole manifest passes through `provenance.redact` before it is written.
 
 The runner refuses to append to a result directory whose existing files carry a different
-identity: for `predictions.jsonl` any of run_id, dataset_version, dataset_sha256,
+identity: for `predictions.jsonl` any of run_id, eval_manifest_version, dataset_sha256,
 prompt_version, prompt_sha256, parser_version, model_id or model_settings; for `failures.jsonl`
 the run_id; for `run_manifest.json` any of run_id, dataset_sha256, prompt_version,
 prompt_sha256, parser_version, model_id or model_settings. The remedy is a new result directory.

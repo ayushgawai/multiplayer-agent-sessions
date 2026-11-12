@@ -22,7 +22,7 @@ F_BENCHMARK = "benchmark"
 F_REFERENCE_SOURCE = "reference_source"
 F_TRACE_KEY = "trace_key"
 F_LLM_NAME = "llm_name"
-F_DATASET_VERSION = "dataset_version"
+F_EVAL_MANIFEST_VERSION = "eval_manifest_version"
 F_DATASET_SHA256 = "dataset_sha256"
 F_PROMPT_VERSION = "prompt_version"
 F_PROMPT_SHA256 = "prompt_sha256"
@@ -266,8 +266,8 @@ def build_html(
     parser_version = manifest.get(F_PARSER_VERSION) or (
         records[0].get(F_PARSER_VERSION) if records else ""
     )
-    dataset_version = (
-        records[0].get(F_DATASET_VERSION) if records else ""
+    eval_manifest_version = manifest.get(F_EVAL_MANIFEST_VERSION) or (
+        records[0].get(F_EVAL_MANIFEST_VERSION) if records else ""
     )
 
     status_rows = "".join(
@@ -391,7 +391,7 @@ def build_html(
 <div><b>model_id</b><br/>{_esc(model_id)}</div>
 <div><b>prompt</b><br/>{_esc(prompt_version)} {_esc(sha12)}</div>
 <div><b>parser_version</b><br/>{_esc(parser_version)}</div>
-<div><b>dataset_version</b><br/>{_esc(dataset_version)}</div>
+<div><b>eval_manifest_version</b><br/>{_esc(eval_manifest_version)}</div>
 <div><b>records</b><br/>{_esc(len(records))}</div>
 <div><b>traces with disagreement</b><br/>{_esc(n_dis)}</div>
 </div>
