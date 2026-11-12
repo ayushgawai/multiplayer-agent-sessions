@@ -163,11 +163,11 @@ P("Multiplayer Agents: A Shared Live Session Layer for Human-Agent Collaboration
 P("Team 4. Ayush Gawai, Naman Vipul Chheda, Manav Patel, Shriram Dundigalla, Pramod Satya Dindukurthi. "
   "Section 21, Topic 4. Advisor: Prof. Simon Shim. November 11, 2026", C, after=6)
 T(["Team member", "Sections written"],
-  [["Naman Vipul Chheda", "3.1, 3.2, 3.3"],
-   ["Ayush Gawai", "3.4, 3.5, 4.2"],
-   ["Shriram Dundigalla", "3.6 and the figures in sections 3 and 4"],
-   ["Manav Patel", "4.1"],
-   ["Pramod Satya Dindukurthi", "4.3, 4.4, References"]],
+  [["Ayush Gawai", "4.1, 4.2, 4.3"],
+   ["Naman Vipul Chheda", "3.1, 3.2, 3.3"],
+   ["Manav Patel", "3.5, 3.6"],
+   ["Shriram Dundigalla", "3.4, 4.5, and the figures in sections 3 and 4"],
+   ["Pramod Satya Dindukurthi", "4.4, 4.6, References"]],
   [2.6, 3.9])
 P("GitHub: https://github.com/ayushgawai/multiplayer-agent-sessions   "
   "Linear: https://linear.app/data-298a-team-4/team/DAT/cycles", C, 10, after=6)
@@ -481,7 +481,7 @@ T(["Gap", "Evidence", "Who it would disadvantage if the system were deployed", "
     "Any user relying on the catch-up to say what is blocked or who owns an action: a model tuned only on QMSum can be fluent and wrong about status.",
     "Safety gates are measured on annotated product sessions; relevance labels derived from QMSum are weak supervision and are never presented as human labels."],
    ["MAST is dominated by three frameworks (82.6% of scorable traces) and one model family (GPT-4o, 45.8%); three frameworks have 30 traces each.",
-    "Figure 4.",
+    "Figure 4 shows raw counts (1,642); the shares here are computed on the 1,638 scorable traces.",
     "Users of under-represented frameworks: a judge validated mainly on AG2, MetaGPT and ChatDev traces may mislabel failures elsewhere.",
     "Report per-framework results with sample sizes; do not claim the taxonomy transfers to our sessions without our own annotation."],
    ["MAST traces contain agents only. No trace has several humans steering one agent.",
@@ -581,7 +581,7 @@ F("fig11_platform_architecture.png", "Supporting platform architecture: session 
   "docs/reports/generate_t4a6_figures.py.")
 T(["Model", "Development environment", "Libraries and tools", "Execution and serving"],
   [["M1 catch-up", "Python 3.11 locally and in CI; training on one RTX 5080 Laptop GPU (16 GB) in the university lab at $0, PyTorch with CUDA.",
-    "Transformers, PEFT, bitsandbytes 4-bit NF4, the BM25 ranker in `models/m1_catchup/bm25.py` (DAT-58, in review), shared checkpoint utility `models/common/checkpointing.py`.",
+    "Transformers, PEFT, bitsandbytes 4-bit NF4, the BM25 ranker in `models/m1_catchup/bm25.py` (DAT-58, draft pull request #26), shared checkpoint utility `models/common/checkpointing.py`.",
     "Winner loaded behind `POST /v1/models/m1/predict`; called by the session service on join and hand-off."],
    ["M2 attribution", "Same GPU and harness.", "Transformers encoders, scikit-learn for the TF-IDF control.", "`POST /v1/models/m2/predict`, called per instruction event."],
    ["M3 arbitration", "Same GPU and harness; the rule arm needs no GPU.", "Transformers, PEFT; configurations already in `eval/configs/m3-*.yaml`.", "`POST /v1/models/m3/predict`, called when the control plane detects a conflict."],
@@ -697,7 +697,7 @@ P("The metrics in Table 42 are committed here, before any comparative result exi
   "Model 1 definitions are machine-readable in `eval/configs/m1-contract.yaml`, and ADR-005 states that the "
   "definitions and the winner policy cannot change after test results are seen without a new contract version.")
 T(["Metric", "Why this metric", "Benchmark or split it is measured on", "Committed on"],
-  [["M1 critical-fact recall (primary)", "A catch-up that omits the blocker has failed, however fluent. Counts gold critical facts that are covered by a claim supported by its cited events.", "Annotated product-session test split (`session_test`)", "22 Oct 2026 (ADR-005); merged 11 Nov 2026"],
+  [["M1 critical-fact recall (primary)", "A catch-up that omits the blocker has failed, however fluent. Counts gold critical facts that are covered by a claim supported by its cited events.", "Annotated product-session test split (`session_test`)", "22 Oct 2026 (ADR-005); merged 11 Nov 2026 (US Pacific)"],
    ["M1 unsupported-claim rate (gate: at most 0.02, and no worse than m1-a)", "Measures invention: claims not supported by the events they cite, over emitted claims.", "`session_test`, every seed", "22 Oct 2026 (ADR-005)"],
    ["M1 attribution accuracy (gate: at least 0.95)", "A correct fact citing the wrong event cannot be verified by the reader.", "`session_test`, every seed", "22 Oct 2026 (ADR-005)"],
    ["M1 status consistency (gate: at least 0.95)", "Reporting blocked work as completed is the most damaging single error.", "`session_test`, every seed", "22 Oct 2026 (ADR-005)"],
@@ -759,17 +759,18 @@ T(["Check", "Yes / No"],
    ["Each section names the team member who wrote it", "Yes. Title page"]],
   [4.2, 2.3])
 H("Self-assessment and gap register", 2)
-T(["Report section", "Our rating", "If below good: what is missing", "Owner", "Lands by"],
+T(["Report section", "Our rating", "If below good: what is missing", "Owner", "Lands by (proposed)"],
   [["3.1 to 3.6", "Good", "Not below good, but not excellent: the product-session corpus that selects the Model 1 winner has no recorded sessions, so sections 3.2 to 3.5 describe it as planned.", "Naman", "2 Dec 2026"],
    ["4.1 to 4.4", "Good", "Not below good. Models 2 and 4 have no committed configuration files yet; their candidates are described from Workbook 1.", "Naman, Shriram", "298B, cycle 1"],
    ["References", "Excellent", "", "Pramod", ""]],
   [1.0, 0.8, 2.9, 0.9, 0.9])
 H("Carry-forward from Workbook 1", 2)
-T(["Item", "Why it did not land, or what changed", "Owner", "New target"],
+T(["Item", "Why it did not land, or what changed", "Owner", "New target (proposed; each owner to confirm)"],
   [["Model 1 candidate matrix (sections 1.1, 1.4; Tables 1 and 8)", "Changed. Workbook 1 named an extractive ModernBERT control with Qwen and Gemma LoRA generators. ADR-005 freezes BM25, ModernBERT-base, Phi-4-mini with QLoRA and Qwen3.5-4B with QLoRA, adding a parameter-free floor and replacing Gemma.", "Ayush, Pramod", "Done, 11 Nov 2026"],
    ["Model 1 selection metric (sections 1.1, 1.2 AI-3, 2.2.2)", "Changed. Workbook 1 selected on validation ROUGE-L under a factuality guardrail. Selection now applies per-seed safety gates and then ranks on critical-fact recall, BERTScore-F1 and ROUGE-L, on annotated product sessions. ROUGE-L is still reported on QMSum test against 28.2, the published QMSum BART score used as a reference floor in Workbook 1, but it no longer selects.", "Pramod", "Done, 11 Nov 2026"],
    ["QMSum size (DR-1; Table 9)", "Corrected. Workbook 1 quoted the published 1,808 query-summary pairs. The pinned release yields 1,810, and the splits are built from those.", "Naman", "Done"],
    ["Pilot session corpus (DR-2, DR-3)", "Not landed. No session has been recorded, because the end-to-end integration gate has not been passed. The risk-register trigger of fewer than five sessions by late October has fired; the documented fallback of internal sessions plus scripted cases is in effect, and 18 scripted smoke examples exist (DAT-53).", "Naman", "First sessions by 2 Dec 2026"],
+   ["Automated session-level leakage check (DR-4)", "Partly landed. `make_splits.py` accepts a grouping option that the Model 1 path does not read, so the no-shared-meeting guarantee rests on QMSum's inherited partition and on the checks in Table 29, not on a grouping implementation. The session-level check is needed before `m1_session_v1` is built.", "Naman", "With the session split"],
    ["Harness runs one candidate end to end (Progress Report 1)", "Not landed. The shared Model 1 harness is in review (DAT-61); review found the comparison step applying gates to the three-seed mean instead of each seed, which must be corrected before merge.", "Pramod", "18 Nov 2026"],
    ["Model 1 bake-off and winner (AI-3)", "At risk. Training and inference paths and GPU feasibility are in progress, but ADR-005 forbids a selection run until the annotated product-session split is frozen. The final report will carry either the winner or the documented shortfall.", "Ayush", "7 Dec 2026"],
    ["MAST judge environment and final runs (DAT-25, DAT-26, DAT-27, DAT-36)", "Not landed. Prompt, parser, batch runner, provenance and metrics are on main; the pinned o1 judge environment and the clean-environment smoke test are open.", "Ayush, Shriram", "2 Dec 2026"],
