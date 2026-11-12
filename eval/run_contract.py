@@ -13,12 +13,24 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from eval.contracts.m1 import M1Input
 
-RESULT_SCHEMA_VERSION: Literal["candidate-result-v1"] = "candidate-result-v1"
+RESULT_SCHEMA_VERSION: Literal["candidate-result-v2"] = "candidate-result-v2"
 REPORTABLE_PROTOCOL: Literal["reportable"] = "reportable"
 SMOKE_PROTOCOL: Literal["smoke_non_reportable"] = "smoke_non_reportable"
 HARNESS_METRICS = frozenset(
     {"schema_valid_rate", "latency_p50_ms", "latency_p95_ms", "peak_vram_mb"}
 )
+_SHA256_PATTERN = r"^[0-9a-f]{64}$"
+
+
+def is_test_plugin(spec: str) -> bool:
+    """True when a module:symbol spec points into a test package.
+
+    Test doubles live in ``tests`` packages (for example ``eval.tests.fake_m1_plugin``). They are
+    valid for smoke runs only and must never produce a reportable or comparable result.
+    """
+
+    module_name = spec.partition(":")[0]
+    return "tests" in module_name.split(".")
 
 
 class _StrictModel(BaseModel):
@@ -130,11 +142,23 @@ class M1SelectionGates(_StrictModel):
 
 
 class M1SelectionContract(_StrictModel):
+    eligibility_gate_aggregation: Literal["every_seed"]
+    baseline_comparison: Literal["matched_seed"]
     eligible_if: M1SelectionGates
     rank_eligible_by: list[str] = Field(min_length=1)
-    quality_tie_margin: float = Field(ge=0)
+    rank_aggregation: Literal["mean_across_three_seeds"]
+    tie_policy: Literal["retain_within_margin_of_stage_best"]
+    quality_tie_margins: dict[str, float]
     tie_break_by: list[str] = Field(min_length=1)
     final_confirmation: str
+
+    @model_validator(mode="after")
+    def validate_ranking_policy(self) -> Self:
+        if set(self.quality_tie_margins) != set(self.rank_eligible_by):
+            raise ValueError("quality_tie_margins must match rank_eligible_by")
+        if any(margin < 0 for margin in self.quality_tie_margins.values()):
+            raise ValueError("quality tie margins must be non-negative")
+        return self
 
 
 class M1ExperimentContract(_StrictModel):
@@ -167,6 +191,13 @@ class M1ExperimentContract(_StrictModel):
             raise ValueError("test feedback must never enter memory")
         if self.fairness.get("candidate_selection_condition") != "memory_disabled":
             raise ValueError("candidate selection must run with memory disabled")
+        metric_names = set(self.metrics)
+        ranked_metrics = set(self.selection.rank_eligible_by)
+        tie_break_metrics = set(self.selection.tie_break_by)
+        if not ranked_metrics <= metric_names:
+            raise ValueError("rank_eligible_by contains an unknown metric")
+        if not tie_break_metrics <= metric_names:
+            raise ValueError("tie_break_by contains an unknown metric")
         return self
 
 
@@ -231,9 +262,18 @@ Evaluator = Callable[
 ]
 
 
+class PluginIdentity(_StrictModel):
+    """The runner or evaluator that produced a result, pinned by its module source."""
+
+    spec: str = Field(min_length=3)
+    module_sha256: str = Field(pattern=_SHA256_PATTERN)
+
+
 class SeedRunResult(_StrictModel):
     seed: int
     attempted_examples: int = Field(gt=0)
+    example_ids_sha256: str = Field(pattern=_SHA256_PATTERN)
+    examples_sha256: str = Field(pattern=_SHA256_PATTERN)
     valid_outputs: int = Field(ge=0)
     metrics: dict[str, float]
     failures: dict[str, int]
@@ -251,7 +291,7 @@ class MetricSummary(_StrictModel):
 
 
 class CandidateResult(_StrictModel):
-    schema_version: Literal["candidate-result-v1"] = RESULT_SCHEMA_VERSION
+    schema_version: Literal["candidate-result-v2"] = RESULT_SCHEMA_VERSION
     protocol_mode: Literal["reportable", "smoke_non_reportable"]
     contract_version: Literal["m1-experiment-v1"]
     task: Literal["m1_catchup"]
@@ -262,6 +302,10 @@ class CandidateResult(_StrictModel):
     split: str
     split_path: str
     dataset_version: str
+    dataset_manifest_sha256: str | None = Field(default=None, pattern=_SHA256_PATTERN)
+    manifest_example_count: int | None = Field(default=None, gt=0)
+    runner: PluginIdentity
+    evaluator: PluginIdentity
     git_sha: str
     model_repo: str | None
     model_revision: str | None
@@ -279,6 +323,10 @@ class CandidateResult(_StrictModel):
         run_seeds = [run.seed for run in self.runs]
         if run_seeds != self.seeds:
             raise ValueError("runs must appear once in the same order as seeds")
+        if self.protocol_mode == REPORTABLE_PROTOCOL and (
+            self.dataset_manifest_sha256 is None or self.manifest_example_count is None
+        ):
+            raise ValueError("reportable results must record the verified dataset manifest")
         for name, metric in self.metrics.items():
             if len(metric.per_seed) != len(self.seeds):
                 raise ValueError(f"metric {name} must contain one value per seed")

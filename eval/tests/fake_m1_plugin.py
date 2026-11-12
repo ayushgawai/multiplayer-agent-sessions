@@ -5,8 +5,10 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Any
 
+from data.m1_smoke.loader import gold_reference, load_fixtures, to_m1_input, verify_manifest
 from eval.contracts.m1 import M1Event, M1Input
 from eval.run_contract import (
+    CriticalFact,
     EvaluationSummary,
     M1CandidateConfig,
     M1EvaluationExample,
@@ -32,7 +34,7 @@ class FakePreparedCandidate:
                         M1Event(
                             event_id="event-1",
                             sequence=1,
-                            event_type="result",
+                            event_type="tool_result",
                             actor_id="agent-1",
                             text="The evaluation passed.",
                         )
@@ -65,6 +67,52 @@ class FakePreparedCandidate:
 
 def build_eval_runner(request: RunnerRequest) -> PreparedCandidate:
     return FakePreparedCandidate(request)
+
+
+class SmokeFixturePreparedCandidate:
+    dataset_version = "m1-smoke-v1"
+    hardware = "cpu-smoke-fixture"
+
+    def __init__(self, request: RunnerRequest) -> None:
+        verify_manifest(request.dataset_path)
+        fixtures = load_fixtures(request.dataset_path)
+        source_examples = [
+            example
+            for split in ("train", "dev", "smoke_holdout")
+            for example in fixtures[split]
+        ]
+        self._candidate_id = request.config.candidate_id
+        self._references = {
+            example.example_id: gold_reference(example) for example in source_examples
+        }
+        self.examples: Sequence[M1EvaluationExample] = [
+            M1EvaluationExample(
+                model_input=M1Input.model_validate(to_m1_input(example)),
+                reference=gold_reference(example),
+                critical_facts=[
+                    CriticalFact.model_validate(fact.model_dump())
+                    for fact in example.critical_facts
+                ],
+                metadata={"smoke_fixture": True},
+            )
+            for example in source_examples
+        ]
+
+    def predict(self, model_input: M1Input) -> Mapping[str, Any]:
+        return {
+            **self._references[model_input.example_id],
+            "candidate_id": self._candidate_id,
+        }
+
+    def peak_vram_mb(self) -> float:
+        return 0.0
+
+    def close(self) -> None:
+        return None
+
+
+def build_smoke_fixture_runner(request: RunnerRequest) -> PreparedCandidate:
+    return SmokeFixturePreparedCandidate(request)
 
 
 def evaluate(

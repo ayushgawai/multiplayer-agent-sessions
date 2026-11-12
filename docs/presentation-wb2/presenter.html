@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Presenter · Team 4 · Workbook 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="deck.css">
+</head>
+<body class="presenter" data-mode="presenter">
+<div class="p-shell">
+  <header class="p-top">
+    <span class="meta" id="meta">Slide 1</span>
+    <span class="rubric" id="rubric"></span>
+    <span class="who" id="who"></span>
+    <div class="clock"><b id="timer">00:00</b><span id="slide-timer"></span></div>
+    <button type="button" id="reset">Reset timer</button>
+    <button type="button" id="btn-prev" aria-label="Previous slide">&larr;</button>
+    <button type="button" id="btn-next" aria-label="Next slide">&rarr;</button>
+    <button type="button" class="primary" id="open-audience">Open the room window</button>
+  </header>
+  <article class="p-notes" id="notes">
+    <h4>Say this</h4>
+    <div class="say" id="say"></div>
+    <h4>If asked (do not read aloud)</h4>
+    <div id="qa"></div>
+  </article>
+  <aside class="p-side">
+    <div class="p-box" id="cur-box"><main class="stage" id="cur"></main></div>
+    <div class="p-next">
+      <div class="p-box" id="nxt-box"><main class="stage" id="nxt"></main></div>
+      <div><div class="lbl">Next</div><div class="t" id="nxt-title"></div><div class="s" id="nxt-who"></div></div>
+    </div>
+    <p class="p-help">Arrow keys or space in either window move both. Open the room window, drag it to the projector, press F there. Same Chrome profile on the same laptop.</p>
+  </aside>
+</div>
+<script src="slides.js"></script>
+<script src="sync.js"></script>
+</body>
+</html>

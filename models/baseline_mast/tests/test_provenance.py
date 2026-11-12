@@ -37,7 +37,7 @@ def _summary(result_dir: Path) -> Any:
     runner = BatchRunner(
         judge=StubJudge(),
         result_dir=result_dir,
-        dataset_version="test-v1",
+        eval_manifest_version="test-v1",
         dataset_sha256=DATASET_SHA,
         run_id="run-test-001",
         log=lambda _m: None,

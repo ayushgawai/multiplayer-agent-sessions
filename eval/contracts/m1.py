@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Literal, Self
+import json
+import re
+from collections.abc import Mapping, Sequence
+from typing import Any, Literal, Self, TypeAlias
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -15,6 +18,35 @@ M1_CATEGORIES = (
     "decisions",
     "pending_actions",
 )
+M1_EVENT_TYPES = (
+    "doc_update",
+    "instruction",
+    "agent_step",
+    "tool_call",
+    "tool_result",
+    "interrupt",
+    "handoff",
+    "rollback",
+    "join",
+    "leave",
+    "arbitration",
+    "rejected",
+)
+M1EventType: TypeAlias = Literal[
+    "doc_update",
+    "instruction",
+    "agent_step",
+    "tool_call",
+    "tool_result",
+    "interrupt",
+    "handoff",
+    "rollback",
+    "join",
+    "leave",
+    "arbitration",
+    "rejected",
+]
+_QMSUM_ID = re.compile(r"^qmsum_(train|val|test)_(\d+)_[sg]\d+$")
 
 
 class _StrictModel(BaseModel):
@@ -32,7 +64,7 @@ class M1Event(_StrictModel):
 
     event_id: str
     sequence: int = Field(ge=0)
-    event_type: str
+    event_type: M1EventType
     actor_id: str | None = None
     text: str
 
@@ -164,8 +196,92 @@ def validate_m1_pair(model_input: M1Input, model_output: M1Output) -> None:
     if unknown_event_ids:
         raise ValueError(f"output references unknown source_event_ids: {unknown_event_ids}")
 
+    normalized_claims = [" ".join(claim.text.split()).casefold() for claim in model_output.claims()]
+    duplicate_claims = sorted(
+        {claim for claim in normalized_claims if normalized_claims.count(claim) > 1}
+    )
+    if duplicate_claims:
+        raise ValueError(f"output contains duplicate claims: {duplicate_claims}")
+
 
 def project_m1_output_text(model_output: M1Output) -> str:
     """Project structured output to canonical text for ROUGE and BERTScore."""
 
     return "\n".join(" ".join(claim.text.split()) for claim in model_output.claims())
+
+
+def session_event_to_m1_event(event: Mapping[str, Any]) -> M1Event:
+    """Adapt one SessionEvent JSON object into the frozen M1 event schema."""
+
+    event_type = event.get("type")
+    payload = event.get("payload")
+    actor = event.get("actor")
+    if not isinstance(payload, Mapping):
+        raise ValueError("SessionEvent payload must be an object")
+    if not isinstance(actor, Mapping):
+        raise ValueError("SessionEvent actor must be an object")
+
+    text_value = payload.get("text")
+    text = text_value.strip() if isinstance(text_value, str) else ""
+    display_name_value = payload.get("display_name", actor.get("display_name", actor.get("id")))
+    display_name = str(display_name_value)
+
+    if not text and event_type == "join":
+        role = payload.get("role")
+        role_suffix = f" as {role}" if isinstance(role, str) and role.strip() else ""
+        text = f"{display_name} joined the session{role_suffix}."
+    elif not text and event_type == "leave":
+        text = f"{display_name} left the session."
+    elif not text and event_type == "rejected":
+        attempted_type = payload.get("attempted_type", "event")
+        reason = payload.get("reason", "unspecified reason")
+        text = f"Rejected {attempted_type}: {reason}."
+    elif not text:
+        payload_json = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        text = f"{event_type}: {payload_json}"
+
+    return M1Event.model_validate(
+        {
+            "event_id": event.get("event_id"),
+            "sequence": event.get("seq"),
+            "event_type": event_type,
+            "actor_id": actor.get("id"),
+            "text": text,
+        }
+    )
+
+
+def qmsum_row_to_m1_input(row: Mapping[str, Any]) -> M1Input:
+    """Adapt one committed QMSum split row into a deterministic M1 input."""
+
+    example_id = row.get("id")
+    if not isinstance(example_id, str):
+        raise ValueError("QMSum row id must be a string")
+    match = _QMSUM_ID.fullmatch(example_id)
+    if match is None:
+        raise ValueError("QMSum row id must include split, meeting index, and query index")
+
+    spans = row.get("context_spans")
+    if not isinstance(spans, Sequence) or isinstance(spans, (str, bytes)) or not spans:
+        raise ValueError("QMSum context_spans must be a non-empty sequence")
+    if not all(isinstance(span, str) and span.strip() for span in spans):
+        raise ValueError("QMSum context_spans must contain non-blank strings")
+
+    split_name, meeting_index = match.groups()
+    events = [
+        M1Event(
+            event_id=f"{example_id}:span:{index:04d}",
+            sequence=index,
+            event_type="doc_update",
+            text=span,
+        )
+        for index, span in enumerate(spans)
+    ]
+    return M1Input.model_validate(
+        {
+            "example_id": example_id,
+            "session_id": f"qmsum:{split_name}:{meeting_index}",
+            "query": row.get("query"),
+            "events": events,
+        }
+    )
