@@ -1,0 +1,26 @@
+# Executed DAT-57 infrastructure-feasibility configuration.
+# This is not a final M1 candidate and must never enter the four-way bake-off.
+task: m1_catchup_feasibility
+candidate_id: m1-b
+label: "Legacy Qwen3-1.7B QLoRA infrastructure verification"
+mode: lora
+experimental_role: infrastructure_only
+model:
+  repo: Qwen/Qwen3-1.7B
+  revision: "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+split: data/splits/m1_v1/
+train:
+  epochs: 5
+  max_seq_len: 2048
+  per_device_train_batch_size: 4
+  effective_batch_size: 16
+  lr: 3.0e-4
+  warmup_ratio: 0.06
+  save_steps: 50
+  dataloader_num_workers: 2
+  checkpoint_uri: "file://./checkpoints/m1-feasibility-qwen3-1.7b/"
+lora:
+  r: 32
+  alpha: 64
+  dropout: 0.05
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
