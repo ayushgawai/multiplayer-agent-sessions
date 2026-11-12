@@ -13,7 +13,7 @@
   function frame(s, i) {
     const arc = ARC.map((a, k) => `<span class="${k === s.arc ? "on" : k < s.arc ? "done" : ""}">${a}</span>`).join("");
     const head = s.bare ? "" :
-      `<header class="hd"><div class="kicker">${s.num ? `<span class="num">${s.num}</span>` : ""}${s.kicker}${s.flag ? `<span class="flag">${s.flag}</span>` : ""}${s.flag2 ? `<span class="flag ink">${s.flag2}</span>` : ""}</div><h1>${s.title}</h1></header>`;
+      `<header class="hd"><div class="kicker">${s.num ? `<span class="num">${s.num}</span>` : ""}<span class="kicker-text">${s.kicker}</span>${s.flag ? `<span class="flag">${s.flag}</span>` : ""}${s.flag2 ? `<span class="flag ink">${s.flag2}</span>` : ""}</div><h1>${s.title}</h1></header>`;
     return `<div class="slide">${head}${s.bare ? s.html : `<div class="body">${s.html}</div>`}
       <footer class="ft"><div class="arc">${arc}</div><div class="rub">${s.rubric}</div>
       <div class="spk">${s.speaker}</div><div class="ctr">${String(i + 1).padStart(2, "0")} / ${N}</div></footer></div>`;

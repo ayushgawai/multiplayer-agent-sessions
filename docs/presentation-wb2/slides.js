@@ -634,7 +634,7 @@
     /* ================= 9 · 4.1 Model proposals ================= */
     {
       arc: 4, num: "4.1", kicker: "Model proposals", rubric: "4.1 Model Proposals", flag: "Plan, committed before training", speaker: "Ayush", secs: 35,
-      title: "Four models, sixteen candidates, one reproduced baseline",
+      title: "Four models, sixteen candidates, one frozen baseline",
       html: `
         <div class="card" style="position:absolute;left:0;top:0;width:800px;bottom:0;padding:32px 36px;display:flex;flex-direction:column;gap:16px;border:2px solid #c8d0ff">
           <div style="display:flex;align-items:center;gap:16px"><div class="icwrap">${I("clock", 34)}</div><div><div class="label">Model 1 · this semester</div><div style="font:700 40px var(--display)">Catch-up for a late joiner</div></div></div>
@@ -666,16 +666,18 @@
               <div style="flex:1"><div style="display:flex;align-items:baseline;gap:12px"><span style="font:700 27px var(--display)">${h}</span><span class="label" style="margin-left:auto">298B · next term</span></div>
               <div class="muted" style="font:500 19px var(--sans);margin:4px 0 10px">${p}</div>
               <div style="display:flex;gap:6px;flex-wrap:wrap">${c.map((x, k) => `<span class="pill${k === 0 ? " ctl" : ""}">${x}</span>`).join("")}</div></div></div>`).join("")}
-          <div class="card" style="padding:22px 24px;border:2px dashed #9a9ca3;background:transparent;display:flex;gap:18px;align-items:center">
+          <div class="card" style="padding:18px 22px;border:2px dashed #9a9ca3;background:transparent;display:flex;gap:18px;align-items:center">
             <div class="icwrap ink">${I("eye", 30)}</div>
-            <div><div style="font:700 25px var(--display)">Baseline · MAST LLM judge, reproduced</div>
-            <div class="muted" style="font:500 19px var(--sans);margin-top:4px">Paper (o1, few-shot): accuracy 0.94 · F1 0.80 · kappa 0.77. Not one of the four.</div></div>
+            <div style="flex:1"><div style="font:700 25px var(--display)">Baseline · MAST LLM judge</div>
+            <div class="muted" style="font:500 18px var(--sans);margin-top:4px"><b>Frozen reproduction:</b> o1 few-shot · accuracy 0.94 · F1 0.80 · kappa 0.77</div>
+            <div style="font:600 17px/1.3 var(--sans);color:var(--blue);margin-top:7px"><b>298A extension:</b> adaptation failures seed approved memory, tested on an untouched holdout.</div></div>
           </div>
           <div style="display:flex;gap:10px;align-items:center"><span class="pill ctl">dark</span><span class="muted" style="font:500 18px var(--sans)">= the simple control each model must beat</span></div>
         </div>`,
       say: [
         "Section four, the models. Four models, one per coordination problem. Model 1, this semester, catches up someone who joins late. Model 2 finds who an instruction is for. Model 3 handles two people redirecting one agent. Model 4 splits and routes a task.",
-        "Each is a bake-off of four candidates, starting from a simple control. The MAST judge is our separate baseline.",
+        "Each is a bake-off of four candidates, starting from a simple control. The MAST judge stays separate and frozen for the published reproduction.",
+        "After reproduction, our 298A extension will turn verified MAST failures into human-approved memory and compare a new run under the same scoring protocol.",
         "What's new: every Model 1 claim must cite the events that prove it, like the blocked test shown here."
       ],
       qa: [
@@ -683,7 +685,7 @@
         ["Architectures, briefly?", "m1-a Okapi BM25 ranks events and fills a template, no parameters, CPU. m1-b ModernBERT-base, 149M-parameter encoder with 8,192-token context, fine-tuned as a relevance scorer, same template. m1-c Phi-4-mini, 3.8B decoder, 4-bit NF4 QLoRA, writes the JSON directly. m1-d Qwen3.5-4B, 4-bit NF4, LoRA r 16, alpha 32."],
         ["Why QLoRA and small models?", "One 16 GB GPU in the university lab, at zero cost. 4-bit quantisation with adapters fits, and adapter-only checkpoints survive an interrupted session."],
         ["Has any candidate been trained?", "No. ModernBERT ran a 40-step feasibility smoke on the GPU with checkpoint and resume. That is not a result and is not in the workbook as one."],
-        ["Why is the baseline separate?", "It is the external reference that tells us whether our prompt, parser, batch runner and metric code can recover a published number. None of our models claims to improve on it. Prompt mast-judge-v1, parser mast-parser-v1.1, batch runner, provenance and metrics are on main; the judge has not been run."],
+        ["Why is the baseline separate?", "It is the external reference that tells us whether our prompt, parser, batch runner and metric code can recover a published number. We keep its prompt, data and scoring frozen. The 298A self-improving study starts only after reproduction and is reported as a separate condition. Prompt mast-judge-v1, parser mast-parser-v1.1, batch runner, provenance and metrics are on main; the judge has not been run."],
         ["Why pairwise for Model 2?", "The roster changes from session to session; scoring one (instruction, participant) pair at a time works for any roster."],
         ["Models 2 to 4 in more detail?", "M2: instruction text, explicit mentions, each participant's role and recent activity; TF-IDF with a linear classifier vs DeBERTaV3 and ModernBERT cross-encoders vs a Qwen classification head. M3: both instructions, authors, roles, timing, document state; last-writer-wins vs ModernBERT pairwise cross-encoder vs Qwen3.5-4B LoRA with a four-way head vs few-shot Qwen; escalation is a first-class output. M4: task text, skills, workload, cost; rules-only vs LLM planner with a LightGBM router vs planner alone vs single prompt; an invalid task graph is rejected before any metric. M3 configs are committed (eval/configs/m3-a to m3-d); M2 and M4 configs come at the start of 298B."]
       ]
@@ -786,13 +788,14 @@
         </div>
         <div class="label" style="position:absolute;left:0;bottom:142px">Every other model has its metric fixed too</div>
         <div style="position:absolute;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(4,1fr);gap:18px">
-          ${[["Model 2", "macro-F1, per-class F1"], ["Model 3", "macro-F1 · harmful-merge rate · escalation P/R"], ["Model 4", "valid plan (gate) → routing accuracy, cost"], ["Baseline", "accuracy · P · R · F1 · kappa, 95% CI"]].map(([m, t]) =>
+          ${[["Model 2", "macro-F1, per-class F1"], ["Model 3", "macro-F1 · harmful-merge rate · escalation P/R"], ["Model 4", "valid plan (gate) → routing accuracy, cost"], ["Baseline", "accuracy · P · R · F1 · kappa, 95% CI<br><span style='font:600 16px var(--sans);color:var(--blue)'>298A MAST: approved memory off/on</span>"]].map(([m, t]) =>
             `<div class="card" style="padding:20px 24px"><div class="label">${m}</div><div style="font:600 21px/1.35 var(--sans);margin-top:8px">${t}</div></div>`).join("")}
         </div>
         `,
       say: [
         "These rules were committed on October 22nd, before any result. Each candidate runs three seeds and must pass every safety gate on every seed: at most two percent unsupported claims, 95 percent right evidence and status, 98 percent valid output.",
-        "Only then do we rank: critical-fact recall, then BERTScore, then ROUGE. If nothing passes, nothing is promoted. Models 2 to 4 have their metrics fixed too."
+        "Only then do we rank: critical-fact recall, then BERTScore, then ROUGE. If nothing passes, nothing is promoted. Models 2 to 4 have their metrics fixed too.",
+        "For the 298A MAST extension, the frozen baseline and approved-memory condition use the same data and scoring, and we report them separately."
       ],
       qa: [
         ["Why is ROUGE-L not the primary metric?", "Summaries are about 65 words. A summary can score well on overlap and still omit the one blocker, or assign an action to the wrong person. ROUGE-L is still reported (on QMSum test against the 28.2 reference floor) and still breaks ties, after the gates."],
@@ -801,19 +804,19 @@
         ["Is the harness finished?", "No. It is in review (DAT-61, PR #25). Review found the comparison step applying gates to the three-seed mean, which the contract forbids, so it is being fixed before merge; target 18 November."],
         ["How does the human review work?", "The top two candidates that pass the gates get a blinded review; the metric is human edit rate, the token edits a reviewer needs to make an output acceptable (committed in ADR-005)."],
         ["What does a candidate with zero claims score?", "It fails recall, and its attribution accuracy is recorded as zero by contract convention, so silence cannot win the safety gates."],
-        ["What else is evaluated?", "An ablation over context budget (512, 1,024, 2,048 tokens) and memory on or off, and every failure gets one of seven frozen failure codes for the failure analysis."]
+        ["What else is evaluated?", "Model 1 has an ablation over context budget (512, 1,024, 2,048 tokens) and approved memory on or off. In 298A, the MAST extension freezes an adaptation subset and untouched holdout. Lessons use only adaptation failures, and the holdout compares memory disabled with approved-memory retrieval. Every failure gets one of seven frozen failure codes for the failure analysis."]
       ]
     },
 
     /* ================= 14 · Next ================= */
     {
       arc: 5, num: "", kicker: "What we do next", rubric: "Next steps · carry-forward", speaker: "Pramod", secs: 25,
-      title: "Next: our own sessions, then the Model 1 bake-off",
+      title: "Next: Model 1 and the MAST self-improving extension",
       html: `
         <div class="tl" style="left:0;right:0;top:20px">
           <div class="track" style="left:4%;right:4%"></div>
           <div class="seg" style="left:4%;width:92%;background:repeating-linear-gradient(90deg,var(--amber) 0 14px,transparent 14px 26px)"></div>
-          ${[[4, "12 Nov", "Today", "", "now"], [68, "2 Dec", "First sessions · MAST judge runs", "Naman · Ayush, Shriram", "next"], [96, "7–8 Dec", "Final report, presentation", "Ayush", "next"]].map(([p, d, w, o, c]) =>
+          ${[[4, "12 Nov", "Today", "", "now"], [68, "2 Dec", "M1 bake-off · MAST baseline + extension", "Team execution", "next"], [96, "7–8 Dec", "Final report, presentation", "Ayush", "next"]].map(([p, d, w, o, c]) =>
             `<div class="node${p > 90 ? " end" : ""}" style="left:${p}%"><div class="pw"><div class="pin ${c}"></div></div><div class="date">${d}</div><div class="what">${w}</div><div class="muted" style="font:500 19px var(--sans);margin-top:2px">${o}</div></div>`).join("")}
         </div>
         <div style="position:absolute;left:0;right:0;top:250px">
@@ -823,17 +826,35 @@
               `<div class="card" style="flex:1;padding:30px 24px;min-height:150px;${i === 4 ? "background:var(--ink);color:#fff;border-color:var(--ink)" : ""}"><div style="font:700 25px/1.15 var(--display)">${t}</div></div>${i < 4 ? arrow(30) : ""}`).join("")}
           </div>
         </div>
+        <div style="position:absolute;left:0;top:455px;width:1010px">
+          <div class="label" style="color:var(--blue);margin-bottom:12px">298A MAST improvement cycle</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+            ${[["1 · Freeze", "Extension protocol", "Adaptation subset and untouched holdout"],
+               ["2 · Learn", "Create lessons", "Failure codes plus trace evidence"],
+               ["3 · Approve", "Human review", "Version and store accepted lessons"],
+               ["4 · Evaluate", "Paired holdout test", "Retrieve approved memory, then compare off/on"]].map(([n, h, p]) =>
+              `<div style="background:var(--blue-soft);border-radius:12px;padding:12px 14px;min-height:94px">
+                <div style="font:700 14px var(--sans);letter-spacing:0.08em;text-transform:uppercase;color:var(--blue)">${n}</div>
+                <div style="font:700 18px var(--sans);margin-top:5px">${h}</div>
+                <div class="muted" style="font:500 16px/1.25 var(--sans);margin-top:4px">${p}</div>
+              </div>`).join("")}
+          </div>
+        </div>
         <div style="position:absolute;left:0;bottom:0;display:flex;gap:12px;align-items:center">
           <span class="label" style="margin-right:6px">298B</span><span class="chip">Models 2 to 4</span><span class="chip">Cloud deployment</span><span class="chip">Controlled study</span>
         </div>
         <div style="position:absolute;right:0;bottom:-10px;text-align:right"><div style="font:720 104px/1 var(--display);letter-spacing:-0.035em">Thank you<span style="color:var(--blue)">.</span></div><div class="muted" style="font:600 26px var(--sans);margin-top:8px">Questions welcome</div></div>`,
       say: [
-        "Next: the evaluation harness was merged yesterday. Now we record and annotate our own sessions, run the MAST judge, and run the Model 1 bake-off.",
-        "Our own sessions are the next big step, because they decide every winner. Our target for the final report on December 7th is the Model 1 bake-off and the MAST reproduction. Thank you. Questions?"
+        "Next: the evaluation harness was merged yesterday. Now we record and annotate our own sessions, run the Model 1 bake-off, and reproduce the MAST baseline.",
+        "Our 298A contribution continues after the frozen MAST result. Before reviewing failures, we freeze an adaptation subset and an untouched holdout. Only adaptation failures can create lesson candidates.",
+        "A human reviews each evidence-linked lesson. The final paired test retrieves approved, versioned memory for the untouched holdout and compares memory disabled with memory enabled under the same model and scoring.",
+        "Our target for the final report on December 7th includes the Model 1 bake-off, exact MAST reproduction, and the separate self-improving MAST experiment. Thank you. Questions?"
       ],
       qa: [
         ["What is your biggest risk?", "The session corpus. Sessions need the end-to-end integration gate, annotation needs sessions, splits need annotation. If it slips, we shorten collection, not the freeze date."],
-        ["What if the MAST baseline does not reproduce?", "Check the prompt and scoring code before the model. The paper's zero-shot figure is 0.89, so few-shot matters. MultiAgentBench is the documented fallback. If the gap stays, we report it."],
+        ["What if the MAST baseline does not reproduce?", "Check the prompt and scoring code before the model. The paper's zero-shot figure is 0.89, so few-shot matters. MultiAgentBench is the documented fallback. If the gap stays, we report it. We do not use memory to repair or redefine the reproduction."],
+        ["How will the MAST extension improve itself?", "During 298A, verified failure codes and trace evidence from the adaptation subset create proposed learning events. A human approves or rejects each lesson. The holdout run retrieves only approved, versioned lessons, and the evaluation compares memory disabled with approved memory under the same model and scoring."],
+        ["How do you prevent test leakage?", "We freeze the adaptation and holdout membership before anyone inspects extension failures. Lessons can use only adaptation records. The holdout stays untouched until the paired memory off/on evaluation, and the exact published reproduction remains a separate result."],
         ["Who does what?", "Ayush: platform, serving, Model 1. Naman: data, Model 2. Manav: client, Model 3. Shriram: agent runtime, Model 4. Pramod: evaluation and the MAST baseline."],
         ["What else is open?", "GPU feasibility for Phi-4-mini (failed at step 2 of 15, likely memory at 4,096 tokens) and Qwen3.5-4B (not run); branch protection on main (DAT-10, target 18 Nov); Model 2 and 4 config files at the start of 298B."],
         ["Will outside participants be recruited?", "The first sessions come from the five of us. We widen recruitment only after the IRB question is answered, and every result states its population."]
