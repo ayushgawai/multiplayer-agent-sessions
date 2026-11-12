@@ -39,3 +39,5 @@ jobs:
         run: pytest -q models/baseline_mast/tests
       - name: Checkpointing self-check
         run: PYTHONPATH=. python models/common/check_checkpointing.py
+      - name: Pytest warehouse pipeline
+        run: pytest -q infra/warehouse

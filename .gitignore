@@ -58,3 +58,4 @@ mlruns/
 # Generated locally but openapi.json is committed intentionally
 *.log
 .cache/
+/warehouse/
