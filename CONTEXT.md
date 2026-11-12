@@ -488,7 +488,7 @@ Do **not** budget paid cloud GPU for 298A unless the GPU lab is unavailable.
 
 | Resource | Detail | Cost |
 |----------|--------|------|
-| GPU lab | University NVIDIA RTX 4090/5090 pool for final candidates; the prior feasibility run used an RTX 5080 Laptop, 16 GB. | $0 |
+| GPU lab | University GPU lab for final candidates; the prior feasibility run used an RTX 5080 Laptop, 16 GB. | $0 |
 | LLM APIs | OpenRouter and/or OpenAI / Anthropic / Kiro CLI as needed for MAST judge and prompted arms | pay-as-you-go; keep receipts; no fixed $100–$250 commitment |
 
 Workbook section 2.3 should say training runs in the GPU lab at $0, not invented cloud GPU spend. Colab is fallback only if the GPU lab is unavailable.
