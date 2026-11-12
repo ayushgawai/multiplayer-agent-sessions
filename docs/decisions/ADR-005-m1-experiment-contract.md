@@ -72,7 +72,8 @@ human evidence labels. Final selection requires the frozen annotated product-ses
 
 ### Metrics
 
-The machine-readable definitions are in `eval/configs/m1-contract.yaml`. BERTScore is pinned
+The machine-readable definitions are in `eval/configs/m1-contract.yaml`. ROUGE follows
+[ADR-004](ADR-004-m1-rouge-contract.md). BERTScore is pinned
 to `bert-score==0.3.13`, `FacebookAI/roberta-large` revision
 `722cf37b1afa9454edce342e7895e588b6ff1d59`, layer 17, without IDF weighting or baseline
 rescaling. Report schema-valid
@@ -86,26 +87,71 @@ Unsupported claims and attribution use claim-level denominators. Zero emitted cl
 earn a perfect safety score: they fail critical-fact recall and are reported with zero
 attribution accuracy plus the `generic_output` or `missing_critical_fact` failure code.
 
+The annotated product-session record will store each gold critical fact as a stable fact ID,
+text, one of the five output categories, and one or more acceptable evidence-event ID sets.
+For these metrics:
+
+- A gold fact is **covered** only when at least one predicted claim expresses that fact and is
+  supported by the cited input events.
+- A predicted claim is **supported** only when its factual content follows from the content of
+  its cited input events; the mere presence of a valid event ID is not sufficient.
+- **Correct supporting IDs** means the prediction cites an acceptable frozen evidence set for
+  the matched gold fact and does not cite an event that contradicts or is irrelevant to it.
+
+The final annotation schema, matching procedure, inter-annotator adjudication policy, and
+versioned annotation manifest are deferred to the product-session dataset issue. No candidate
+selection run may begin until those artifacts are implemented, independently reviewed, and
+frozen. This ADR defines the required semantics rather than claiming that the annotations or
+verifier already exist.
+
+### Input adapters
+
+`eval.contracts.m1` owns the deterministic boundary adapters; candidate implementations must
+not invent their own mappings.
+
+- A native `SessionEvent` keeps `event_id`, maps `seq` to `sequence`, maps `type` to
+  `event_type`, maps `actor.id` to `actor_id`, and normally maps `payload.text` to `text`.
+  `join` events render the participant name and role, `leave` events render the participant
+  name, and `rejected` events render the attempted type and rejection reason because those
+  service events do not carry `payload.text`. For any other textless event, the adapter emits
+  the event type plus canonical, key-sorted compact JSON of the payload. Events without an
+  assigned sequence are rejected.
+- A committed QMSum row becomes one input. The row ID is the `example_id`, its query is the
+  query, and each context span becomes an ordered `doc_update` event. Event IDs use
+  `<row-id>:span:<zero-padded-index>`. The session ID is
+  `qmsum:<split-name>:<meeting-index>`; including the split is required because meeting indices
+  restart in each source split. QMSum reference summaries remain evaluation targets and are
+  never inserted into the input events.
+
 ### Candidate selection
 
-Only runs completing all three seeds are eligible. On the annotated product-session test
-split, a candidate must achieve at least 98% schema validity, no more than 2% unsupported
-claims, unsupported-claim performance no worse than `m1-a`, at least 95% attribution
-accuracy, and at least 95% status consistency.
+Only runs completing all three seeds are eligible. Every eligibility gate applies to **each
+individual seed**, not to the three-seed mean. For the baseline-relative unsupported-claim
+gate, compare each candidate seed with the `m1-a` run using the same seed. Therefore, one
+unsafe seed cannot be hidden by stronger results from the other two. On the annotated
+product-session test split, every seed must achieve at least 98% schema validity, no more
+than 2% unsupported claims, unsupported-claim performance no worse than its matched `m1-a`
+seed, at least 95% attribution accuracy, and at least 95% status consistency.
 
-Rank eligible candidates by mean critical-fact recall, then BERTScore-F1, then ROUGE-L. Values
-within 0.01 are a quality tie; resolve a tie by latency p95 and then peak VRAM. Confirm the
-top two with a blinded human review before promotion. ROUGE alone can never select a winner.
-If no candidate passes the gates, report that no model is promotable and continue using the
-extractive control while failures are corrected.
+Rank eligible candidates using the three-seed mean of critical-fact recall, then
+BERTScore-F1, then ROUGE-L. At each ranking stage, retain every candidate whose value is
+within that metric's margin of the stage-best value, then apply the next metric only to the
+retained candidates. The margins are 0.01 for unit-interval critical-fact recall and
+BERTScore-F1, and 1.0 for percentage-scale ROUGE-L; these all represent one percentage point.
+This stage-best rule is deterministic and avoids a non-transitive chain of pairwise ties.
+Resolve any remaining tie by latency p95 and then peak VRAM. Confirm the top two with a
+blinded human review before promotion. ROUGE alone can never select a winner. If no candidate
+passes the gates, report that no model is promotable and continue using the extractive
+control while failures are corrected.
 
 ### Reproducibility and hardware
 
 Each result records the contract version, candidate config hash, dataset manifest hashes,
 git SHA, model repository and revision, seed, memory condition and version, hardware, package
 versions, latency, peak VRAM, raw structured outputs, verifier outputs, and metric convention
-versions. GPU candidates run on the university RTX 4090 or 5090 pool; hardware-specific
-latency and VRAM are never compared without naming the GPU.
+versions. GPU candidates run in the university GPU lab at $0; each result must record the
+actual GPU model. Hardware-specific latency and VRAM are never compared across different GPU
+models without clearly identifying that difference.
 
 ## Consequences
 

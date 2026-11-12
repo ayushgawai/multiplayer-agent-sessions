@@ -72,6 +72,8 @@ metrics:
     scale: mebibytes
     definition: max_allocated_cuda_memory_mb_during_inference
 selection:
+  eligibility_gate_aggregation: every_seed
+  baseline_comparison: matched_seed
   eligible_if:
     all_three_seed_runs_complete: true
     schema_valid_rate_min: 0.98
@@ -83,6 +85,11 @@ selection:
     - critical_fact_recall
     - bertscore_f1
     - rouge_l
-  quality_tie_margin: 0.01
+  rank_aggregation: mean_across_three_seeds
+  tie_policy: retain_within_margin_of_stage_best
+  quality_tie_margins:
+    critical_fact_recall: 0.01
+    bertscore_f1: 0.01
+    rouge_l: 1.0
   tie_break_by: [latency_p95_ms, peak_vram_mb]
   final_confirmation: blinded_human_review_of_top_two
