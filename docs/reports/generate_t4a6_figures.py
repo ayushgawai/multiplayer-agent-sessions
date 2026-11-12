@@ -222,8 +222,9 @@ for i, (t, c) in enumerate(zip(labs, cols)):
     box(ax, x, yb, w, 13, t, c, 7)
     if i:
         arrow(ax, (x - gap, yb + 6.5), (x, yb + 6.5))
-box(ax, x0, yb - 11.5, right - x0, 6.5,
-    "Every result JSON records: contract version, config hash, dataset manifest hashes, git SHA, model revision, seed, hardware, package versions, latency, peak VRAM",
+box(ax, x0, yb - 12.5, right - x0, 7.5,
+    "Every result JSON records: contract version, config hash, dataset manifest hashes, git SHA,\n"
+    "model revision, seed, hardware, package versions, latency, peak VRAM",
     GREY, 7.2)
 for i in (2, 3, 4):
     xm = x0 + i * (w + gap) + w / 2
