@@ -268,12 +268,21 @@ def test_consecutive_runs_do_not_leak_context_into_each_other() -> None:
     first = loop.run("one", session_id="ses_a", root_instruction_event_id="evt_a")
     second = loop.run("two", session_id="ses_b", root_instruction_event_id="evt_b")
 
-    tail = loop.events[len(first["events"]) :]
     assert {e["session_id"] for e in first["events"]} == {"ses_a"}
     assert {e["causality"]["root_instruction"] for e in first["events"]} == {"evt_a"}
-    assert {e["session_id"] for e in tail} == {"ses_b"}
-    assert {e["causality"]["root_instruction"] for e in tail} == {"evt_b"}
-    assert len(second["events"]) == len(first["events"]) + len(tail)
+    assert {e["session_id"] for e in second["events"]} == {"ses_b"}
+    assert {e["causality"]["root_instruction"] for e in second["events"]} == {"evt_b"}
+
+
+def test_a_run_returns_only_its_own_events() -> None:
+    """The returned audit is per run. AgentLoop.events stays cumulative."""
+    loop = make_loop(ScriptedPlanner(acts=1))
+
+    first = loop.run("one", session_id="ses_a")
+    second = loop.run("two", session_id="ses_b")
+
+    assert all(event["session_id"] == "ses_b" for event in second["events"])
+    assert loop.events == [*first["events"], *second["events"]]
 
 
 def test_a_run_without_context_falls_back_to_the_emitter_default() -> None:

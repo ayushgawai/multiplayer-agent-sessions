@@ -325,10 +325,19 @@ class AgentLoop:
         # recursion_limit guards the graph itself; the step cap is the real
         # bound, so give LangGraph enough room to reach it and halt cleanly.
         config = {"recursion_limit": self.max_steps * 4 + 10}
+        # The recorder outlives the run, so mark where this run starts and
+        # return only its own slice. Returning the whole recorder would put
+        # another session's events in this run's audit.
+        first_event = len(self.sink.events)
         final: AgentState = self.graph.invoke(initial, config=config)
-        final["events"] = self.events
+        final["events"] = list(self.sink.events[first_event:])
         return final
 
     @property
     def events(self) -> list[dict[str, Any]]:
+        """Every event this loop has emitted, across all runs.
+
+        Deliberately cumulative, for a caller watching one long-lived loop.
+        A single run's events are the `events` key of what `run` returns.
+        """
         return list(self.sink.events)
