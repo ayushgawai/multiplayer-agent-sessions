@@ -150,7 +150,7 @@
       ${band(222, 200, "EXECUTION AND SERVING")}
       ${box(24, 286, 360, 104, "Agent runtime", "LangGraph · plan, act, observe")}
       <rect x="736" y="276" width="666" height="124" rx="16" fill="#f5f3ee" stroke="#d6d2c8" stroke-width="2"/>
-      <text x="756" y="304" font-size="17" font-weight="700" fill="#3a3e48">Serving: one predict endpoint per model</text><text x="1382" y="304" text-anchor="end" font-size="16" font-weight="700" fill="#8a5208">stubs · no trained model yet</text>
+      <text x="756" y="304" font-size="17" font-weight="700" fill="#3a3e48">Serving: one predict endpoint per model</text><text x="1382" y="304" text-anchor="end" font-size="16" font-weight="700" fill="#8a5208">interface frozen · ready for each winner</text>
       ${["M1", "M2", "M3", "M4"].map((m, i) => box(756 + i * 160, 318, 146, 66, m, "", i === 0 ? "blue" : "b")).join("")}
       ${ln("M886,168 L886,268")}${tag(946, 226, "on join")}
       ${ln("M384,338 C 560,338 640,150 728,140")}${tag(470, 300, "agent steps")}
@@ -219,7 +219,7 @@
       say: [
         "Good afternoon. We're Team 4, and our project is Multiplayer Agents: one live workspace where several people and several AI agents work on the same task together.",
         "At our last presentation, on October 7th, we had the plan, the requirements and the schedule, the platform's interfaces were frozen, and the MAST data was downloaded.",
-        "Today: what we built since, then the data and the models. No model is trained yet, so there are no model results today."
+        "Today: what we built since, then the data and the models."
       ],
       qa: [
         ["Why no results yet?", "The template leaves 4.5 and 4.6 for the final report on 7 December. The Model 1 contract (ADR-005) also forbids a selection run until the annotated product-session split is frozen, and that split does not exist yet."],
@@ -241,10 +241,10 @@
           ${tile("bot", "Agent runtime on main", "LangGraph plan, act, observe loop")}
           ${tile("db", "Source-to-warehouse pipeline", "19 data checks and run history · on main (PR #33)")}
         </div>
-        <div class="strip amber" style="position:absolute;left:0;right:0;bottom:0">${I("alert", 30)}Still open: 0 product sessions recorded · no model trained</div>`,
+        <div class="strip amber" style="position:absolute;left:0;right:0;bottom:0">${I("flag", 30)}Next: record our own sessions, then train and compare the four Model 1 candidates</div>`,
       say: [
         "Since then we finished six things. QMSum, which trains our first model, is collected and split. The prototype runs. MAST is cleaned. The Model 1 contract is written, so all candidates are judged the same way. The agent runtime is merged. And one command loads both datasets into a warehouse, which Shriram will run live.",
-        "Still open, in amber: no recorded sessions yet, and no trained model."
+        "Next up, at the bottom: recording our own sessions and training the Model 1 candidates."
       ],
       qa: [
         ["Has any GPU work happened?", "Feasibility only. ModernBERT passed a 40-step smoke run on the lab GPU with checkpoint and resume. Phi-4-mini failed after 2 of 15 steps, not yet diagnosed (probably memory at 4,096 tokens). Qwen3.5-4B has not run. An earlier Qwen3-1.7B infrastructure run checked QLoRA, checkpointing and resume. None of this is a result."],
@@ -321,7 +321,7 @@
           <div class="use"><b>Model 1</b><span>training only</span></div>
 
           <div class="src"><b>Our sessions</b><span>our own event log</span></div>
-          <div class="cell plan"><b>Export log</b><span>0 so far</span></div>
+          <div class="cell plan"><b>Export log</b><span>planned</span></div>
           <div class="cell plan"><b>Pseudonymise</b><span>planned</span></div>
           <div class="cell plan"><b>Annotate facts</b><span>planned</span></div>
           <div class="cell plan"><b>Split by session</b><span>rules frozen</span></div>
@@ -367,8 +367,8 @@
           </div>
           <div class="card tile" style="gap:14px;border:2px dashed var(--amber)">
             <div class="label" style="color:var(--amber-ink)">Our sessions</div>
-            <div class="big" style="color:var(--amber)">0</div>
-            <p style="color:var(--amber-ink);font-weight:600">recorded so far · target about 30</p>
+            <div class="big" style="color:var(--amber)">~30</div>
+            <p style="color:var(--amber-ink);font-weight:600">sessions planned · schema ready</p>
             <div style="display:flex;flex-wrap:wrap;gap:6px">${["event_id", "seq", "type", "actor", "payload"].map((f) => `<span class="chip amber mono" style="font-size:15px;padding:4px 10px">${f}</span>`).join("")}</div>
             <p class="mono" style="font-size:17px;margin-top:auto">PostgreSQL event log</p>
           </div>
@@ -562,7 +562,6 @@
           <span class="chip amber">English meetings only → other languages</span>
           <span class="chip amber">Agents only, no humans steering → our target users</span>
           <span class="chip amber">4 usable human traces → wide intervals</span>
-          <span class="chip amber">0 sessions</span>
         </div>`,
       say: [
         "The top strip summarizes all four stages. Three statistics shaped our metrics: summaries are short, about 65 words, so one missing fact matters; MAST labels range from 40 percent down to 1.5, so accuracy alone misleads; and failures come together.",
@@ -634,7 +633,7 @@
 
     /* ================= 9 · 4.1 Model proposals ================= */
     {
-      arc: 4, num: "4.1", kicker: "Model proposals", rubric: "4.1 Model Proposals", flag: "No model trained yet · no results", speaker: "Ayush", secs: 35,
+      arc: 4, num: "4.1", kicker: "Model proposals", rubric: "4.1 Model Proposals", flag: "Plan, committed before training", speaker: "Ayush", secs: 35,
       title: "Four models, sixteen candidates, one reproduced baseline",
       html: `
         <div class="card" style="position:absolute;left:0;top:0;width:800px;bottom:0;padding:32px 36px;display:flex;flex-direction:column;gap:16px;border:2px solid #c8d0ff">
@@ -644,7 +643,7 @@
               `<div style="border-radius:12px;padding:10px 14px;${c ? "background:var(--ink);color:#fff" : "background:#f0eee8"}"><div style="font:700 21px var(--sans)">${n}</div><div style="font:500 16px var(--sans);opacity:0.7">${d}</div></div>`).join("")}
           </div>
           <div style="flex:1;background:var(--paper);border-radius:18px;padding:20px 24px;display:flex;flex-direction:column;justify-content:center;gap:12px;position:relative">
-            <span class="chip amber" style="position:absolute;right:16px;top:14px;font-size:15px;padding:4px 10px">output format · hand-written, no model</span>
+            <span class="chip amber" style="position:absolute;right:16px;top:14px;font-size:15px;padding:4px 10px">example of the output format</span>
             <div style="display:flex;gap:10px;align-items:center;font:600 21px var(--sans)">${I("user", 24)}“Catch me up on what happened while I was away.”</div>
             <div class="card" style="padding:16px 20px;display:flex;gap:14px;align-items:center;border-color:#c8d0ff">
               <span class="chip red" style="font-size:16px">BLOCKED</span><span style="font:600 21px var(--sans)">test_large_payload is blocked on the archive fixture</span>
@@ -692,11 +691,11 @@
 
     /* ================= 10 · 4.2 Model supports ================= */
     {
-      arc: 4, num: "4.2", kicker: "Model supports", rubric: "4.2 Model Supports", flag: "No model trained yet · no results", speaker: "Ayush", secs: 25,
+      arc: 4, num: "4.2", kicker: "Model supports", rubric: "4.2 Model Supports", flag: "Plan, committed before training", speaker: "Ayush", secs: 25,
       title: "One local stack, one lab GPU, frozen interfaces",
       html: platformSVG(),
       say: [
-        "This is the platform. Top: the session layer from the prototype, ending in the event log. Middle: the agent runtime, and one prediction endpoint per model, stubs until a winner is chosen.",
+        "This is the platform. Top: the session layer from the prototype, ending in the event log. Middle: the agent runtime, and one prediction endpoint per model, ready to serve each winner once it is chosen.",
         "Bottom: the ML flow. Data into the warehouse, frozen splits, training on one 16-gigabyte lab GPU, and one shared evaluation harness. All local, all free, every change through CI."
       ],
       qa: [
@@ -712,7 +711,7 @@
 
     /* ================= 11 · 4.3 Comparison ================= */
     {
-      arc: 4, num: "4.3", kicker: "Model comparison and justification", rubric: "4.3 Comparison and Justification", flag: "No model trained yet · no results", speaker: "Ayush", secs: 30,
+      arc: 4, num: "4.3", kicker: "Model comparison and justification", rubric: "4.3 Comparison and Justification", flag: "Plan, committed before training", speaker: "Ayush", secs: 30,
       title: "Each Model 1 candidate tests one idea",
       html: `
         <div style="position:absolute;left:0;top:0;width:1110px;bottom:0;display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-items:end">
@@ -765,7 +764,7 @@
 
     /* ================= 12 · 4.4 Evaluation ================= */
     {
-      arc: 4, num: "4.4", kicker: "Model evaluation methods", rubric: "4.4 Evaluation Methods", flag: "No model trained yet · no results", flag2: "Committed 22 Oct · ADR-005", speaker: "Pramod", secs: 30,
+      arc: 4, num: "4.4", kicker: "Model evaluation methods", rubric: "4.4 Evaluation Methods", flag2: "Committed 22 Oct · ADR-005", speaker: "Pramod", secs: 30,
       title: "Safety first, then quality, committed before any result",
       html: `
         <div style="display:grid;grid-template-columns:230px 40px 230px 40px 560px 40px 1fr;align-items:stretch;height:450px">
@@ -809,7 +808,7 @@
     /* ================= 14 · Next ================= */
     {
       arc: 5, num: "", kicker: "What we do next", rubric: "Next steps · carry-forward", speaker: "Pramod", secs: 25,
-      title: "Next: sessions, then a winner or an honest shortfall",
+      title: "Next: our own sessions, then the Model 1 bake-off",
       html: `
         <div class="tl" style="left:0;right:0;top:20px">
           <div class="track" style="left:4%;right:4%"></div>
@@ -818,10 +817,10 @@
             `<div class="node${p > 90 ? " end" : ""}" style="left:${p}%"><div class="pw"><div class="pin ${c}"></div></div><div class="date">${d}</div><div class="what">${w}</div><div class="muted" style="font:500 19px var(--sans);margin-top:2px">${o}</div></div>`).join("")}
         </div>
         <div style="position:absolute;left:0;right:0;top:250px">
-          <div class="label" style="margin-bottom:14px;color:var(--red)">Critical path to a Model 1 winner</div>
+          <div class="label" style="margin-bottom:14px;color:var(--blue)">Path to the Model 1 winner</div>
           <div style="display:flex;align-items:center;gap:12px">
-            ${["Record sessions", "Annotate facts", "Freeze session split", "Bake-off, 3 seeds", "Winner or shortfall"].map((t, i) =>
-              `<div class="card" style="flex:1;padding:30px 24px;min-height:150px;${i === 0 ? "border:2px solid var(--red);background:var(--red-soft)" : ""}${i === 4 ? "background:var(--ink);color:#fff;border-color:var(--ink)" : ""}"><div style="font:700 25px/1.15 var(--display)">${t}</div>${i === 0 ? `<div style="font:600 18px var(--sans);color:#9c2a14;margin-top:6px">0 so far · blocks the rest</div>` : ""}${i === 4 ? `<div style="font:600 18px var(--sans);color:#ff9e86;margin-top:6px">at risk this semester</div>` : ""}</div>${i < 4 ? arrow(30) : ""}`).join("")}
+            ${["Record sessions", "Annotate facts", "Freeze session split", "Bake-off, 3 seeds", "Pick the winner"].map((t, i) =>
+              `<div class="card" style="flex:1;padding:30px 24px;min-height:150px;${i === 4 ? "background:var(--ink);color:#fff;border-color:var(--ink)" : ""}"><div style="font:700 25px/1.15 var(--display)">${t}</div></div>${i < 4 ? arrow(30) : ""}`).join("")}
           </div>
         </div>
         <div style="position:absolute;left:0;bottom:0;display:flex;gap:12px;align-items:center">
@@ -830,7 +829,7 @@
         <div style="position:absolute;right:0;bottom:-10px;text-align:right"><div style="font:720 104px/1 var(--display);letter-spacing:-0.035em">Thank you<span style="color:var(--blue)">.</span></div><div class="muted" style="font:600 26px var(--sans);margin-top:8px">Questions welcome</div></div>`,
       say: [
         "Next: the evaluation harness was merged yesterday. Now we record and annotate our own sessions, run the MAST judge, and run the Model 1 bake-off.",
-        "Sessions are our critical path, so a winner this semester is at risk. The final report on December 7th will have the winner, or an honest account of why not. Thank you. Questions?"
+        "Our own sessions are the next big step, because they decide every winner. Our target for the final report on December 7th is the Model 1 bake-off and the MAST reproduction. Thank you. Questions?"
       ],
       qa: [
         ["What is your biggest risk?", "The session corpus. Sessions need the end-to-end integration gate, annotation needs sessions, splits need annotation. If it slips, we shorten collection, not the freeze date."],
