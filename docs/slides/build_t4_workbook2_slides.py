@@ -8,6 +8,7 @@ from pptx.util import Inches, Pt
 
 FIG = Path(sys.argv[1])
 OUT = sys.argv[2]
+DEMO = Path(__file__).resolve().parents[1] / "demo" / "images"
 NAVY, BLUE, GREY, AMBER = RGBColor(0x1F, 0x4E, 0x79), RGBColor(0x2E, 0x75, 0xB6), RGBColor(0x59, 0x59, 0x59), RGBColor(0x8A, 0x64, 0x14)
 prs = Presentation()
 prs.slide_width, prs.slide_height = Inches(13.333), Inches(7.5)
@@ -44,7 +45,8 @@ def slide(title, rubric=None, notes=""):
 
 
 def pic(s, name, x, y, w):
-    s.shapes.add_picture(str(FIG / name), Inches(x), Inches(y), width=Inches(w))
+    path = DEMO / name if (DEMO / name).exists() else FIG / name
+    s.shapes.add_picture(str(path), Inches(x), Inches(y), width=Inches(w))
 
 
 def table(s, x, y, w, rows, widths, size=13, row_h=0.42):
@@ -85,6 +87,29 @@ table(s, 0.5, 1.5, 12.3,
        ["M1 smoke dataset: 18 examples, 12 sessions (DAT-53)", "Learning-event store (DAT-56)", ""]],
       [4.3, 4.3, 3.7], 13, 0.62)
 text(s, 0.5, 5.6, 12.3, 1, "No bake-off result and no baseline agreement figure exists yet. Everything on the following slides is data, design and committed evaluation rules.", 16, AMBER, True)
+
+# prototype screenshots (docs/demo/DEMO_IMAGES.md) ---------------------
+s = slide("Prototype today: shared editing, presence and roles", notes="Client runs against the real session service (REAL API badge). No model output is shown in the client yet.")
+pic(s, "crdt_two_tabs.png", 0.5, 1.35, 7.4)
+pic(s, "presence_three_users.png", 0.5, 4.85, 7.4)
+text(s, 8.2, 1.4, 4.8, 5.3, ["Two people edit one document at once; edits merge through a Yjs CRDT, so nothing is lost.",
+                            "Each edit is also written to the session event log as a doc_update event.",
+                            "Presence bar: author, reviewer, observer, each with a stable colour and a named cursor. Observers can read but not edit.",
+                            "Real: client talking to the real session service."], 15)
+
+s = slide("Prototype today: one ordered event log, with rollback")
+pic(s, "rollback_before_after.png", 0.5, 1.5, 12.3)
+text(s, 0.5, 5.2, 12.3, 1.6, ["Left: four events (two joins, two instructions). Right: after 'roll back to seq 2', the two instructions are removed for everyone in the session.",
+                             "This log is the source of our own data and the input that the Model 1 catch-up reads."], 16)
+
+s = slide("Evaluation tooling: MAST result viewer and an M1-A example")
+pic(s, "mast_viewer_compact.png", 0.5, 1.35, 6.1)
+pic(s, "m1a_example.png", 6.8, 1.35, 6.1)
+text(s, 0.5, 4.2, 6.1, 2.2, ["Judge label against reference label per trace and failure code (TP, FP, FN, TN, NA).",
+                            "Header carries prompt version and hash, parser and manifest versions."], 14)
+text(s, 6.8, 4.2, 6.1, 2.2, ["Left: session events. Right: BM25 catch-up in five categories; every line cites its source event.",
+                            "M1-A is the floor the learned candidates must beat (draft PR #26)."], 14)
+text(s, 0.5, 6.2, 12.3, 0.7, "Both screenshots use test data: a 6-record fixture with a stub judge, and a synthetic smoke session. Neither is a result.", 15, AMBER, True)
 
 # 3 ------------------------------------------------------------------
 s = slide("Data process: three sources, five steps", "3.1 Data Process", "Three paths never mix. Amber is planned.")
