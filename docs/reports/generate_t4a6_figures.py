@@ -114,7 +114,7 @@ ax.set_yticklabels([f"{c}  {NAMES[c]}" for c in codes], fontsize=8)
 ax.set_xlabel("Share of the 1,638 scorable traces labelled positive (%)")
 ax.set_xlim(0, 52)
 ax.legend(handles=[plt.Rectangle((0, 0), 1, 1, color=c) for _, c in CAT.values()],
-          labels=[n for n, _ in CAT.values()], frameon=False, fontsize=7.5, loc="lower right")
+          labels=[n for n, _ in CAT.values()], frameon=False, fontsize=7.5, loc="center right")
 ax.set_title("Label imbalance across the 14 MAST failure modes", fontsize=10)
 save(fig, "fig06_mast_prevalence.png")
 
