@@ -350,8 +350,20 @@ def truncate_at_word(text: str, limit: int = MAX_CLAIM_CHARS) -> str:
     return cut.rstrip()
 
 
+def normalize_claim_text(text: str) -> str:
+    """Normalize claim text the way ``validate_m1_pair`` does to find duplicates."""
+
+    return " ".join(text.split()).casefold()
+
+
 def predict(model_input: M1Input) -> dict[str, Any]:
-    """Build an ``m1-output-v1`` dict for one example from its own events only."""
+    """Build an ``m1-output-v1`` dict for one example from its own events only.
+
+    The contract rejects duplicate claim text, so a claim whose normalized text
+    equals one already chosen in any category is skipped. Categories are
+    visited in rule priority order, then by BM25 rank, so the first one wins. A
+    skipped duplicate does not use up a ``MAX_CLAIMS_PER_CATEGORY`` slot.
+    """
 
     events = model_input.events
     index = BM25Index([tokenize(event.text) for event in events])
@@ -363,23 +375,38 @@ def predict(model_input: M1Input) -> dict[str, Any]:
         if category is not None:
             candidates[category].append(position)
 
+    claim_texts = {
+        position: truncate_at_word(collapse_whitespace(event.text))
+        for position, event in enumerate(events)
+    }
+    seen: set[str] = set()
+    selected: dict[str, list[int]] = {category: [] for category in M1_CATEGORIES}
+    for rule in CATEGORY_RULES:
+        category = rule.category
+        positions = candidates[category]
+        if not positions:
+            continue
+        scores = index.scores(query_tokens + list(CATEGORY_CUE_WORDS[category]))
+        ranked = sorted(positions, key=lambda p: (-scores[p], -events[p].sequence))
+        for position in ranked:
+            if len(selected[category]) == MAX_CLAIMS_PER_CATEGORY:
+                break
+            normalized = normalize_claim_text(claim_texts[position])
+            if normalized in seen:
+                continue
+            seen.add(normalized)
+            selected[category].append(position)
+
     output: dict[str, Any] = {
         "schema_version": OUTPUT_VERSION,
         "example_id": model_input.example_id,
         "candidate_id": CANDIDATE_ID,
     }
     for category in M1_CATEGORIES:
-        positions = candidates[category]
-        if not positions:
-            output[category] = []
-            continue
-        scores = index.scores(query_tokens + list(CATEGORY_CUE_WORDS[category]))
-        ranked = sorted(positions, key=lambda p: (-scores[p], -events[p].sequence))
-        top = ranked[:MAX_CLAIMS_PER_CATEGORY]
-        kept = sorted(top, key=lambda p: events[p].sequence)
+        kept = sorted(selected[category], key=lambda p: events[p].sequence)
         output[category] = [
             {
-                "text": truncate_at_word(collapse_whitespace(events[p].text)),
+                "text": claim_texts[p],
                 "source_event_ids": [events[p].event_id],
             }
             for p in kept

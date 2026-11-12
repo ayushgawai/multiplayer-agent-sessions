@@ -27,6 +27,7 @@ from models.m1_catchup.bm25 import (
     build_eval_runner,
     classify_event,
     collapse_whitespace,
+    normalize_claim_text,
     predict,
     tokenize,
     truncate_at_word,
@@ -289,6 +290,82 @@ def test_events_without_a_category_are_dropped() -> None:
     output = predict(make_input(events))
     assert all(output[category] == [] for category in M1_CATEGORIES)
     M1Output.model_validate(output)
+
+
+# --- duplicate claim text ----------------------------------------------------
+
+
+def all_claims(output: dict[str, object]) -> list[dict[str, object]]:
+    return [
+        claim
+        for category in M1_CATEGORIES
+        for claim in parsed_claims(output, category)
+    ]
+
+
+def test_duplicate_text_in_one_category_emits_one_claim() -> None:
+    events = [
+        event("e1", 1, "doc_update", "Created the export module."),
+        event("e2", 2, "doc_update", "created   the EXPORT module."),
+    ]
+    output = predict(make_input(events))
+    claims = parsed_claims(output, "completed")
+    assert len(claims) == 1
+    # Equal text means equal BM25 score, so the later event ranks higher.
+    assert claims[0]["source_event_ids"] == ["e2"]
+
+
+def test_same_text_in_two_categories_is_emitted_once_in_the_higher_priority() -> None:
+    text = "Created the report; I will ship it."
+    pending = event("e1", 1, "instruction", text)
+    completed = event("e2", 2, "doc_update", text)
+    assert classify_event(pending) == "pending_actions"
+    assert classify_event(completed) == "completed"
+    output = predict(make_input([pending, completed]))
+    pending_claims = parsed_claims(output, "pending_actions")
+    assert [c["source_event_ids"] for c in pending_claims] == [["e1"]]
+    assert parsed_claims(output, "completed") == []
+
+
+def test_a_skipped_duplicate_does_not_use_up_a_slot() -> None:
+    events = [
+        event("e1", 1, "doc_update", "Created the alpha module."),
+        event("e2", 2, "doc_update", "Created the beta module."),
+        event("e3", 3, "doc_update", "Created the gamma module."),
+        event("e4", 4, "doc_update", "Created the delta module."),
+        event("e5", 5, "doc_update", "created THE alpha   module."),
+    ]
+    output = predict(make_input(events, query="alpha"))
+    claims = parsed_claims(output, "completed")
+    assert len(claims) == MAX_CLAIMS_PER_CATEGORY
+    normalized = [normalize_claim_text(str(c["text"])) for c in claims]
+    assert len(set(normalized)) == len(normalized)
+    # e5 and e1 are the two best matches; e5 wins the pair, e1 is skipped, and the
+    # two remaining slots go to the next best distinct events.
+    assert [c["source_event_ids"] for c in claims] == [["e3"], ["e4"], ["e5"]]
+
+
+def test_texts_that_truncate_to_the_same_claim_are_deduplicated() -> None:
+    prefix = " ".join(["segment"] * 60)
+    events = [
+        event("e1", 1, "doc_update", prefix + " alpha ending"),
+        event("e2", 2, "doc_update", prefix + " beta ending"),
+    ]
+    output = predict(make_input(events))
+    claims = parsed_claims(output, "completed")
+    assert len(claims) == 1
+    assert len(str(claims[0]["text"])) <= MAX_CLAIM_CHARS
+
+
+@pytest.mark.parametrize(
+    ("split", "example"), ALL_EXAMPLES, ids=[e.example_id for _, e in ALL_EXAMPLES]
+)
+def test_no_smoke_output_has_duplicate_claim_text(
+    split: str, example: M1SmokeExample
+) -> None:
+    output = predict(M1Input.model_validate(to_m1_input(example)))
+    normalized = [normalize_claim_text(str(c["text"])) for c in all_claims(output)]
+    assert len(normalized) == len(set(normalized))
 
 
 # --- no gold leakage and determinism -----------------------------------------
