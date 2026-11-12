@@ -44,7 +44,7 @@ lesson = store.propose(
         split=Split.validation,
         model_output="Ana approved the Q3 budget.",
         source_event_ids=["evt_01M5FZGECQ32H9BKAHATWG5KRW"],
-        failure_code="m1.unsupported_claim",
+        failure_code="unsupported_claim",
         feedback=Feedback(
             source=FeedbackSource.verifier,
             author="m1-verifier-v1",
@@ -70,7 +70,20 @@ lessons = store.retrieve(Task.m1, candidate_id="m1-a", limit=5)
 | `failure_codes` | Restrict to particular failure modes. |
 | `session_id` | Restrict to lessons derived from one session. |
 | `limit` | Cap the result length after ordering. |
-| `version` | Read memory as it stood after the first N revisions. |
+| `version` | Read memory as it stood after the first N revisions. Refused if the store never had that version. |
+
+## Failure vocabulary
+
+A lesson records the same failure the candidate's evaluator reported, so there
+is one vocabulary rather than two. The codes are the `failure_codes` of the
+candidate configs: `eval/configs/m1-*.yaml` (DAT-55) and `eval/configs/m3-*.yaml`
+(DAT-40). `tests/test_vocabulary.py` compares them against those files, so
+changing either side alone fails the build. M2 and M4 have no candidate configs
+yet; the placeholders here are not enforced until those land, at which point the
+same test begins checking them.
+
+An unknown code is a rejected record, not a new category, so the taxonomy
+cannot drift one lesson at a time.
 
 Results are ordered by decision time, newest first, with `lesson_id` breaking
 ties so repeated reads of the same contents return the same order. There is no

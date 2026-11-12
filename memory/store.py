@@ -178,8 +178,16 @@ class MemoryStore:
         """
         if version < 0:
             raise ValueError("version must not be negative")
+        revisions = self.revisions()
+        # Slicing past the end would silently return the newest state, so a run
+        # pinned to a version this store never had would be handed different
+        # memory and still look reproducible.
+        if version > len(revisions):
+            raise ValueError(
+                f"version {version} does not exist; this store has {len(revisions)} revisions"
+            )
         state: dict[str, LearningEvent] = {}
-        for revision in self.revisions()[:version]:
+        for revision in revisions[:version]:
             state[revision.lesson_id] = revision
         return state
 

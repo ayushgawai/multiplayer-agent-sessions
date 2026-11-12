@@ -29,7 +29,7 @@ def test_the_documented_flow_works(tmp_path: Path) -> None:
             split=Split.validation,
             model_output="Ana approved the Q3 budget.",
             source_event_ids=["evt_01M5FZGECQ32H9BKAHATWG5KRW"],
-            failure_code="m1.unsupported_claim",
+            failure_code="unsupported_claim",
             feedback=Feedback(
                 source=FeedbackSource.verifier,
                 author="m1-verifier-v1",

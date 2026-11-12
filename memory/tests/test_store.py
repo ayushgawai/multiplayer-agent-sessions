@@ -259,13 +259,27 @@ def test_a_negative_version_is_rejected(store: MemoryStore) -> None:
         store.at_version(-1)
 
 
+def test_a_version_the_store_never_had_is_refused(
+    store: MemoryStore, make_lesson: Any
+) -> None:
+    """Pinning past the end must fail, not quietly hand back the newest state."""
+    lesson = store.propose(make_lesson())
+    store.approve(lesson.lesson_id, decided_by="pramod")
+
+    assert store.version == 2
+    with pytest.raises(ValueError, match="version 3 does not exist"):
+        store.at_version(3)
+    with pytest.raises(ValueError, match="version 99 does not exist"):
+        store.retrieve(Task.m1, version=99)
+
+
 # retrieval filters
 
 
 def test_retrieval_is_scoped_to_one_task(store: MemoryStore, make_lesson: Any) -> None:
     m1 = store.propose(make_lesson())
     m3 = store.propose(
-        make_lesson(task=Task.m3, candidate_id="m3-a", failure_code="m3.harmful_merge")
+        make_lesson(task=Task.m3, candidate_id="m3-a", failure_code="invalid_merge")
     )
     store.approve(m1.lesson_id, decided_by="pramod")
     store.approve(m3.lesson_id, decided_by="pramod")
@@ -284,12 +298,12 @@ def test_retrieval_can_be_filtered_by_candidate(store: MemoryStore, make_lesson:
 
 
 def test_retrieval_can_be_filtered_by_failure_code(store: MemoryStore, make_lesson: Any) -> None:
-    unsupported = store.propose(make_lesson(failure_code="m1.unsupported_claim"))
-    attribution = store.propose(make_lesson(failure_code="m1.attribution_incorrect"))
+    unsupported = store.propose(make_lesson(failure_code="unsupported_claim"))
+    attribution = store.propose(make_lesson(failure_code="wrong_attribution"))
     store.approve(unsupported.lesson_id, decided_by="pramod")
     store.approve(attribution.lesson_id, decided_by="pramod")
 
-    hits = store.retrieve(Task.m1, failure_codes=["m1.attribution_incorrect"])
+    hits = store.retrieve(Task.m1, failure_codes=["wrong_attribution"])
 
     assert [h.lesson_id for h in hits] == [attribution.lesson_id]
 

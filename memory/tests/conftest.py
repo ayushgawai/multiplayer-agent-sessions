@@ -41,7 +41,7 @@ def make_lesson(verifier_feedback: Feedback) -> Any:
             "split": Split.validation,
             "model_output": "Ana approved the Q3 budget in the second half of the session.",
             "source_event_ids": [event_id()],
-            "failure_code": "m1.unsupported_claim",
+            "failure_code": "unsupported_claim",
             "feedback": verifier_feedback,
             "lesson": "Every factual claim must cite the event id it came from.",
         }

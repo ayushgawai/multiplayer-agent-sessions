@@ -90,37 +90,45 @@ class Split(str, Enum):
 
 # Failure vocabularies, per task. Closed sets: an unknown code is a rejected
 # record, not a new category, so the taxonomy cannot drift one lesson at a
-# time. M1's codes come from the verifier described in the research plan
-# (schema, source references, critical-fact coverage, attribution,
-# unsupported claims). M2 to M4 are declared now so the contract does not
-# change when their verifiers arrive in 298B.
+# time.
+#
+# A lesson is written against the same failure a candidate's evaluator
+# reports, so these are the evaluator's own codes rather than a second
+# vocabulary of our own. M1 is the frozen set in eval/configs/m1-*.yaml
+# (DAT-55), M3 the set in eval/configs/m3-*.yaml (DAT-40).
+# tests/test_vocabulary.py compares both against those files, so a change to
+# a candidate config that is not mirrored here fails the build.
 M1_FAILURE_CODES: tuple[str, ...] = (
-    "m1.schema_invalid",
-    "m1.missing_source_reference",
-    "m1.unsupported_claim",
-    "m1.critical_fact_missing",
-    "m1.attribution_incorrect",
-    "m1.stale_state",
-)
-
-M2_FAILURE_CODES: tuple[str, ...] = (
-    "m2.addressee_incorrect",
-    "m2.addressee_ambiguous",
-    "m2.broadcast_misread",
+    "invalid_schema",
+    "missing_critical_fact",
+    "unsupported_claim",
+    "wrong_attribution",
+    "wrong_status",
+    "generic_output",
+    "truncated",
 )
 
 M3_FAILURE_CODES: tuple[str, ...] = (
-    "m3.harmful_merge",
-    "m3.wrong_winner",
-    "m3.missed_escalation",
-    "m3.needless_escalation",
+    "under_escalated",
+    "over_escalated",
+    "wrong_winner",
+    "invalid_merge",
+)
+
+# M2 and M4 have no candidate configs yet, so there is nothing to mirror.
+# These stand in until those land, at which point the vocabulary test starts
+# enforcing them and will fail if the two disagree.
+M2_FAILURE_CODES: tuple[str, ...] = (
+    "addressee_incorrect",
+    "addressee_ambiguous",
+    "broadcast_misread",
 )
 
 M4_FAILURE_CODES: tuple[str, ...] = (
-    "m4.invalid_dag",
-    "m4.ineligible_tool",
-    "m4.wrong_route",
-    "m4.incomplete_plan",
+    "invalid_dag",
+    "ineligible_tool",
+    "wrong_route",
+    "incomplete_plan",
 )
 
 # MAST supplies an external taxonomy for describing multi-agent failures. Its

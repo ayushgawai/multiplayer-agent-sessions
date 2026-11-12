@@ -75,8 +75,8 @@ def test_a_malformed_lesson_id_is_rejected(make_lesson: Any, bad: str) -> None:
 
 def test_lesson_ids_are_stable_across_processes() -> None:
     """Derivation is a hash of the inputs, not a per-process counter."""
-    assert new_lesson_id("m1|m1-a|run_1|m1.unsupported_claim|evt_x") == new_lesson_id(
-        "m1|m1-a|run_1|m1.unsupported_claim|evt_x"
+    assert new_lesson_id("m1|m1-a|run_1|unsupported_claim|evt_x") == new_lesson_id(
+        "m1|m1-a|run_1|unsupported_claim|evt_x"
     )
 
 
@@ -112,11 +112,13 @@ def test_the_m1_vocabulary_covers_the_verifier_checks() -> None:
     codes = failure_codes_for(Task.m1)
 
     for expected in (
-        "m1.schema_invalid",
-        "m1.missing_source_reference",
-        "m1.unsupported_claim",
-        "m1.critical_fact_missing",
-        "m1.attribution_incorrect",
+        "invalid_schema",
+        "missing_critical_fact",
+        "unsupported_claim",
+        "wrong_attribution",
+        "wrong_status",
+        "generic_output",
+        "truncated",
     ):
         assert expected in codes
 
@@ -130,12 +132,12 @@ def test_mast_codes_are_available_to_every_task() -> None:
 
 def test_a_code_from_another_task_is_rejected(make_lesson: Any) -> None:
     with pytest.raises(ValidationError, match="not in the m1 vocabulary"):
-        make_lesson(failure_code="m3.harmful_merge")
+        make_lesson(failure_code="invalid_merge")
 
 
 def test_an_unknown_code_is_rejected(make_lesson: Any) -> None:
     with pytest.raises(ValidationError, match="not in the m1 vocabulary"):
-        make_lesson(failure_code="m1.made_this_up")
+        make_lesson(failure_code="made_this_up")
 
 
 def test_a_bare_mast_code_without_the_prefix_is_rejected(make_lesson: Any) -> None:
@@ -259,7 +261,7 @@ def test_draft_never_returns_an_approved_lesson(verifier_feedback: Feedback) -> 
         split=Split.train,
         model_output="plan: [a, b]",
         source_event_ids=[event_id()],
-        failure_code="m4.invalid_dag",
+        failure_code="invalid_dag",
         feedback=verifier_feedback,
         lesson="Reject plans whose edges form a cycle.",
     )
