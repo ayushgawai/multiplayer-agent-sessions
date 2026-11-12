@@ -184,7 +184,7 @@ arrow(ax, (24, y1 + 4.75), (28, y1 + 4.75), style="<|-|>")
 arrow(ax, (48, y1 + 4.75), (52, y1 + 4.75))
 arrow(ax, (73, y1 + 4.75), (77, y1 + 4.75), style="<|-|>")
 y2 = ymax - 33.5
-box(ax, 4, y2, 27, 9.5, "agent-runtime/\nLangGraph plan, act, observe loop\nfive fixed tools", fs=7.4)
+box(ax, 4, y2, 27, 9.5, "agent-runtime/\nLangGraph plan, act, observe loop\nfive fixed tools planned (DAT-19)", fs=7.4)
 box(ax, 37, y2, 27, 9.5, "serving/\nPOST /v1/models/{id}/predict\nadapters m1 to m4 (stubs today)", fs=7.4)
 box(ax, 70, y2, 26, 9.5, "locked bake-off winners\nloaded as adapters\n(after selection)", AMBER, fs=7.4)
 arrow(ax, (31, y2 + 4.75), (37, y2 + 4.75))

@@ -232,7 +232,7 @@ P("Table 20 lists the raw sources with their parameters and quantities. Both pub
   "sufficient is our own, and section 3.6 says so plainly.")
 T(["Source", "Origin and pinned revision", "Quantity retrieved", "Parameters (fields)", "Licence", "Role"],
   [["MAST-Data [3]", "Hugging Face dataset `mcemri/MAD`, commit `95118ac9`. Taxonomy text from the MAST GitHub repository, commit `a70542e5`.",
-    "1,642 annotated traces (199.6 MB), equal to the paper's stated 1,642. 19 human-labelled traces (2.7 MB). 2 taxonomy files.",
+    "1,642 annotated traces (199.6 MB), equal to the paper's stated 1,642. 19 human-labelled traces (2.7 MB) from the authors' inter-annotator agreement study: a separate file with its own numbering, annotated over four rounds under a taxonomy revised between rounds, so it is not a subset of the 1,642. 2 taxonomy files.",
     "`mas_name`, `llm_name`, `benchmark_name`, `trace_id`, `trace` {`index`, `key`, `trajectory`}, `mast_annotation` {14 failure codes `1.1` to `3.3`, each 0, 1 or null}",
     "CC-BY-4.0", "Published baseline corpus. Evaluation only."],
    ["QMSum [2]", "Yale-LILY/QMSum public release, official train, validation and test files.",
@@ -393,8 +393,8 @@ T(["Split", "id", "query", "context", "reference_summary (start)"],
     "The values these nodes take feed into the middle layer nodes identified as hidden variables of the user/device interaction, such as whether the user is on tour, running an errand or in a hurry. ..."]],
   [0.7, 1.1, 1.3, 1.7, 1.7], "One sample from each prepared split.", size=8)
 P("Two other prepared sets exist and neither is a training split. The MAST evaluation manifest "
-  "(`data/mast/eval_manifest.json`, version 1.0.0, status FROZEN) fixes the 1,638 scorable records and the 19 "
-  "human-labelled records as evaluation-only references, and records for each which label source it carries, so "
+  "(`data/mast/eval_manifest.json`, version 1.0.0, status FROZEN) fixes the 1,638 scorable records, labelled by the original LLM judge, and the separate 19-record human-labelled file "
+  "from the authors' agreement study (four rounds, taxonomy revised between rounds, numbered independently of the 1,642) as evaluation-only references, and records for each which label source it carries, so "
   "that agreement with the released judge labels can never be reported as agreement with human experts. MAST "
   "has no train split because the baseline is an inference-only judge. The smoke fixtures "
   "(`data/m1_smoke/fixtures/`, 12 train, 3 dev and 3 hold-out examples, split by `session_id` with seed 13) "
@@ -421,7 +421,7 @@ P("Table 32 summarises what each stage produced. Read down a column and the row 
   "exactly the four unscorable records between raw and pre-processed and nothing afterwards, and the 1,810 "
   "QMSum queries present in the raw files are the 1,810 rows of the prepared splits.")
 T(["Stage", "Rows", "Columns", "Notes"],
-  [["Raw", "MAST: 1,642 traces (+19 human-labelled)\nQMSum: 232 meetings, 129,177 turns", "MAST: 6 top-level fields, 14 nested labels\nQMSum: 4 fields",
+  [["Raw", "MAST: 1,642 traces (+19 in a separate human-labelled file)\nQMSum: 232 meetings, 129,177 turns", "MAST: 6 top-level fields, 14 nested labels\nQMSum: 4 fields",
     "Pinned revisions; SHA-256 per file; MAST count equals the paper's 1,642."],
    ["Pre-processed", "MAST: 1,638 scorable (4 removed)\nQMSum: 232 meetings (0 removed)", "Unchanged",
     "56 null label cells preserved, all in the 4 excluded records; 0 invalid labels; 0 duplicate keys."],
@@ -435,7 +435,7 @@ T(["Statistic (words unless stated)", "Train", "Validation", "Test"],
   [["Rows", "1,257", "272", "281"], ["Specific / general queries", "1,095 / 162", "237 / 35", "244 / 37"],
    ["Reference summary: median (Q1 to Q3), max", "66 (47 to 90), 238", "68 (50 to 86), 188", "59 (43 to 81), 188"],
    ["Query: median (Q1 to Q3)", "11 (8 to 15)", "10 (7 to 15)", "11 (7 to 15)"],
-   ["Context spans per example: median, 95th percentile, max", "29, 588, 1,832", "31, 624, 1,259", "33, 678, 1,368"],
+   ["Context spans per example: median, 95th percentile, max", "29, 588, 1,832", "30.5, 624, 1,259", "33, 678, 1,368"],
    ["Context length: median, 95th percentile, max", "660, 10,368, 26,338", "696, 11,210, 24,573", "671, 10,280, 25,244"]],
   [2.9, 1.2, 1.2, 1.2], "Descriptive statistics of the prepared Model 1 splits.")
 F("fig6_qmsum_distributions.png", "Distributions of reference-summary length, context spans per example and query length "
@@ -454,7 +454,7 @@ F("fig06_mast_prevalence.png", "Label imbalance across the 14 MAST failure modes
 P("The labels are imbalanced in two ways (Figure 7). Across failure modes, prevalence ranges from 40.5% for "
   "step repetition (1.3) down to 1.5% for information withholding (2.4), which is 664 positive traces against 24, a ratio of about 28 to 1; four modes are "
   "positive on fewer than one trace in ten. Within a trace, 401 of the 1,638 traces (24.5%) carry no failure at "
-  "all and the remaining 1,237 (75.5%) carry between 1 and 14, with a mean of 3.14 and a median of 2 "
+  "all and the remaining 1,237 (75.5%) carry between 1 and 14. Across all 1,638 traces the mean is 3.14 failure modes and the median 2; among the 1,237 traces with at least one failure the mean is 4.16 and the median 3 "
   "(Figure 8). The consequence for evaluation is direct: with 24 positive examples of mode 2.4, a judge that "
   "never predicts it loses almost nothing on accuracy, so the baseline is reported with precision, recall, F1 "
   "and Cohen's kappa beside accuracy, as the original paper does.")
@@ -488,7 +488,7 @@ T(["Gap", "Evidence", "Who it would disadvantage if the system were deployed", "
     "Paper [3]; Workbook 1, Table 10.",
     "Exactly the teams this project targets, whose failures include conflicting human instructions.",
     "MAST is the baseline and a taxonomy source, not training data for Models 2 to 4."],
-   ["The human-labelled MAST set has 19 records.",
+   ["The human-labelled MAST file has only 19 traces, from four annotation rounds under a taxonomy revised between rounds, so the subset directly comparable under the final taxonomy is smaller still.",
     "`eval_manifest.json`.",
     "Anyone reading a reproduced agreement figure as precise.",
     "Report sample size and a 95% confidence interval beside every value."],
@@ -528,7 +528,7 @@ T(["ID", "Candidate", "Architecture and algorithm", "Features and training", "Ro
    ["m1-b", "ModernBERT-base selector + the same template", "ModernBERT-base [15], a 149M-parameter bidirectional encoder with an 8,192-token context, fine-tuned as a relevance scorer over (query, event); selected events fill the same template as m1-a.",
     "Contextual embeddings. Full fine-tuning, 3 epochs, 4,096 tokens, effective batch 16, learning rate 2e-5. Relevance labels are weak labels derived from QMSum.", "Learned extractive arm. Isolates what learned relevance adds over BM25 while staying unable to invent text."],
    ["m1-c", "Phi-4-mini-instruct + QLoRA", "Phi-4-mini [19], a 3.8B-parameter decoder-only transformer, quantised to 4-bit NF4 with low-rank adapters (QLoRA [20], LoRA [10]) on the projection layers named in `m1-c.yaml`; generates the JSON output directly.",
-    "Instruction prompt with the event list and ids. 3 epochs, 4,096 tokens, effective batch 16; adapters only are trained and checkpointed.", "Compact generative family. Tests whether abstraction improves coverage at a size that fits a 16 GB GPU."],
+    "Instruction prompt with the event list and ids. 3 epochs, 4,096 tokens, effective batch 16; adapters only are trained and checkpointed.", "Compact generative family. Tests whether abstraction improves coverage at a size expected to fit a 16 GB GPU in 4-bit; that fit is not yet verified for this model."],
    ["m1-d", "Qwen3.5-4B + QLoRA", "Qwen3.5-4B [21], a 4B-parameter model that ADR-005 records as loading through a conditional-generation class, 4-bit NF4 with LoRA rank 16, alpha 32, dropout 0.05, learning rate 2e-4; generates the JSON output directly.",
     "Same prompt, data and limits as m1-c. A separate trainer path, because this architecture must not pass through the causal-LM-only trainer.", "Larger generative family. Tests whether more capacity buys recall without raising unsupported claims."]],
   [0.45, 1.05, 2.1, 1.6, 1.3], "The four Model 1 candidates frozen in ADR-005 and eval/configs/m1-a.yaml to m1-d.yaml.", size=8)
@@ -593,7 +593,7 @@ T(["Model", "Development environment", "Libraries and tools", "Execution and ser
 P("The session plane is what produces our own data. The React client edits a shared Yjs document through the "
   "CRDT server, and every action that matters is posted to the session service, a FastAPI application that "
   "enforces roles and appends a totally ordered `SessionEvent` to PostgreSQL, an event-sourced log from which state is derived by replay [23], with Redis fanning events out to "
-  "connected clients. The agent runtime is a LangGraph plan, act, observe loop restricted to five fixed tools. "
+  "connected clients. The agent runtime is a LangGraph plan, act, observe loop that executes tools from a registry; the design restricts it to five fixed tools, which are not implemented yet (DAT-19), so today the loop is tested with stand-in tools. "
   "The serving layer exposes one predict route per model; today the four adapters are stubs that honour the "
   "frozen interface, and each is replaced by a real model only when its bake-off winner is locked.")
 F("fig12_ml_data_flow.png", "Machine-learning data flow for one bake-off candidate, from frozen split to serving "
@@ -644,12 +644,12 @@ T(["Model", "Targeted problem", "Input features", "Approach", "Strengths", "Limi
    ["M2 attribution", "Unclear whom an instruction addresses", "Instruction text, mentions, roles, recent activity", "Machine learning (TF-IDF + linear), deep learning (cross-encoders)", "Cheap per-event inference; per-class F1 exposes weak classes", "Bounded by annotator agreement on what an instruction meant"],
    ["M3 arbitration", "Two actors redirect one agent at once", "Both instructions, authors and roles, timing, document state", "Rule (last-writer-wins), deep learning (cross-encoder, LoRA, few-shot)", "Can escalate instead of guessing; rule control is trivial to audit", "Conflicts are rare, so data is scarce and partly synthetic"],
    ["M4 routing", "Subtasks assigned by availability alone", "Task text, participant skills, workload, cost", "Rules, LLM planning, gradient-boosted router", "DAG-validity gate stops malformed plans early", "Plans are costly to label; planner quality is sensitive to the prompt"],
-   ["MAST baseline", "Do we measure failures correctly?", "Trace text, 14 definitions, few-shot examples", "Prompted LLM judge, no training", "Published target to hit; inference only", "19 human-labelled traces limit precision of any agreement figure"]],
+   ["MAST baseline", "Do we measure failures correctly?", "Trace text, 14 definitions, few-shot examples", "Prompted LLM judge, no training", "Published target to hit; inference only", "Only 19 human-labelled traces exist, over four rounds with a revised taxonomy, so any agreement figure is imprecise and reported with its sample size and a 95% confidence interval"]],
   [0.8, 1.15, 1.15, 1.15, 1.15, 1.1], "Comparison of the four models and the baseline.", size=8)
 T(["", "m1-a BM25", "m1-b ModernBERT", "m1-c Phi-4-mini QLoRA", "m1-d Qwen3.5-4B QLoRA"],
   [["Approach", "Statistical retrieval", "Deep learning, extractive", "Deep learning, generative", "Deep learning, generative"],
    ["Trainable parameters", "None", "All (149M)", "LoRA adapters only", "LoRA adapters only (r = 16)"],
-   ["Hardware", "CPU", "GPU, small", "GPU, 4-bit, fits 16 GB", "GPU, 4-bit, fits 16 GB"],
+   ["Hardware", "CPU", "GPU, small (a 40-step feasibility run fit in 6.7 GB)", "GPU, 4-bit, expected to fit 16 GB; first feasibility run did not complete", "GPU, 4-bit, expected to fit 16 GB; not yet run"],
    ["Can invent a claim?", "No. Output is verbatim events", "No. Output is verbatim events", "Yes", "Yes"],
    ["Can rephrase and merge events?", "No", "No", "Yes", "Yes"],
    ["Assigns status categories", "By template rule", "By template rule", "Learned", "Learned"],
@@ -681,8 +681,9 @@ B(["If a generative candidate exceeds 2% unsupported claims, or is worse than m1
    "If the product-session corpus turns out to be small. With few training sessions the weakly supervised and "
    "parameter-free arms have less to lose than a generator that must learn the status categories."])
 P("If no candidate passes every gate, ADR-005 requires us to report that no model is promotable and to keep the "
-  "extractive control in service while the failures are corrected. Between m1-c and m1-d we hold no preference; "
-  "m1-d would lose to m1-c whenever their recall is within the margin, because the smaller model is faster.")
+  "extractive control in service while the failures are corrected. Between m1-c and m1-d we hold no preference. "
+  "If they are tied within the margins on critical-fact recall, BERTScore-F1 and ROUGE-L, the tie passes to latency at the "
+  "95th percentile and then peak memory; we expect the smaller m1-c to win there, but that has not been measured.")
 
 # ------------------------------------------------------------------ 4.4
 H("4.4 Model Evaluation Methods", 2)
@@ -773,7 +774,7 @@ T(["Item", "Why it did not land, or what changed", "Owner", "New target (propose
    ["QMSum size (DR-1; Table 9)", "Corrected. Workbook 1 quoted the published 1,808 query-summary pairs. The pinned release yields 1,810, and the splits are built from those.", "Naman", "Done"],
    ["Pilot session corpus (DR-2, DR-3)", "Not landed. No session has been recorded, because the end-to-end integration gate has not been passed. The risk-register trigger of fewer than five sessions by late October has fired; the documented fallback of internal sessions plus scripted cases is in effect, and 18 scripted smoke examples exist (DAT-53).", "Naman", "First sessions by 2 Dec 2026"],
    ["Automated session-level leakage check (DR-4)", "Partly landed. `make_splits.py` accepts a grouping option that the Model 1 path does not read, so the no-shared-meeting guarantee rests on QMSum's inherited partition and on the checks in Table 29, not on a grouping implementation. The session-level check is needed before `m1_session_v1` is built.", "Naman", "With the session split"],
-   ["Harness runs one candidate end to end (Progress Report 1)", "In review. The shared Model 1 harness (DAT-61, pull request #25) targets main. Review found the comparison step applying gates to the three-seed mean; it now applies every gate to each seed and compares unsupported claims with the matched m1-a seed, as ADR-005 requires, and awaits independent review before merge.", "Pramod", "18 Nov 2026"],
+   ["Harness runs one candidate end to end (Progress Report 1)", "Partly landed. The shared Model 1 harness (DAT-61) was reviewed and merged on 11 November 2026 (pull request #25). Review had found the comparison step applying gates to the three-seed mean; the merged version applies every gate to each seed and compares unsupported claims with the matched m1-a seed, as ADR-005 requires. No candidate has been run through it end to end yet, because the candidate runners and the session split are not on main.", "Pramod", "With the first candidate runner"],
    ["Model 1 bake-off and winner (AI-3)", "At risk. Training and inference paths and GPU feasibility are in progress, but ADR-005 forbids a selection run until the annotated product-session split is frozen. The final report will carry either the winner or the documented shortfall.", "Ayush", "7 Dec 2026"],
    ["MAST judge environment and final runs (DAT-25, DAT-26, DAT-27, DAT-36)", "Not landed. Prompt, parser, batch runner, provenance and metrics are on main; the pinned o1 judge environment and the clean-environment smoke test are open.", "Ayush, Shriram", "2 Dec 2026"],
    ["Cloud deployment (FR-8; Table 16)", "Deferred. The prototype runs locally under Docker Compose and no cloud cost has been incurred. Deployment is needed when participants outside the team join, which is the 298B controlled study (section 4.2).", "Ayush", "298B"],

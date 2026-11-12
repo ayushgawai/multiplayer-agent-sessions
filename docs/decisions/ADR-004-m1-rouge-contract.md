@@ -1,6 +1,6 @@
 # ADR-004: M1 ROUGE scoring contract
 
-- Status: Proposed (implementation complete; independent review pending)
+- Status: Accepted (reviewed and merged in PR #19, 2026-10-22)
 - Date: 2026-10-22
 - Owner: evaluation owner. Reviewer: one independent teammate
 
