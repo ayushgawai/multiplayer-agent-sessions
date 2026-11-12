@@ -16,7 +16,8 @@ from urllib.parse import urlparse
 def _local_path(uri: str) -> Path:
     parsed = urlparse(uri)
     if parsed.scheme in ("", "file"):
-        path = parsed.path if parsed.scheme == "file" else uri
+        # "file://./checkpoints/m1-b/" parses with netloc "."; keep it so the path stays relative.
+        path = parsed.netloc + parsed.path if parsed.scheme == "file" else uri
         return Path(path)
     raise ValueError(
         f"unsupported checkpoint URI scheme {parsed.scheme!r}; "
