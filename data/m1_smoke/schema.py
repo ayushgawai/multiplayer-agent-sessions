@@ -14,11 +14,11 @@ it cannot be mistaken for a test split.
 
 from __future__ import annotations
 
-from typing import Annotated, Literal, Self
+from typing import Annotated, Final, Literal, Self
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
 
-SCHEMA_VERSION = "m1-smoke-v1"
+SCHEMA_VERSION: Final = "m1-smoke-v1"
 
 # Wire event types from session-service (EventType). Mirrored here so data/ has no
 # dependency on session-service; a test checks the two sets stay equal.
