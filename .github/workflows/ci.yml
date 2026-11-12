@@ -44,3 +44,5 @@ jobs:
         run: if [ -d models/m1_catchup/tests ]; then pytest -q models/m1_catchup/tests; fi
       - name: Checkpointing self-check
         run: PYTHONPATH=. python models/common/check_checkpointing.py
+      - name: Pytest warehouse pipeline
+        run: pytest -q infra/warehouse
