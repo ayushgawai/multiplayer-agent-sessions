@@ -148,7 +148,7 @@
       ${ln("M314,116 L382,116")}${ln("M660,116 L728,116")}${ln("M1036,116 L1104,116")}
       ${tag(348, 104, "edits")}${tag(694, 104, "events")}${tag(1070, 104, "append")}
       ${band(222, 200, "EXECUTION AND SERVING")}
-      ${box(24, 286, 360, 104, "Agent runtime", "LangGraph · 5 fixed tools")}
+      ${box(24, 286, 360, 104, "Agent runtime", "LangGraph · plan, act, observe")}
       <rect x="736" y="276" width="666" height="124" rx="16" fill="#f5f3ee" stroke="#d6d2c8" stroke-width="2"/>
       <text x="756" y="304" font-size="17" font-weight="700" fill="#3a3e48">Serving: one predict endpoint per model</text><text x="1382" y="304" text-anchor="end" font-size="16" font-weight="700" fill="#8a5208">stubs · no trained model yet</text>
       ${["M1", "M2", "M3", "M4"].map((m, i) => box(756 + i * 160, 318, 146, 66, m, "", i === 0 ? "blue" : "b")).join("")}
@@ -199,7 +199,7 @@
   window.DECK = [
     /* ================= 0 · Title and recap ================= */
     {
-      arc: 0, bare: true, rubric: "Opening · recap", speaker: "Manav", secs: 30,
+      arc: 0, bare: true, rubric: "Opening · recap", speaker: "Manav", secs: 35,
       title: "Multiplayer Agents · where we were at Workbook 1",
       html: `
         <div class="t-title">
@@ -217,9 +217,9 @@
           <span class="chip">MAST data downloaded</span>
         </div>`,
       say: [
-        "Good afternoon. We are Team 4. We are building one live session where several people and several agents work together.",
-        "At Workbook 1, on October 7th, we had the plan, the requirements and the schedule. The platform contracts were frozen, and the MAST data was downloaded.",
-        "Today is the data and the models. No model is trained yet, so we show no model results."
+        "Good afternoon. We're Team 4, and our project is Multiplayer Agents: one live workspace where several people and several AI agents work on the same task together.",
+        "At our last presentation, on October 7th, we had the plan, the requirements and the schedule, the platform's interfaces were frozen, and the MAST data was downloaded.",
+        "Today: what we built since, then the data and the models. No model is trained yet, so there are no model results today."
       ],
       qa: [
         ["Why no results yet?", "The template leaves 4.5 and 4.6 for the final report on 7 December. The Model 1 contract (ADR-005) also forbids a selection run until the annotated product-session split is frozen, and that split does not exist yet."],
@@ -229,7 +229,7 @@
 
     /* ================= 1 · Built since Workbook 1 ================= */
     {
-      arc: 1, num: "", kicker: "Since 7 October", rubric: "Progress since Workbook 1", speaker: "Manav", secs: 25,
+      arc: 1, num: "", kicker: "Since 7 October", rubric: "Progress since Workbook 1", speaker: "Manav", secs: 30,
       title: "Six things built since Workbook 1",
       html: `
         ${timeline(10, "since", 0)}
@@ -241,10 +241,10 @@
           ${tile("bot", "Agent runtime on main", "LangGraph plan, act, observe loop")}
           ${tile("db", "Source-to-warehouse pipeline", "19 data checks and run history · on main (PR #33)")}
         </div>
-        <div class="strip amber" style="position:absolute;left:0;right:0;bottom:0">${I("alert", 30)}Still open: 0 product sessions recorded · evaluation harness in review · no model trained</div>`,
+        <div class="strip amber" style="position:absolute;left:0;right:0;bottom:0">${I("alert", 30)}Still open: 0 product sessions recorded · no model trained</div>`,
       say: [
-        "Since then, we built six things. QMSum is collected and split. The prototype runs. MAST is cleaned. The Model 1 contract is committed. The agent runtime is on main. And one command loads both datasets into a warehouse.",
-        "Still open, in amber: no product sessions yet, and no trained model. Here is the prototype."
+        "Since then we finished six things. QMSum, which trains our first model, is collected and split. The prototype runs. MAST is cleaned. The Model 1 contract is written, so all candidates are judged the same way. The agent runtime is merged. And one command loads both datasets into a warehouse, which Shriram will run live.",
+        "Still open, in amber: no recorded sessions yet, and no trained model."
       ],
       qa: [
         ["Has any GPU work happened?", "Feasibility only. ModernBERT passed a 40-step smoke run on the lab GPU with checkpoint and resume. Phi-4-mini failed after 2 of 15 steps, not yet diagnosed (probably memory at 4,096 tokens). Qwen3.5-4B has not run. An earlier Qwen3-1.7B infrastructure run checked QLoRA, checkpointing and resume. None of this is a result."],
@@ -281,9 +281,9 @@
             `<div style="display:flex;gap:16px;align-items:flex-start"><div class="callout">${n}</div><div><div style="font:650 27px var(--display)">${h}</div><div class="muted" style="font:500 20px var(--sans);margin-top:4px">${p}</div></div></div>`).join("")}
         </div>`,
       say: [
-        "This is our client, running against the real session service. Ada and Ben type at the same time, and a CRDT merges their edits.",
-        "Every action is also an ordered event in one shared log. We roll back to event two, and the two instructions disappear for everyone.",
-        "That log is where our own data will come from. Naman will explain the data."
+        "This is our client on the real session service. Ada and Ben type in the same document at once, and a CRDT merges their edits, so nothing is lost.",
+        "Every action is also an ordered event in one shared log, on the right. Roll back to event two, and both instructions disappear for everyone.",
+        "That log is where our own data will come from. Over to Naman."
       ],
       qa: [
         ["Is any model output shown in the client?", "No. The client does not call or display any model yet. The serving adapters are stubs behind a frozen interface until a bake-off winner is locked."],
@@ -296,7 +296,7 @@
 
     /* ================= 3 · 3.1 Data process ================= */
     {
-      arc: 2, num: "3.1", kicker: "Data process", rubric: "3.1 Data Process · 3.6 stage summary", speaker: "Naman", secs: 30,
+      arc: 2, num: "3.1", kicker: "Data process", rubric: "3.1 Data Process · 3.6 stage summary", speaker: "Naman", secs: 25,
       title: "Three sources, one five-step process",
       html: `
         <div class="lanes">
@@ -336,8 +336,8 @@
           <span class="chip ghost" style="margin-left:auto">${I("db", 20)}built stages also run as one pipeline · live demo</span>
         </div>`,
       say: [
-        "Workbook 2, section 3: the data. We use three sources, each with its own job. MAST is for the published baseline we reproduce. QMSum trains Model 1. Our own sessions will pick every winner.",
-        "Each source goes through the same five steps: collect, clean, transform, prepare and describe. Blue is built. Amber is planned, because no session is recorded yet."
+        "Section three, the data. Three sources, each with one job. MAST backs the baseline we reproduce. QMSum trains Model 1. Our own sessions will pick the winners, because only they look like our real task.",
+        "Each row runs the same five steps: collect, clean, transform, prepare, describe. Blue is built. Amber is our sessions, still planned."
       ],
       qa: [
         ["Why is the session row amber?", "No session has been recorded, because the end-to-end integration gate has not been passed. The fallback from Workbook 1 is in effect: internal sessions plus 18 scripted smoke examples. Its split rules are already frozen in ADR-005: split by session_id, freeze before the first comparative run, synthetic examples in training only."],
@@ -390,8 +390,9 @@
     "answer": "Project Manager introduced that …" }]`)}</div>
         </div>`,
       say: [
-        "Collection is scripted, pinned and checked with SHA-256. We got all 1,642 MAST traces, exactly the paper's number, and 1,810 QMSum question and summary pairs from 232 meetings.",
-        "Below are two raw samples. A MAST trace carries fourteen failure labels. A QMSum meeting carries questions with reference summaries."
+        "Collection is a script: it downloads a pinned version and checks every file with a SHA-256 checksum, so anyone gets exactly the same data.",
+        "We got all 1,642 MAST traces, exactly the paper's number, and 1,810 question-and-summary pairs from 232 QMSum meetings.",
+        "Below are two raw records: a MAST trace with its fourteen failure labels, and a QMSum meeting with its questions and summaries."
       ],
       qa: [
         ["Workbook 1 said 1,808 QMSum pairs.", "That is the paper's figure. The pinned release yields 1,810: 1,576 specific and 234 general queries. It is corrected in the carry-forward table."],
@@ -436,8 +437,8 @@
           </div>
         </div>`,
       say: [
-        "Every cleaning rule is code, and every rule reports what it removed. Most removed nothing, because these are curated research releases. One rule removed four MAST traces whose fourteen labels were all missing.",
-        "The key rule is the blue one: a missing label stays missing. We never turn it into a zero, because a missing judgement is not a no. Shriram takes the rest of the data."
+        "Every cleaning rule is code, and each one reports what it removed. Most removed nothing, because these are curated datasets. One removed four MAST traces whose fourteen labels were all missing; one is shown on the right.",
+        "The key rule is in blue: a missing label stays missing. We never turn it into a zero, because 'not judged' isn't 'no failure'. Shriram takes it from here."
       ],
       qa: [
         ["Only four rows removed. Did you really clean the data?", "Yes. Both are curated research releases, so the value is the guarantee, not the volume: unique record keys, label domain 0, 1 or null over 22,988 cells, and ten quality gates that pass. The four excluded traces are named in the committed summary."],
@@ -482,8 +483,8 @@
         <div style="position:absolute;left:128px;top:0;display:grid;grid-template-columns:420px 130px 720px;gap:18px"><span class="label">Before</span><span></span><span class="label">After</span></div>
         <div class="strip ink" style="position:absolute;left:0;right:0;bottom:0">${I("lock", 30)}The reference summary stays outside the input, so the answer cannot leak.</div>`,
       say: [
-        "Transformation changes the shape, not the facts. For MAST, we flatten the nested labels into one table: 1,638 rows by 26 columns.",
-        "For QMSum, each question becomes one example, and each piece of transcript becomes an event with a stable id. That is the shape of a live session, so every claim can cite its events. The reference summary stays outside the input, so the answer cannot leak."
+        "Transformation changes the shape, not the facts. Top row: MAST's nested labels become one flat table, 1,638 rows by 26 columns, that we can count and compare with the paper.",
+        "Bottom row: each QMSum question becomes one example, and each piece of transcript becomes an event with an id. That's the shape of a live session, so the model can cite its evidence. The answer stays out of the input, so it can't leak."
       ],
       qa: [
         ["Why turn meeting transcripts into events?", "All four Model 1 candidates must consume one input contract, m1-input-v1, which is also what live sessions produce. One adapter in the evaluation layer does the mapping, so no candidate invents its own (ADR-005)."],
@@ -495,7 +496,7 @@
 
     /* ================= 7 · 3.5 Data preparation ================= */
     {
-      arc: 2, num: "3.5", kicker: "Data preparation", rubric: "3.5 Data Preparation", speaker: "Shriram", secs: 30,
+      arc: 2, num: "3.5", kicker: "Data preparation", rubric: "3.5 Data Preparation", speaker: "Shriram", secs: 25,
       title: "Frozen splits, and no meeting crosses a split",
       html: `
         <div style="display:flex;flex-direction:column;justify-content:space-between;height:100%">
@@ -530,8 +531,8 @@
           </div>
         </div></div>`,
       say: [
-        "The Model 1 splits are frozen and version controlled, with a checksum per file: 1,257 training rows, 272 validation and 281 test.",
-        "We split by whole meeting, so no meeting is on two sides. We checked for leakage: nothing is shared. We did find two duplicated reference summaries in the original release. That is four rows, and we report them."
+        "The splits are fixed: 1,257 training rows, 272 validation and 281 test, each file stored with a checksum.",
+        "We split by whole meeting, and the green box is the leakage check: nothing is shared across splits. It did find two repeated summaries in the original release, four rows, which we report. Validation is for tuning; test is read once, at the end."
       ],
       qa: [
         ["Did you stratify?", "No. We inherit the official QMSum partition by meeting, which keeps our numbers comparable with the literature. Because we did not stratify, we checked that the three splits have the same distributions, and they do (next slide)."],
@@ -543,7 +544,7 @@
 
     /* ================= 8 · 3.6 Data statistics ================= */
     {
-      arc: 2, num: "3.6", kicker: "Data statistics", rubric: "3.6 Data Statistics", speaker: "Shriram", secs: 40,
+      arc: 2, num: "3.6", kicker: "Data statistics", rubric: "3.6 Data Statistics", speaker: "Shriram", secs: 30,
       title: "Short summaries and skewed labels shaped our metrics",
       html: `
         <div class="card" style="display:grid;grid-template-columns:130px repeat(4,1fr);row-gap:4px;column-gap:16px;padding:12px 26px;margin-bottom:16px;font:600 20px var(--sans);align-items:baseline">
@@ -564,8 +565,8 @@
           <span class="chip amber">0 sessions</span>
         </div>`,
       say: [
-        "Three statistics shaped our metrics. Summaries are short, about 65 words, so one missing fact is a big part of an answer. MAST labels are imbalanced, from 40 percent down to 1.5, so accuracy alone would mislead. And the labels co-occur.",
-        "The gaps are at the bottom. QMSum is English meetings only, and MAST has no humans steering agents, so teams in other languages, and teams of several people steering agents, are not covered. So QMSum trains, but it never picks the winner."
+        "The top strip summarizes all four stages. Three statistics shaped our metrics: summaries are short, about 65 words, so one missing fact matters; MAST labels range from 40 percent down to 1.5, so accuracy alone misleads; and failures come together.",
+        "The bottom line shows the gaps: QMSum is English only, and MAST has no humans steering agents. So QMSum trains, but never picks the winner. Now, live."
       ],
       qa: [
         ["Who is disadvantaged by these gaps?", "Teams working in other languages, and teams whose sessions are terse tool calls and code. Users of under-represented MAST frameworks. And exactly our target teams, several humans steering agents, which MAST does not contain. That is why our own sessions, not QMSum, select the winner, and why results will state the population."],
@@ -578,7 +579,7 @@
 
     /* ================= 13 · 4.5 Pipeline demo ================= */
     {
-      arc: 3, num: "4.5", kicker: "Data pipeline · live demo", rubric: "4.5 Data Pipeline Demo", speaker: "Shriram", secs: 20,
+      arc: 3, num: "4.5", kicker: "Data pipeline · live demo", rubric: "4.5 Data Pipeline Demo", speaker: "Shriram", secs: 25,
       title: "From source to warehouse, live, in about six seconds",
       html: `
         <div style="display:grid;grid-template-columns:230px 44px repeat(4, 1fr);gap:0 14px;align-items:stretch;height:330px">
@@ -613,9 +614,11 @@
           </div>
         </div>`,
       say: [
-        "Now the pipeline, live. One command ingests both datasets from pinned sources, cleans and validates them, builds a star schema in a local warehouse, and runs nineteen quality checks. A second command shows the run history. That history is our monitoring.",
-        "CUE: SWITCH TO THE TERMINAL. Run: python infra/warehouse/pipeline.py (about 6 seconds). Point at the four stages and the line SUCCESS, all 19 checks PASS.",
-        "CUE: Then run: python infra/warehouse/pipeline.py --report. Point at the run history: two runs (one done before the meeting), each stage with duration and rows in and out.",
+        "One command runs the whole pipeline: it ingests both datasets and verifies checksums, cleans and validates, builds a star schema in a local DuckDB warehouse, and runs nineteen quality checks.",
+        "CUE: SWITCH TO THE TERMINAL. Run: python infra/warehouse/pipeline.py (about 6 seconds).",
+        "Four stages, and all nineteen checks pass, in about six seconds.",
+        "CUE: Run: python infra/warehouse/pipeline.py --report",
+        "And this is our monitoring: every run, every stage, with duration, rows in and out, status and git commit. Over to Ayush.",
         "CUE: If it fails live, open infra/warehouse/SAMPLE_RUN.md and walk through the saved output. Do not debug in front of the room."
       ],
       qa: [
@@ -631,7 +634,7 @@
 
     /* ================= 9 · 4.1 Model proposals ================= */
     {
-      arc: 4, num: "4.1", kicker: "Model proposals", rubric: "4.1 Model Proposals", flag: "No model trained yet · no results", speaker: "Ayush", secs: 40,
+      arc: 4, num: "4.1", kicker: "Model proposals", rubric: "4.1 Model Proposals", flag: "No model trained yet · no results", speaker: "Ayush", secs: 35,
       title: "Four models, sixteen candidates, one reproduced baseline",
       html: `
         <div class="card" style="position:absolute;left:0;top:0;width:800px;bottom:0;padding:32px 36px;display:flex;flex-direction:column;gap:16px;border:2px solid #c8d0ff">
@@ -672,9 +675,9 @@
           <div style="display:flex;gap:10px;align-items:center"><span class="pill ctl">dark</span><span class="muted" style="font:500 18px var(--sans)">= the simple control each model must beat</span></div>
         </div>`,
       say: [
-        "Section 4: the models. We propose four models. Model 1 catches up a person who joins late. Model 2 finds who an instruction is for. Model 3 arbitrates when two people redirect one agent. Model 4 splits a task and routes the parts.",
-        "Each is a bake-off of four candidates, from a simple control up to a fine-tuned language model. Separately, we reproduce the published MAST judge.",
-        "What is new is in Model 1: every claim must cite its events, or it is invalid."
+        "Section four, the models. Four models, one per coordination problem. Model 1, this semester, catches up someone who joins late. Model 2 finds who an instruction is for. Model 3 handles two people redirecting one agent. Model 4 splits and routes a task.",
+        "Each is a bake-off of four candidates, starting from a simple control. The MAST judge is our separate baseline.",
+        "What's new: every Model 1 claim must cite the events that prove it, like the blocked test shown here."
       ],
       qa: [
         ["Which model is innovative, and why?", "Model 1. Three things: evidence-cited output by construction (a claim without a valid event id is invalid, not low-scoring); selection that is safety-gated before it is quality-ranked; and approved memory that can change how it writes but can never be used as evidence."],
@@ -693,8 +696,8 @@
       title: "One local stack, one lab GPU, frozen interfaces",
       html: platformSVG(),
       say: [
-        "This is the platform. On top, the session plane, ending in the event log. In the middle, the agent runtime and one prediction endpoint per model. They stay stubs until a winner is locked.",
-        "At the bottom, the model path: frozen splits, training on one lab GPU, and one shared evaluation layer. Everything runs locally, at zero cost."
+        "This is the platform. Top: the session layer from the prototype, ending in the event log. Middle: the agent runtime, and one prediction endpoint per model, stubs until a winner is chosen.",
+        "Bottom: the ML flow. Data into the warehouse, frozen splits, training on one 16-gigabyte lab GPU, and one shared evaluation harness. All local, all free, every change through CI."
       ],
       qa: [
         ["Why not AWS or Airflow? (talk only, not on slides)", "We evaluated both and chose not to adopt them in 298A. Our two datasets are static and pinned, so nothing is scheduled. The pipeline is four steps in a straight line and runs in about six seconds on a laptop, about 220 MB raw. Training is free on the university GPU. We adopt them when the workload asks: when sessions are recorded more often than weekly (a nightly export becomes a real schedule) and when people outside the team join the 298B study. Details: docs/reports/T4-TA-aws-airflow-justification.md."],
@@ -709,7 +712,7 @@
 
     /* ================= 11 · 4.3 Comparison ================= */
     {
-      arc: 4, num: "4.3", kicker: "Model comparison and justification", rubric: "4.3 Comparison and Justification", flag: "No model trained yet · no results", speaker: "Ayush", secs: 35,
+      arc: 4, num: "4.3", kicker: "Model comparison and justification", rubric: "4.3 Comparison and Justification", flag: "No model trained yet · no results", speaker: "Ayush", secs: 30,
       title: "Each Model 1 candidate tests one idea",
       html: `
         <div style="position:absolute;left:0;top:0;width:1110px;bottom:0;display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-items:end">
@@ -746,8 +749,8 @@
           </div>
         </div>`,
       say: [
-        "The Model 1 candidates form a ladder. ModernBERT adds learned relevance to BM25. Phi-4-mini adds generation. Qwen adds capacity.",
-        "We prefer a generative model, because a catch-up must merge events and give them a status. We say now when it loses: if it invents a claim on any seed, or if it only ties BM25, because then the faster model wins. For Models 2 to 4, a learned model counts only if it beats its simple control."
+        "Each Model 1 candidate tests one idea. BM25 is the floor, no training. ModernBERT adds learned relevance. Phi-4-mini adds writing. Qwen adds capacity. The first two only copy events, so they can't invent; the last two can merge events, but can also invent.",
+        "We prefer a generative model, and we've written down when it loses: if it invents a claim on any seed, or only ties BM25. Pramod has the rules."
       ],
       qa: [
         ["Why this matrix?", "Each neighbouring pair isolates one question. m1-a to m1-b holds the template fixed and changes only the ranker. m1-b to m1-c moves from copying to writing: the value and the risk of generation. m1-c to m1-d holds the method fixed and changes capacity. Unrelated models would tell us which scored highest, not why."],
@@ -789,8 +792,8 @@
         </div>
         `,
       say: [
-        "These rules were committed on October 22nd, before any result. A Model 1 candidate must finish all three seeds, then pass every safety gate on every seed: at most two percent unsupported claims, at least 95 percent right attribution and status, and at least 98 percent valid output.",
-        "Only then do we rank, on critical-fact recall first. If nothing passes, nothing is promoted."
+        "These rules were committed on October 22nd, before any result. Each candidate runs three seeds and must pass every safety gate on every seed: at most two percent unsupported claims, 95 percent right evidence and status, 98 percent valid output.",
+        "Only then do we rank: critical-fact recall, then BERTScore, then ROUGE. If nothing passes, nothing is promoted. Models 2 to 4 have their metrics fixed too."
       ],
       qa: [
         ["Why is ROUGE-L not the primary metric?", "Summaries are about 65 words. A summary can score well on overlap and still omit the one blocker, or assign an action to the wrong person. ROUGE-L is still reported (on QMSum test against the 28.2 reference floor) and still breaks ties, after the gates."],
@@ -805,13 +808,13 @@
 
     /* ================= 14 · Next ================= */
     {
-      arc: 5, num: "", kicker: "What we do next", rubric: "Next steps · carry-forward", speaker: "Pramod", secs: 30,
+      arc: 5, num: "", kicker: "What we do next", rubric: "Next steps · carry-forward", speaker: "Pramod", secs: 25,
       title: "Next: sessions, then a winner or an honest shortfall",
       html: `
         <div class="tl" style="left:0;right:0;top:20px">
           <div class="track" style="left:4%;right:4%"></div>
           <div class="seg" style="left:4%;width:92%;background:repeating-linear-gradient(90deg,var(--amber) 0 14px,transparent 14px 26px)"></div>
-          ${[[4, "12 Nov", "Today", "", "now"], [25, "18 Nov", "Harness fixed, merged", "Pramod", "next"], [68, "2 Dec", "First sessions · MAST judge runs", "Naman · Ayush, Shriram", "next"], [96, "7–8 Dec", "Final report, presentation", "Ayush", "next"]].map(([p, d, w, o, c]) =>
+          ${[[4, "12 Nov", "Today", "", "now"], [68, "2 Dec", "First sessions · MAST judge runs", "Naman · Ayush, Shriram", "next"], [96, "7–8 Dec", "Final report, presentation", "Ayush", "next"]].map(([p, d, w, o, c]) =>
             `<div class="node${p > 90 ? " end" : ""}" style="left:${p}%"><div class="pw"><div class="pin ${c}"></div></div><div class="date">${d}</div><div class="what">${w}</div><div class="muted" style="font:500 19px var(--sans);margin-top:2px">${o}</div></div>`).join("")}
         </div>
         <div style="position:absolute;left:0;right:0;top:250px">
@@ -826,8 +829,8 @@
         </div>
         <div style="position:absolute;right:0;bottom:-10px;text-align:right"><div style="font:720 104px/1 var(--display);letter-spacing:-0.035em">Thank you<span style="color:var(--blue)">.</span></div><div class="muted" style="font:600 26px var(--sans);margin-top:8px">Questions welcome</div></div>`,
       say: [
-        "Next. By November 18th, the evaluation harness is fixed and merged. By December 2nd, the first product sessions are recorded and the MAST judge is run.",
-        "Sessions are our critical path, so a Model 1 winner is at risk. The final report on December 7th will carry either the winner or the documented shortfall. Thank you. We are happy to take questions."
+        "Next: the evaluation harness was merged yesterday. Now we record and annotate our own sessions, run the MAST judge, and run the Model 1 bake-off.",
+        "Sessions are our critical path, so a winner this semester is at risk. The final report on December 7th will have the winner, or an honest account of why not. Thank you. Questions?"
       ],
       qa: [
         ["What is your biggest risk?", "The session corpus. Sessions need the end-to-end integration gate, annotation needs sessions, splits need annotation. If it slips, we shorten collection, not the freeze date."],
