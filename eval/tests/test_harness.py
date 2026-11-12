@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from eval.harness import HarnessError, load_candidate_config, load_contract, run_candidate
-from eval.tests.fake_m1_plugin import build_eval_runner, evaluate
+from eval.tests.fake_m1_plugin import build_eval_runner, build_smoke_fixture_runner, evaluate
 
 
 class StepTimer:
@@ -94,3 +94,26 @@ def test_evaluator_cannot_overwrite_harness_metrics(tmp_path: Path) -> None:
             smoke=True,
             timer=StepTimer(),
         )
+
+
+def test_smoke_run_on_committed_m1_smoke_fixtures(tmp_path: Path) -> None:
+    config, config_path = load_candidate_config("m1-a")
+
+    result = run_candidate(
+        config=config,
+        config_path=config_path,
+        contract=load_contract(),
+        seeds=[13],
+        split="smoke",
+        dataset_path=Path("data/m1_smoke/fixtures"),
+        output_dir=tmp_path / "results",
+        runner_factory=build_smoke_fixture_runner,
+        evaluator=evaluate,
+        smoke=True,
+        timer=StepTimer(),
+    )
+
+    assert result.protocol_mode == "smoke_non_reportable"
+    assert result.dataset_version == "m1-smoke-v1"
+    assert result.runs[0].attempted_examples == 18
+    assert result.metrics["schema_valid_rate"].mean == 1.0

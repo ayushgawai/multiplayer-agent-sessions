@@ -130,11 +130,23 @@ class M1SelectionGates(_StrictModel):
 
 
 class M1SelectionContract(_StrictModel):
+    eligibility_gate_aggregation: Literal["every_seed"]
+    baseline_comparison: Literal["matched_seed"]
     eligible_if: M1SelectionGates
     rank_eligible_by: list[str] = Field(min_length=1)
-    quality_tie_margin: float = Field(ge=0)
+    rank_aggregation: Literal["mean_across_three_seeds"]
+    tie_policy: Literal["retain_within_margin_of_stage_best"]
+    quality_tie_margins: dict[str, float]
     tie_break_by: list[str] = Field(min_length=1)
     final_confirmation: str
+
+    @model_validator(mode="after")
+    def validate_ranking_policy(self) -> Self:
+        if set(self.quality_tie_margins) != set(self.rank_eligible_by):
+            raise ValueError("quality_tie_margins must match rank_eligible_by")
+        if any(margin < 0 for margin in self.quality_tie_margins.values()):
+            raise ValueError("quality tie margins must be non-negative")
+        return self
 
 
 class M1ExperimentContract(_StrictModel):
@@ -167,6 +179,13 @@ class M1ExperimentContract(_StrictModel):
             raise ValueError("test feedback must never enter memory")
         if self.fairness.get("candidate_selection_condition") != "memory_disabled":
             raise ValueError("candidate selection must run with memory disabled")
+        metric_names = set(self.metrics)
+        ranked_metrics = set(self.selection.rank_eligible_by)
+        tie_break_metrics = set(self.selection.tie_break_by)
+        if not ranked_metrics <= metric_names:
+            raise ValueError("rank_eligible_by contains an unknown metric")
+        if not tie_break_metrics <= metric_names:
+            raise ValueError("tie_break_by contains an unknown metric")
         return self
 
 

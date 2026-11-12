@@ -6,7 +6,6 @@ import argparse
 import json
 from collections.abc import Sequence
 from dataclasses import dataclass
-from functools import cmp_to_key
 from pathlib import Path
 import sys
 
@@ -68,6 +67,13 @@ def _mean(result: CandidateResult, metric: str) -> float:
         raise HarnessError(f"{result.candidate_id} is missing metric {metric}") from exc
 
 
+def _per_seed(result: CandidateResult, metric: str) -> list[float]:
+    try:
+        return result.metrics[metric].per_seed
+    except KeyError as exc:
+        raise HarnessError(f"{result.candidate_id} is missing metric {metric}") from exc
+
+
 def validate_result_set(
     results: Sequence[CandidateResult], contract: M1ExperimentContract, split: str
 ) -> None:
@@ -109,33 +115,56 @@ def assess_eligibility(
     results: Sequence[CandidateResult], contract: M1ExperimentContract
 ) -> list[CandidateAssessment]:
     gates = contract.selection.eligible_if
-    baseline_unsupported = _mean(results[0], "unsupported_claim_rate")
+    baseline_unsupported = _per_seed(results[0], "unsupported_claim_rate")
     assessments: list[CandidateAssessment] = []
     for result in results:
         reasons: list[str] = []
         if gates.all_three_seed_runs_complete and result.seeds != contract.seeds:
             reasons.append("incomplete frozen seed set")
-        checks = (
-            ("schema_valid_rate", _mean(result, "schema_valid_rate") >= gates.schema_valid_rate_min),
+        per_seed_checks = (
+            (
+                "schema_valid_rate",
+                _per_seed(result, "schema_valid_rate"),
+                lambda value: value >= gates.schema_valid_rate_min,
+            ),
             (
                 "unsupported_claim_rate",
-                _mean(result, "unsupported_claim_rate") <= gates.unsupported_claim_rate_max,
+                _per_seed(result, "unsupported_claim_rate"),
+                lambda value: value <= gates.unsupported_claim_rate_max,
             ),
             (
                 "attribution_accuracy",
-                _mean(result, "attribution_accuracy") >= gates.attribution_accuracy_min,
+                _per_seed(result, "attribution_accuracy"),
+                lambda value: value >= gates.attribution_accuracy_min,
             ),
             (
                 "status_consistency",
-                _mean(result, "status_consistency") >= gates.status_consistency_min,
+                _per_seed(result, "status_consistency"),
+                lambda value: value >= gates.status_consistency_min,
             ),
         )
-        reasons.extend(f"failed {metric} gate" for metric, passed in checks if not passed)
-        if (
-            gates.unsupported_claim_rate_no_worse_than_m1_a
-            and _mean(result, "unsupported_claim_rate") > baseline_unsupported
-        ):
-            reasons.append("unsupported_claim_rate worse than m1-a")
+        for metric, values, passes in per_seed_checks:
+            failed_seeds = [
+                seed for seed, value in zip(result.seeds, values, strict=True) if not passes(value)
+            ]
+            if failed_seeds:
+                reasons.append(f"failed {metric} gate on seeds {failed_seeds}")
+        if gates.unsupported_claim_rate_no_worse_than_m1_a:
+            failed_seeds = [
+                seed
+                for seed, value, baseline_value in zip(
+                    result.seeds,
+                    _per_seed(result, "unsupported_claim_rate"),
+                    baseline_unsupported,
+                    strict=True,
+                )
+                if value > baseline_value
+            ]
+            if failed_seeds:
+                reasons.append(
+                    "unsupported_claim_rate worse than matched-seed m1-a on seeds "
+                    f"{failed_seeds}"
+                )
         assessments.append(
             CandidateAssessment(result=result, eligible=not reasons, reasons=tuple(reasons))
         )
@@ -145,35 +174,52 @@ def assess_eligibility(
 def rank_eligible(
     assessments: Sequence[CandidateAssessment], contract: M1ExperimentContract
 ) -> list[CandidateAssessment]:
-    eligible = [assessment for assessment in assessments if assessment.eligible]
-    if not eligible:
-        return []
+    remaining = [assessment for assessment in assessments if assessment.eligible]
+    ranked: list[CandidateAssessment] = []
     directions = {
         name: definition.get("direction") for name, definition in contract.metrics.items()
     }
 
-    def compare_candidates(left: CandidateAssessment, right: CandidateAssessment) -> int:
-        for metric in contract.selection.rank_eligible_by:
-            left_value = _mean(left.result, metric)
-            right_value = _mean(right.result, metric)
-            if abs(left_value - right_value) <= contract.selection.quality_tie_margin:
-                continue
-            if directions.get(metric) == "maximize":
-                return -1 if left_value > right_value else 1
-            return -1 if left_value < right_value else 1
-        for metric in contract.selection.tie_break_by:
-            left_value = _mean(left.result, metric)
-            right_value = _mean(right.result, metric)
-            if left_value == right_value:
-                continue
-            if directions.get(metric) == "maximize":
-                return -1 if left_value > right_value else 1
-            return -1 if left_value < right_value else 1
-        left_index = M1_CANDIDATES.index(left.result.candidate_id)
-        right_index = M1_CANDIDATES.index(right.result.candidate_id)
-        return (left_index > right_index) - (left_index < right_index)
+    def retain_stage_best(
+        candidates: Sequence[CandidateAssessment], metric: str, margin: float
+    ) -> list[CandidateAssessment]:
+        values = [_mean(candidate.result, metric) for candidate in candidates]
+        direction = directions.get(metric)
+        if direction == "maximize":
+            stage_best = max(values)
+            return [
+                candidate
+                for candidate, value in zip(candidates, values, strict=True)
+                if stage_best - value <= margin
+            ]
+        if direction == "minimize":
+            stage_best = min(values)
+            return [
+                candidate
+                for candidate, value in zip(candidates, values, strict=True)
+                if value - stage_best <= margin
+            ]
+        raise HarnessError(f"metric {metric} has invalid direction {direction!r}")
 
-    return sorted(eligible, key=cmp_to_key(compare_candidates))
+    def select_next(candidates: Sequence[CandidateAssessment]) -> CandidateAssessment:
+        finalists = list(candidates)
+        for metric in contract.selection.rank_eligible_by:
+            finalists = retain_stage_best(
+                finalists, metric, contract.selection.quality_tie_margins[metric]
+            )
+            if len(finalists) == 1:
+                return finalists[0]
+        for metric in contract.selection.tie_break_by:
+            finalists = retain_stage_best(finalists, metric, 0.0)
+            if len(finalists) == 1:
+                return finalists[0]
+        return min(finalists, key=lambda item: M1_CANDIDATES.index(item.result.candidate_id))
+
+    while remaining:
+        selected = select_next(remaining)
+        ranked.append(selected)
+        remaining.remove(selected)
+    return ranked
 
 
 def _format_metric(value: float) -> str:
