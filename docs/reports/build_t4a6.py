@@ -232,7 +232,7 @@ P("Table 20 lists the raw sources with their parameters and quantities. Both pub
   "sufficient is our own, and section 3.6 says so plainly.")
 T(["Source", "Origin and pinned revision", "Quantity retrieved", "Parameters (fields)", "Licence", "Role"],
   [["MAST-Data [3]", "Hugging Face dataset `mcemri/MAD`, commit `95118ac9`. Taxonomy text from the MAST GitHub repository, commit `a70542e5`.",
-    "1,642 annotated traces (199.6 MB), equal to the paper's stated 1,642. 19 human-labelled traces (2.7 MB) from the authors' inter-annotator agreement study: a separate file with its own numbering, annotated over four rounds under a taxonomy revised between rounds, so it is not a subset of the 1,642. 2 taxonomy files.",
+    "1,642 annotated traces (199.6 MB), equal to the paper's stated 1,642. 19 human-labelled traces (2.7 MB) from the authors' inter-annotator agreement study: a separate file with its own numbering, annotated over four rounds under a taxonomy revised between rounds; only the 4 traces of the last round use the current 14 codes. It is not a subset of the 1,642. 2 taxonomy files.",
     "`mas_name`, `llm_name`, `benchmark_name`, `trace_id`, `trace` {`index`, `key`, `trajectory`}, `mast_annotation` {14 failure codes `1.1` to `3.3`, each 0, 1 or null}",
     "CC-BY-4.0", "Published baseline corpus. Evaluation only."],
    ["QMSum [2]", "Yale-LILY/QMSum public release, official train, validation and test files.",
@@ -393,8 +393,8 @@ T(["Split", "id", "query", "context", "reference_summary (start)"],
     "The values these nodes take feed into the middle layer nodes identified as hidden variables of the user/device interaction, such as whether the user is on tour, running an errand or in a hurry. ..."]],
   [0.7, 1.1, 1.3, 1.7, 1.7], "One sample from each prepared split.", size=8)
 P("Two other prepared sets exist and neither is a training split. The MAST evaluation manifest "
-  "(`data/mast/eval_manifest.json`, version 1.0.0, status FROZEN) fixes the 1,638 scorable records, labelled by the original LLM judge, and the separate 19-record human-labelled file "
-  "from the authors' agreement study (four rounds, taxonomy revised between rounds, numbered independently of the 1,642) as evaluation-only references, and records for each which label source it carries, so "
+  "(`data/mast/eval_manifest.json`, version 1.0.0, status FROZEN) fixes the 1,638 scorable records, labelled by the original LLM judge, and, from the separate 19-record human-labelled file, "
+  "only the 4 traces labelled in the current 14-code taxonomy (the other 15 use older 18- and 17-code taxonomies that do not map one to one) as evaluation-only references, and records for each which label source it carries, so "
   "that agreement with the released judge labels can never be reported as agreement with human experts. MAST "
   "has no train split because the baseline is an inference-only judge. The smoke fixtures "
   "(`data/m1_smoke/fixtures/`, 12 train, 3 dev and 3 hold-out examples, split by `session_id` with seed 13) "
@@ -427,7 +427,7 @@ T(["Stage", "Rows", "Columns", "Notes"],
     "56 null label cells preserved, all in the 4 excluded records; 0 invalid labels; 0 duplicate keys."],
    ["Transformed", "MAST: 1,638\nQMSum: 1,810 examples", "MAST: 26\nQMSum: 4 (7 as `m1-input-v1`)",
     "MAST flat table with category roll-ups. QMSum: 1,576 specific and 234 general queries."],
-   ["Prepared", "MAST: 1,638 + 19, evaluation only\nQMSum: 1,257 / 272 / 281\nSmoke: 12 / 3 / 3", "MAST: manifest v1.0.0\nQMSum: 4\nSmoke: 8",
+   ["Prepared", "MAST: 1,638 judge-labelled + 4 human-labelled, evaluation only\nQMSum: 1,257 / 272 / 281\nSmoke: 12 / 3 / 3", "MAST: manifest v1.0.0\nQMSum: 4\nSmoke: 8",
     "Frozen and hashed. QMSum grouped by meeting, 0 meetings shared across splits."]],
   [1.0, 2.25, 1.6, 1.65], "Data preparation results by stage.")
 H("Model 1 supervision: QMSum", 3)
@@ -488,7 +488,7 @@ T(["Gap", "Evidence", "Who it would disadvantage if the system were deployed", "
     "Paper [3]; Workbook 1, Table 10.",
     "Exactly the teams this project targets, whose failures include conflicting human instructions.",
     "MAST is the baseline and a taxonomy source, not training data for Models 2 to 4."],
-   ["The human-labelled MAST file has only 19 traces, from four annotation rounds under a taxonomy revised between rounds, so the subset directly comparable under the final taxonomy is smaller still.",
+   ["The human-labelled MAST file has 19 traces, and only 4 of them use the current 14-code taxonomy, so the human comparison rests on 4 traces (56 label cells).",
     "`eval_manifest.json`.",
     "Anyone reading a reproduced agreement figure as precise.",
     "Report sample size and a 95% confidence interval beside every value."],
@@ -644,7 +644,7 @@ T(["Model", "Targeted problem", "Input features", "Approach", "Strengths", "Limi
    ["M2 attribution", "Unclear whom an instruction addresses", "Instruction text, mentions, roles, recent activity", "Machine learning (TF-IDF + linear), deep learning (cross-encoders)", "Cheap per-event inference; per-class F1 exposes weak classes", "Bounded by annotator agreement on what an instruction meant"],
    ["M3 arbitration", "Two actors redirect one agent at once", "Both instructions, authors and roles, timing, document state", "Rule (last-writer-wins), deep learning (cross-encoder, LoRA, few-shot)", "Can escalate instead of guessing; rule control is trivial to audit", "Conflicts are rare, so data is scarce and partly synthetic"],
    ["M4 routing", "Subtasks assigned by availability alone", "Task text, participant skills, workload, cost", "Rules, LLM planning, gradient-boosted router", "DAG-validity gate stops malformed plans early", "Plans are costly to label; planner quality is sensitive to the prompt"],
-   ["MAST baseline", "Do we measure failures correctly?", "Trace text, 14 definitions, few-shot examples", "Prompted LLM judge, no training", "Published target to hit; inference only", "Only 19 human-labelled traces exist, over four rounds with a revised taxonomy, so any agreement figure is imprecise and reported with its sample size and a 95% confidence interval"]],
+   ["MAST baseline", "Do we measure failures correctly?", "Trace text, 14 definitions, few-shot examples", "Prompted LLM judge, no training", "Published target to hit; inference only", "Only 4 human-labelled traces use the current taxonomy, so the human agreement figure is imprecise; it is reported with its sample size and a 95% confidence interval beside the full-scale check against the judge labels"]],
   [0.8, 1.15, 1.15, 1.15, 1.15, 1.1], "Comparison of the four models and the baseline.", size=8)
 T(["", "m1-a BM25", "m1-b ModernBERT", "m1-c Phi-4-mini QLoRA", "m1-d Qwen3.5-4B QLoRA"],
   [["Approach", "Statistical retrieval", "Deep learning, extractive", "Deep learning, generative", "Deep learning, generative"],

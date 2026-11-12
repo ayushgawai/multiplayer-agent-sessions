@@ -342,7 +342,7 @@
       qa: [
         ["Why is the session row amber?", "No session has been recorded, because the end-to-end integration gate has not been passed. The fallback from Workbook 1 is in effect: internal sessions plus 18 scripted smoke examples. Its split rules are already frozen in ADR-005: split by session_id, freeze before the first comparative run, synthetic examples in training only."],
         ["Why keep the three paths separate?", "MAST has two label sources, judge labels on 1,642 traces and human labels on 19. Mixing paths is how a baseline number gets scored against the wrong labels."],
-        ["Where is MAST's train split?", "There is none on purpose. The baseline is an inference-only judge, so MAST is evaluation only: the frozen manifest (v1.0.0) fixes 1,638 scorable records and the 19 human-labelled ones."],
+        ["Where is MAST's train split?", "There is none on purpose. The baseline is an inference-only judge, so MAST is evaluation only: the frozen manifest (v1.0.0) fixes 1,638 scorable records and the 4 human-labelled traces that use the current taxonomy (the other 15 of the 19 use older taxonomies)."],
         ["Design rules?", "Public data is never committed; it is rebuilt from pinned revisions and checked by digest. Nothing is dropped silently. The test split is opened only for the final frozen comparison (ADR-005 rule 4)."]
       ]
     },
@@ -549,7 +549,7 @@
       html: `
         <div class="card" style="display:grid;grid-template-columns:130px repeat(4,1fr);row-gap:4px;column-gap:16px;padding:12px 26px;margin-bottom:16px;font:600 20px var(--sans);align-items:baseline">
           <span></span>${["Raw", "Cleaned", "Transformed", "Prepared"].map((t, i) => `<span class="label" style="font-size:15px">${i ? "→ " : ""}${t}</span>`).join("")}
-          <b style="font-weight:700">MAST</b><span>1,642 traces</span><span>1,638</span><span>1,638 × 26</span><span>1,638 + 19, eval only</span>
+          <b style="font-weight:700">MAST</b><span>1,642 traces</span><span>1,638</span><span>1,638 × 26</span><span>1,638 + 4 human, eval only</span>
           <b style="font-weight:700">QMSum</b><span>232 meetings</span><span>232 · 0 removed</span><span>1,810 examples</span><span>1,257 / 272 / 281</span>
         </div>
         <div style="display:grid;grid-template-columns:520px 1fr 410px;gap:22px;height:468px">
@@ -561,7 +561,7 @@
           <span class="label" style="margin-right:8px">Coverage gaps</span>
           <span class="chip amber">English meetings only → other languages</span>
           <span class="chip amber">Agents only, no humans steering → our target users</span>
-          <span class="chip amber">19 human labels → wide intervals</span>
+          <span class="chip amber">4 usable human traces → wide intervals</span>
           <span class="chip amber">0 sessions</span>
         </div>`,
       say: [
@@ -572,7 +572,7 @@
         ["Who is disadvantaged by these gaps?", "Teams working in other languages, and teams whose sessions are terse tool calls and code. Users of under-represented MAST frameworks. And exactly our target teams, several humans steering agents, which MAST does not contain. That is why our own sessions, not QMSum, select the winner, and why results will state the population."],
         ["Correlation details?", "Phi from 0.04 to 0.66. Strongest: step repetition with unawareness of termination (1.3 and 1.5, 0.66), loss of history with conversation reset (1.4 and 2.1, 0.62). Trace length and failure count have Spearman 0.54, an association, not a cause."],
         ["Why does context length matter?", "Context is right-skewed: median about 660 words, 95th percentile over 10,000, because general queries take the whole meeting. A 4,096-token input truncates the tail, so 'truncated' is a failure code and latency is committed at p95 too."],
-        ["Summary of the stages?", "Raw: MAST 1,642, QMSum 232 meetings. Pre-processed: 1,638 and 232. Transformed: 1,638 × 26 and 1,810 examples. Prepared: MAST 1,638 + 19 evaluation only; QMSum 1,257 / 272 / 281; smoke 12 / 3 / 3."],
+        ["Summary of the stages?", "Raw: MAST 1,642, QMSum 232 meetings. Pre-processed: 1,638 and 232. Transformed: 1,638 × 26 and 1,810 examples. Prepared: MAST 1,638 judge-labelled + 4 human-labelled, evaluation only; QMSum 1,257 / 272 / 281; smoke 12 / 3 / 3."],
         ["How do the charts relate to the workbook?", "They are drawn from the same committed files as Workbook Figures 6, 7 and 9: data/splits/m1_v1 and the MAST release."]
       ]
     },
@@ -758,7 +758,7 @@
         ["Approaches across all models?", "Statistics (BM25, rules, last writer wins), classical ML (TF-IDF with a linear classifier, gradient-boosted router), and deep learning (encoders, QLoRA and LoRA generators, few-shot prompting). Each learned arm is only interesting if it beats its control."],
         ["Phi-4-mini or Qwen?", "No preference. Qwen loses to Phi-4-mini whenever recall is within the margin, because the smaller model is faster."],
         ["What if nothing passes?", "ADR-005 requires us to report that no model is promotable and keep the extractive control in service while failures are corrected."],
-        ["Models 2 to 4: strengths and limits?", "M2: cheap per-event inference, per-class F1 exposes weak classes; bounded by annotator agreement. M3: can escalate instead of guessing, rule control is easy to audit; conflicts are rare, so data is scarce and partly synthetic. M4: the DAG-validity gate stops malformed plans early; plans are costly to label and planner quality is prompt-sensitive. Baseline: a published target, inference only; 19 human-labelled traces limit the precision of any agreement figure."],
+        ["Models 2 to 4: strengths and limits?", "M2: cheap per-event inference, per-class F1 exposes weak classes; bounded by annotator agreement. M3: can escalate instead of guessing, rule control is easy to audit; conflicts are rare, so data is scarce and partly synthetic. M4: the DAG-validity gate stops malformed plans early; plans are costly to label and planner quality is prompt-sensitive. Baseline: a published target, inference only; only 4 human-labelled traces use the current taxonomy, which limits the precision of any agreement figure."],
         ["What is the tie margin?", "Critical-fact recall within 0.01. The tie passes to BERTScore-F1 and ROUGE-L, then latency at p95 and peak memory, where BM25 on a CPU wins."]
       ]
     },
@@ -798,7 +798,7 @@
       qa: [
         ["Why is ROUGE-L not the primary metric?", "Summaries are about 65 words. A summary can score well on overlap and still omit the one blocker, or assign an action to the wrong person. ROUGE-L is still reported (on QMSum test against the 28.2 reference floor) and still breaks ties, after the gates."],
         ["Why three seeds, and why per seed?", "Seeds 13, 29 and 47. We report each seed, the mean and a 95% interval, never pooled. Gates apply per seed so one unsafe run cannot hide behind two good ones."],
-        ["Metrics for the other models?", "M2: macro-F1 with per-class F1. M3: macro-F1, harmful-merge rate, escalation precision and recall, against last writer wins. M4: DAG validity as a gate, then routing accuracy, completion, latency and cost. Baseline: accuracy, precision, recall, F1 and Cohen's kappa against the 19 human-labelled traces with sample size and 95% interval; agreement with released judge labels on 1,638 traces is a pipeline check, never reported as a reproduction."],
+        ["Metrics for the other models?", "M2: macro-F1 with per-class F1. M3: macro-F1, harmful-merge rate, escalation precision and recall, against last writer wins. M4: DAG validity as a gate, then routing accuracy, completion, latency and cost. Baseline: accuracy, precision, recall, F1 and Cohen's kappa against the 4 human-labelled traces in the current taxonomy, with sample size and 95% interval; agreement with released judge labels on 1,638 traces is a pipeline check, never reported as a reproduction."],
         ["Is the harness finished?", "No. It is in review (DAT-61, PR #25). Review found the comparison step applying gates to the three-seed mean, which the contract forbids, so it is being fixed before merge; target 18 November."],
         ["How does the human review work?", "The top two candidates that pass the gates get a blinded review; the metric is human edit rate, the token edits a reviewer needs to make an output acceptable (committed in ADR-005)."],
         ["What does a candidate with zero claims score?", "It fails recall, and its attribution accuracy is recorded as zero by contract convention, so silence cannot win the safety gates."],
