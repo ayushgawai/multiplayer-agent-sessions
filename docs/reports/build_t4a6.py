@@ -501,8 +501,10 @@ T(["Gap", "Evidence", "Who it would disadvantage if the system were deployed", "
 # ================================================================== 4
 H("4. Model Development", 1)
 H("4.1 Model Proposals", 2)
-P("The project proposes four learned models, each of which removes one coordination cost identified in section "
-  "2.2.1, and reproduces one published baseline that is deliberately not one of the four. Table 35 lists them. "
+P("The project proposes four learned models and seventeen model configurations in total: each of the four "
+  "models is proposed as four competing candidate architectures, and one published baseline is reproduced "
+  "alongside them. Each model removes one coordination cost identified in section 2.2.1, and the baseline is "
+  "deliberately not one of the four. Table 35 lists the models and Tables 36 and 37 give every candidate. "
   "Model 1 is built in DATA 298A and Models 2 to 4 in DATA 298B.")
 T(["#", "Model", "Concept / architecture", "Built in", "Owner"],
   [["1", "M1 Session-state catch-up", "Given the ordered event log of a session and a query, produce a structured catch-up in five categories (completed, in progress, blocked, decisions, pending actions) in which every claim cites the event ids that support it. Four candidates: BM25 extractive, ModernBERT extractive selector, Phi-4-mini with QLoRA, Qwen3.5-4B with QLoRA.", "298A", "Ayush"],
@@ -514,7 +516,7 @@ T(["#", "Model", "Concept / architecture", "Built in", "Owner"],
 P("Each model is developed as a bake-off of four candidates that share frozen data, one input and output "
   "contract, one evaluation harness and three seeds (13, 29, 47). A candidate is a configuration file under "
   "`eval/configs/` that pins the model repository and a full 40-character revision, so a result can be re-run "
-  "exactly. Counting candidates, the project proposes sixteen model configurations plus the baseline; the "
+  "exactly. That is where the sixteen candidates of the seventeen configurations come from; the "
   "architectures named below are candidates under evaluation, not selections.")
 H("Model 1: session-state catch-up (298A)", 3)
 P("Problem. A participant or agent who joins a session in progress must learn its state without reading the "
