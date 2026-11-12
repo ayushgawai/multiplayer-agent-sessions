@@ -585,7 +585,7 @@ T(["Model", "Development environment", "Libraries and tools", "Execution and ser
     "Winner loaded behind `POST /v1/models/m1/predict`; called by the session service on join and hand-off."],
    ["M2 attribution", "Same GPU and harness.", "Transformers encoders, scikit-learn for the TF-IDF control.", "`POST /v1/models/m2/predict`, called per instruction event."],
    ["M3 arbitration", "Same GPU and harness; the rule arm needs no GPU.", "Transformers, PEFT; configurations already in `eval/configs/m3-*.yaml`.", "`POST /v1/models/m3/predict`, called when the control plane detects a conflict."],
-   ["M4 routing", "Same GPU for the planner arms (Qwen or Gemma family); CPU for the rules arm and the learned router.", "LangGraph [13] for plan execution, LightGBM for the learned router.", "`POST /v1/models/m4/predict`, called by the agent runtime."],
+   ["M4 routing", "Same GPU for the planner arms (Qwen or Gemma family); CPU for the rules arm and the learned router.", "LangGraph [13] for plan execution, LightGBM [28] for the learned router.", "`POST /v1/models/m4/predict`, called by the agent runtime."],
    ["MAST baseline", "No GPU. API inference with the paper's o1 few-shot configuration.", "`models/baseline_mast/`: prompt, parser, resumable batch runner, provenance; `eval/metrics/classification.py`.", "Offline batch; results as immutable run directories."],
    ["All models", "GitHub Actions on every pull request: ruff, mypy, pytest for the session service, serving, data, evaluation, the baseline, the agent runtime and the warehouse pipeline.",
     "Pinned `requirements.txt` with a lock file; ADR-001 to ADR-005; candidate YAML with pinned model revisions.", "Docker Compose: PostgreSQL 16, Redis 7, Jaeger, session service, serving."]],
@@ -687,7 +687,7 @@ P("If no candidate passes every gate, ADR-005 requires us to report that no mode
 # ------------------------------------------------------------------ 4.4
 H("4.4 Model Evaluation Methods", 2)
 P("All metrics are computed in one place, the shared evaluation layer under `eval/`, so that no model reports a "
-  "number through its own code path. Each learned candidate is run with three seeds (13, 29 and 47). Results are "
+  "number through its own code path. Every candidate, including the parameter-free m1-a, is run with three seeds (13, 29 and 47), because the unsupported-claim gate compares each candidate seed with the m1-a run on the same seed. Results are "
   "reported as the per-seed values, their mean, and a 95% confidence interval; predictions are never pooled "
   "across seeds before a metric is computed, and the contract requires eligibility gates to hold on every seed individually so that one "
   "unsafe seed cannot be hidden by two good ones. With three seeds the interval has two degrees of freedom and is wide by construction; it describes seed-to-seed variation, not sampling error over test examples, which is why the per-seed values are always shown beside it. Each result file records the contract version, configuration "
@@ -695,22 +695,22 @@ P("All metrics are computed in one place, the shared evaluation layer under `eva
 P("The metrics in Table 42 are committed here, before any comparative result exists. As of 11 November 2026 no "
   "Model 1 candidate has been scored on a test split and no baseline agreement figure has been computed. The "
   "Model 1 definitions are machine-readable in `eval/configs/m1-contract.yaml`, and ADR-005 states that the "
-  "definitions and the winner policy cannot change after test results are seen without a new contract version.")
+  "definitions and the winner policy cannot change after test results are seen without a new contract version. The gate thresholds, metric definitions and ranking order were committed on 22 October 2026 (commit f2b4d47). Review then made two rules explicit, and both were committed on 11 November 2026 (commit c2028dd), still before any result existed: every gate applies to each seed, with the unsupported-claim gate compared against the m1-a run on the same seed, and each ranking metric has its own tie margin (0.01 for critical-fact recall and BERTScore-F1, 1.0 point for ROUGE-L on its 0 to 100 scale) in place of one shared margin of 0.01.")
 T(["Metric", "Why this metric", "Benchmark or split it is measured on", "Committed on"],
-  [["M1 critical-fact recall (primary)", "A catch-up that omits the blocker has failed, however fluent. Counts gold critical facts that are covered by a claim supported by its cited events.", "Annotated product-session test split (`session_test`)", "22 Oct 2026 (ADR-005); merged 11 Nov 2026 (US Pacific)"],
-   ["M1 unsupported-claim rate (gate: at most 0.02, and no worse than m1-a)", "Measures invention: claims not supported by the events they cite, over emitted claims.", "`session_test`, every seed", "22 Oct 2026 (ADR-005)"],
-   ["M1 attribution accuracy (gate: at least 0.95)", "A correct fact citing the wrong event cannot be verified by the reader.", "`session_test`, every seed", "22 Oct 2026 (ADR-005)"],
-   ["M1 status consistency (gate: at least 0.95)", "Reporting blocked work as completed is the most damaging single error.", "`session_test`, every seed", "22 Oct 2026 (ADR-005)"],
-   ["M1 schema-valid rate (gate: at least 0.98)", "An output that does not parse cannot be shown or scored.", "`session_test`, every seed", "22 Oct 2026 (ADR-005)"],
-   ["M1 BERTScore-F1 [26]", "Semantic similarity that tolerates paraphrase. Pinned: roberta-large, layer 17, no IDF, no rescaling.", "`session_test` for ranking; QMSum test reported separately", "22 Oct 2026 (ADR-005)"],
-   ["M1 ROUGE-L, with ROUGE-1 and ROUGE-2 [25]", "Lexical overlap, comparable with published QMSum figures. Macro F1 under convention `m1_rouge_macro_v1`.", "QMSum test (281 rows) and `session_test`", "22 Oct 2026 (ADR-004)"],
+  [["M1 critical-fact recall (primary)", "A catch-up that omits the blocker has failed, however fluent. Counts gold critical facts that are covered by a claim supported by its cited events.", "Annotated product-session test split (`session_test`)", "22 Oct 2026 (ADR-005); tie margin 11 Nov 2026 (c2028dd); merged 11 Nov 2026 (US Pacific)"],
+   ["M1 unsupported-claim rate (gate: at most 0.02, and no worse than m1-a)", "Measures invention: claims not supported by the events they cite, over emitted claims.", "`session_test`, every seed", "22 Oct 2026 (ADR-005); per-seed rule 11 Nov 2026 (c2028dd)"],
+   ["M1 attribution accuracy (gate: at least 0.95)", "A correct fact citing the wrong event cannot be verified by the reader.", "`session_test`, every seed", "22 Oct 2026 (ADR-005); per-seed rule 11 Nov 2026 (c2028dd)"],
+   ["M1 status consistency (gate: at least 0.95)", "Reporting blocked work as completed is the most damaging single error.", "`session_test`, every seed", "22 Oct 2026 (ADR-005); per-seed rule 11 Nov 2026 (c2028dd)"],
+   ["M1 schema-valid rate (gate: at least 0.98)", "An output that does not parse cannot be shown or scored.", "`session_test`, every seed", "22 Oct 2026 (ADR-005); per-seed rule 11 Nov 2026 (c2028dd)"],
+   ["M1 BERTScore-F1 [26]", "Semantic similarity that tolerates paraphrase. Pinned: roberta-large, layer 17, no IDF, no rescaling.", "`session_test` for ranking; QMSum test reported separately", "22 Oct 2026 (ADR-005); tie margin 11 Nov 2026 (c2028dd)"],
+   ["M1 ROUGE-L, with ROUGE-1 and ROUGE-2 [25]", "Lexical overlap, comparable with published QMSum figures. Macro F1 under convention `m1_rouge_macro_v1`.", "QMSum test (281 rows) and `session_test`", "22 Oct 2026 (ADR-004); tie margin 11 Nov 2026 (c2028dd)"],
    ["M1 latency p50 and p95, peak VRAM", "A catch-up is read at the moment of joining. Tail latency is set by the long-context minority (section 3.6).", "Same examples, after warm-up, on the recorded GPU", "22 Oct 2026 (ADR-005)"],
    ["M1 human edit rate", "Token edits a reviewer needs to make an output acceptable: the cost a user actually pays.", "Blinded review of the top two candidates", "22 Oct 2026 (ADR-005)"],
    ["M1 training and validation loss", "Convergence and early-stopping signal only. Never used to compare candidates.", "QMSum train and validation", "11 Nov 2026 (this workbook)"],
    ["M2 macro-F1, with per-class F1", "Classes are imbalanced, and accuracy would hide a class that is never predicted.", "Held-out session-level test split", "7 Oct 2026 (Workbook 1)"],
    ["M3 macro-F1; harmful-merge rate; escalation precision and recall", "A wrong merge is worse than an escalation, so harm is measured directly and compared with last-writer-wins.", "Held-out conflict cases", "8 Oct 2026 (`m3-*.yaml`)"],
    ["M4 DAG validity (gate); routing accuracy; completion; latency; cost", "An invalid plan cannot be executed, so validity gates everything else.", "Held-out routing test split", "7 Oct 2026 (Workbook 1)"],
-   ["Baseline accuracy, precision, recall, F1, Cohen's kappa [27]", "The five figures the paper reports, at the same scale: 0.94, 0.833, 0.77, 0.80, 0.77. Kappa corrects for chance agreement under imbalance.", "19 human-labelled MAST traces, with sample size and 95% CI", "7 Oct 2026 (Workbook 1; `mast_binary_label_cells_v1`)"],
+   ["Baseline accuracy, precision, recall, F1, Cohen's kappa [27]", "The five figures the paper reports, at the same scale: 0.94, 0.833, 0.77, 0.80, 0.77. Kappa corrects for chance agreement under imbalance.", "4 human-consensus traces: the only records of the 19-record human file labelled in the current 14-code taxonomy (eval_manifest.json). Reported with sample size and 95% CI", "7 Oct 2026 (Workbook 1; `mast_binary_label_cells_v1`)"],
    ["Baseline agreement with released judge labels", "Pipeline fidelity at scale. Not a reproduction of the human-agreement result and never reported as one.", "1,638 scorable MAST traces", "7 Oct 2026 (Workbook 1)"]],
   [1.55, 2.25, 1.45, 1.25], "Evaluation metrics committed before results.", size=8)
 P("Three choices in that table depart from common practice and are argued for here. ROUGE-L is not the primary "
@@ -722,6 +722,7 @@ P("Three choices in that table depart from common practice and are argued for he
   "perfect safety score: it fails recall, and its attribution accuracy, which would otherwise be undefined at zero claims, is recorded as zero by contract convention. Third, results on "
   "QMSum are reported separately and cannot select the winner, because QMSum contains none of the labels the "
   "gates need.")
+P("The baseline comparison has a limit that we state before running it. The paper's figures measure agreement with expert annotation, but the released human file holds only 4 traces labelled in the current 14-code taxonomy. Its other 15 records were labelled against older taxonomies with 18 and 17 failure modes whose codes do not map one to one onto the current 14, so the frozen evaluation manifest excludes them instead of pooling them. Four traces give 56 label cells. Even at the paper's accuracy of 0.94, a binomial 95% interval over 56 cells is about 0.13 wide, several times the 0.02 accuracy tolerance, and cells from one trace are not independent, so the real uncertainty is larger. The human comparison can therefore expose a gross failure but cannot by itself confirm a reproduction. We report it with its sample size beside a second, separately labelled check: agreement with the released judge labels on all 1,638 scorable traces, which tests whether our prompt, parser and scoring recover the published pipeline at scale.")
 P("Evaluation ends with two further steps for every model. An ablation varies the context budget (512, 1,024 "
   "and 2,048 tokens) and, for Model 1, approved memory on and off. And every failure is assigned one of seven "
   "frozen failure codes (invalid schema, missing critical fact, unsupported claim, wrong attribution, wrong "
@@ -744,6 +745,7 @@ for ref in [
     "[25] C.-Y. Lin, \"ROUGE: A package for automatic evaluation of summaries,\" in Text Summarization Branches Out: Proc. ACL-04 Workshop, 2004, pp. 74-81.",
     "[26] T. Zhang, V. Kishore, F. Wu, K. Q. Weinberger, and Y. Artzi, \"BERTScore: Evaluating text generation with BERT,\" in Proc. Int. Conf. Learn. Representations (ICLR), 2020.",
     "[27] J. Cohen, \"A coefficient of agreement for nominal scales,\" Educ. Psychol. Meas., vol. 20, no. 1, pp. 37-46, 1960.",
+    "[28] G. Ke, Q. Meng, T. Finley, T. Wang, W. Chen, W. Ma, Q. Ye, and T.-Y. Liu, \"LightGBM: A highly efficient gradient boosting decision tree,\" in Advances in Neural Information Processing Systems 30, 2017, pp. 3146-3154.",
 ]:
     P(ref, J, after=6)
 
@@ -762,7 +764,7 @@ H("Self-assessment and gap register", 2)
 T(["Report section", "Our rating", "If below good: what is missing", "Owner", "Lands by (proposed)"],
   [["3.1 to 3.6", "Good", "Not below good, but not excellent: the product-session corpus that selects the Model 1 winner has no recorded sessions, so sections 3.2 to 3.5 describe it as planned.", "Naman", "2 Dec 2026"],
    ["4.1 to 4.4", "Good", "Not below good. Models 2 and 4 have no committed configuration files yet; their candidates are described from Workbook 1.", "Naman, Shriram", "298B, cycle 1"],
-   ["References", "Excellent", "", "Pramod", ""]],
+   ["References", "Good", "Not below good, but not excellent: every algorithm, dataset and metric source is cited, including [28] added in review, but the software libraries named in Table 38 (PyTorch, Transformers, PEFT) are not cited separately.", "Pramod", ""]],
   [1.0, 0.8, 2.9, 0.9, 0.9])
 H("Carry-forward from Workbook 1", 2)
 T(["Item", "Why it did not land, or what changed", "Owner", "New target (proposed; each owner to confirm)"],
@@ -771,7 +773,7 @@ T(["Item", "Why it did not land, or what changed", "Owner", "New target (propose
    ["QMSum size (DR-1; Table 9)", "Corrected. Workbook 1 quoted the published 1,808 query-summary pairs. The pinned release yields 1,810, and the splits are built from those.", "Naman", "Done"],
    ["Pilot session corpus (DR-2, DR-3)", "Not landed. No session has been recorded, because the end-to-end integration gate has not been passed. The risk-register trigger of fewer than five sessions by late October has fired; the documented fallback of internal sessions plus scripted cases is in effect, and 18 scripted smoke examples exist (DAT-53).", "Naman", "First sessions by 2 Dec 2026"],
    ["Automated session-level leakage check (DR-4)", "Partly landed. `make_splits.py` accepts a grouping option that the Model 1 path does not read, so the no-shared-meeting guarantee rests on QMSum's inherited partition and on the checks in Table 29, not on a grouping implementation. The session-level check is needed before `m1_session_v1` is built.", "Naman", "With the session split"],
-   ["Harness runs one candidate end to end (Progress Report 1)", "Not landed. The shared Model 1 harness is in review (DAT-61); review found the comparison step applying gates to the three-seed mean instead of each seed, which must be corrected before merge.", "Pramod", "18 Nov 2026"],
+   ["Harness runs one candidate end to end (Progress Report 1)", "In review. The shared Model 1 harness (DAT-61, pull request #25) targets main. Review found the comparison step applying gates to the three-seed mean; it now applies every gate to each seed and compares unsupported claims with the matched m1-a seed, as ADR-005 requires, and awaits independent review before merge.", "Pramod", "18 Nov 2026"],
    ["Model 1 bake-off and winner (AI-3)", "At risk. Training and inference paths and GPU feasibility are in progress, but ADR-005 forbids a selection run until the annotated product-session split is frozen. The final report will carry either the winner or the documented shortfall.", "Ayush", "7 Dec 2026"],
    ["MAST judge environment and final runs (DAT-25, DAT-26, DAT-27, DAT-36)", "Not landed. Prompt, parser, batch runner, provenance and metrics are on main; the pinned o1 judge environment and the clean-environment smoke test are open.", "Ayush, Shriram", "2 Dec 2026"],
    ["Cloud deployment (FR-8; Table 16)", "Deferred. The prototype runs locally under Docker Compose and no cloud cost has been incurred. Deployment is needed when participants outside the team join, which is the 298B controlled study (section 4.2).", "Ayush", "298B"],
