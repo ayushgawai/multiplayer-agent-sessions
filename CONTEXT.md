@@ -137,10 +137,13 @@ When you finish a feature, add one bullet here under your name and bump **Last u
 - Still open: six scenario briefs (DAT-21), team sign-off (DAT-22).
 
 ### Manav
-- On `main`: judge prompt `mast-judge-v1`, parser `mast-parser-v1.1`, result viewer, M3 configs `m3-a` through `m3-d`, serving stub label `escalate` (DAT-40, PR #11).
-- On `main`: client scaffold (DAT-15, PR #12), Yjs editor and crdt-server (DAT-16), presence (DAT-17). Browser-tested with up to three participants.
-- ADR-003 (DAT-52): merged to `main` with runner owner review changes incorporated (PR #16).
-- Next: M1-03 extractive CPU baseline (DAT-58, due Nov 4); location of M1-A code to be agreed with the M1 and evaluation owners first.
+- On `main`: MAST judge prompt `mast-judge-v1`, parser `mast-parser-v1.1` and result viewer (DAT-31 to DAT-33), M3 configs `m3-a` to `m3-d` (DAT-40), serving stub label `escalate` (PR #11), and ADR-003 prediction record (DAT-52, first version `19a115c`, review changes `48d1bb9`).
+- On `main`, client (DAT-15, PR #12): Vite 5, React 18 and strict TypeScript; API types generated from the session-service OpenAPI; mock or real backend through `VITE_USE_MOCK`; lobby to create or join a session; live event list (stream with periodic reconcile, polling fallback); instruction box; rollback panel; timestamps without a zone read as UTC. 41 Vitest tests.
+- On `main`, CRDT editor (DAT-16): TipTap 2.8 editor bound to a shared Yjs document through `crdt-server` (y-websocket at `ws://localhost:1234/crdt/{session_id}`); a bridge posts one debounced `doc_update` event (800 ms) to the session-service log; observers can read but not edit. 4 crdt-server convergence tests.
+- On `main`, presence (DAT-17): presence bar and collaboration cursors from Yjs awareness; each display name maps to a stable colour from a fixed palette, so it survives a rejoin. Browser-tested with up to three participants.
+- Not integrated: the client does not call or display any model output. `catchup_summary` from join is not rendered (the mock returns null), and there is no M1 or M3 UI while `serving/adapters/m1.py` to `m4.py` are stubs.
+- In review: M1-A BM25 extractive baseline (DAT-58, draft PR #26), which depends on #25 (DAT-61) and #22 (DAT-53).
+- Next: M1 catch-up panel in the client once the M1 contract (#25) and M1 serving land; end-to-end wiring with the session service, agent runtime and serving; demo script and deck under `docs/slides/` with the environment owner; remove the optional `trace_text` field from the result viewer.
 
 ### Shriram
 - On `main`: resumable MAST batch and run provenance (DAT-34/35, PR #5). Notes in `docs/verification/dat-34-dat-35-batch-execution.md`.
