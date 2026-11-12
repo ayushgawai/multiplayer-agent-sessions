@@ -86,11 +86,9 @@ sometimes, supporting events (for example the failing tool result behind a block
   touched. The smoke set is a separate, event-shaped dataset.
 - **DAT-55 `m1-input-v1` / `m1-output-v1`** (Pramod): `to_m1_input` maps `source_event_id` to
   `event_id` and sets `memory_version` to null and `approved_memory` to `[]`. `gold_reference`
-  returns the `m1-output-v1` shape without `candidate_id`. When this was written the contract was
-  not on `main` (it is on the DAT-55 branch, PR #20). The compatibility test imports
-  `eval.contracts.m1` and skips with a reason until it lands. All 18 examples were checked by hand
-  against the DAT-55 branch version of `M1Input`, `M1Output` and `validate_m1_pair` and passed.
-  Pramod should confirm the mapping.
+  returns the `m1-output-v1` shape without `candidate_id`. The DAT-55 contract is on `main`
+  (`eval/contracts/m1.py`, PR #20). `test_contract_compat` runs and validates all 18 smoke examples
+  through `M1Input`, `M1Output` and `validate_m1_pair`.
 - The contract plans real session data in `data/splits/m1_session_v1/`. That is not this dataset.
 
 ## Rollback matches the live service

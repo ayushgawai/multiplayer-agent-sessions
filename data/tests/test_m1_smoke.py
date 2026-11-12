@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import importlib
 import importlib.util
 import json
 import sys
@@ -336,13 +337,12 @@ def test_gold_reference_shape(dataset: dict[str, list[M1SmokeExample]]) -> None:
             assert set(claim) == {"text", "source_event_ids"}
 
 
-# --- DAT-55 contract compatibility (skips until eval/contracts/m1.py is on this branch) -----
+# --- DAT-55 contract compatibility (eval/contracts/m1.py is on main) ----------------------
 
 
 def test_contract_compat(dataset: dict[str, list[M1SmokeExample]]) -> None:
-    m1 = pytest.importorskip(
-        "eval.contracts.m1", reason="unvalidated against DAT-55 contract (not on main yet)"
-    )
+    m1 = importlib.import_module("eval.contracts.m1")
+    assert sum(len(examples) for examples in dataset.values()) == 18
     for examples in dataset.values():
         for ex in examples:
             model_input = m1.M1Input.model_validate(loader.to_m1_input(ex))
