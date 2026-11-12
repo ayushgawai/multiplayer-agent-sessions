@@ -6,7 +6,7 @@
 (function () {
   const W = 1920, H = 1080;
   const KEY = "t4-wb2-slide", CH = "t4-wb2";
-  const ARC = ["Recap", "Built", "Data", "Models", "Demo", "Next"];
+  const ARC = ["Recap", "Built", "Data", "Demo", "Models", "Next"];
   const deck = window.DECK, N = deck.length;
   const mode = document.body.dataset.mode; // audience | presenter | render
 

@@ -199,7 +199,7 @@
   window.DECK = [
     /* ================= 0 · Title and recap ================= */
     {
-      arc: 0, bare: true, rubric: "Opening · recap", speaker: "Ayush", secs: 30,
+      arc: 0, bare: true, rubric: "Opening · recap", speaker: "Manav", secs: 30,
       title: "Multiplayer Agents · where we were at Workbook 1",
       html: `
         <div class="t-title">
@@ -229,7 +229,7 @@
 
     /* ================= 1 · Built since Workbook 1 ================= */
     {
-      arc: 1, num: "", kicker: "Since 7 October", rubric: "Progress since Workbook 1", speaker: "Ayush", secs: 25,
+      arc: 1, num: "", kicker: "Since 7 October", rubric: "Progress since Workbook 1", speaker: "Manav", secs: 25,
       title: "Six things built since Workbook 1",
       html: `
         ${timeline(10, "since", 0)}
@@ -244,7 +244,7 @@
         <div class="strip amber" style="position:absolute;left:0;right:0;bottom:0">${I("alert", 30)}Still open: 0 product sessions recorded · evaluation harness in review · no model trained</div>`,
       say: [
         "Since then, we built six things. QMSum is collected and split. The prototype runs. MAST is cleaned. The Model 1 contract is committed. The agent runtime is on main. And one command loads both datasets into a warehouse.",
-        "Still open, in amber: no product sessions yet, and no trained model. Manav will show the prototype."
+        "Still open, in amber: no product sessions yet, and no trained model. Here is the prototype."
       ],
       qa: [
         ["Has any GPU work happened?", "Feasibility only. ModernBERT passed a 40-step smoke run on the lab GPU with checkpoint and resume. Phi-4-mini failed after 2 of 15 steps, not yet diagnosed (probably memory at 4,096 tokens). Qwen3.5-4B has not run. An earlier Qwen3-1.7B infrastructure run checked QLoRA, checkpointing and resume. None of this is a result."],
@@ -437,7 +437,7 @@
         </div>`,
       say: [
         "Every cleaning rule is code, and every rule reports what it removed. Most removed nothing, because these are curated research releases. One rule removed four MAST traces whose fourteen labels were all missing.",
-        "The key rule is the blue one: a missing label stays missing. We never turn it into a zero, because a missing judgement is not a no."
+        "The key rule is the blue one: a missing label stays missing. We never turn it into a zero, because a missing judgement is not a no. Shriram takes the rest of the data."
       ],
       qa: [
         ["Only four rows removed. Did you really clean the data?", "Yes. Both are curated research releases, so the value is the guarantee, not the volume: unique record keys, label domain 0, 1 or null over 22,988 cells, and ten quality gates that pass. The four excluded traces are named in the committed summary."],
@@ -495,7 +495,7 @@
 
     /* ================= 7 · 3.5 Data preparation ================= */
     {
-      arc: 2, num: "3.5", kicker: "Data preparation", rubric: "3.5 Data Preparation", speaker: "Manav", secs: 30,
+      arc: 2, num: "3.5", kicker: "Data preparation", rubric: "3.5 Data Preparation", speaker: "Shriram", secs: 30,
       title: "Frozen splits, and no meeting crosses a split",
       html: `
         <div style="display:flex;flex-direction:column;justify-content:space-between;height:100%">
@@ -543,7 +543,7 @@
 
     /* ================= 8 · 3.6 Data statistics ================= */
     {
-      arc: 2, num: "3.6", kicker: "Data statistics", rubric: "3.6 Data Statistics", speaker: "Manav", secs: 40,
+      arc: 2, num: "3.6", kicker: "Data statistics", rubric: "3.6 Data Statistics", speaker: "Shriram", secs: 40,
       title: "Short summaries and skewed labels shaped our metrics",
       html: `
         <div class="card" style="display:grid;grid-template-columns:130px repeat(4,1fr);row-gap:4px;column-gap:16px;padding:12px 26px;margin-bottom:16px;font:600 20px var(--sans);align-items:baseline">
@@ -576,9 +576,62 @@
       ]
     },
 
+    /* ================= 13 · 4.5 Pipeline demo ================= */
+    {
+      arc: 3, num: "4.5", kicker: "Data pipeline · live demo", rubric: "4.5 Data Pipeline Demo", speaker: "Shriram", secs: 20,
+      title: "From source to warehouse, live, in about six seconds",
+      html: `
+        <div style="display:grid;grid-template-columns:230px 44px repeat(4, 1fr);gap:0 14px;align-items:stretch;height:330px">
+          <div class="col" style="gap:14px">
+            <div class="card" style="flex:1;padding:18px 20px;display:flex;flex-direction:column;justify-content:center"><div class="label">Source</div><div style="font:700 26px var(--display)">MAST</div><div class="mono muted" style="font-size:15px">pinned, SHA-256</div></div>
+            <div class="card" style="flex:1;padding:18px 20px;display:flex;flex-direction:column;justify-content:center"><div class="label">Source</div><div style="font:700 26px var(--display)">QMSum</div><div class="mono muted" style="font-size:15px">pinned, SHA-256</div></div>
+          </div>
+          <div style="display:grid;place-items:center">${arrow(40)}</div>
+          ${[["1", "download", "Ingest", "raw", "1,642 + 1,810 rows", "checksums verified, stored raw"], ["2", "filter", "Clean and validate", "staging", "1,638 traces · 22,932 labels", "a bad label stops the run"], ["3", "shuffle", "Transform", "marts", "3 fact + 4 dimension tables", "a star schema for analysis"], ["4", "shield", "Quality gates", "meta", "19 of 19 data checks pass", "expected vs actual, every run"]].map(([n, ic, h, layer, rows, what], i) =>
+            `<div class="card" style="padding:24px 24px;display:flex;flex-direction:column;gap:12px;${i === 3 ? "background:var(--green-soft);border-color:#bfe5d4" : ""}">
+              <div style="display:flex;align-items:center;gap:12px"><span class="callout" style="width:42px;height:42px;font-size:22px;${i === 3 ? "background:var(--green);box-shadow:none" : ""}">${n}</span><span style="color:${i === 3 ? "var(--green)" : "var(--blue)"}">${I(ic, 30)}</span></div>
+              <div style="font:700 29px/1.1 var(--display)">${h}</div>
+              <span class="chip ${i === 3 ? "green" : "blue"}" style="align-self:flex-start;font-family:var(--mono);font-size:17px">${layer}</span>
+              <div style="font:500 19px/1.35 var(--sans);color:var(--mute)">${what}</div>
+              <div style="margin-top:auto;font:600 20px/1.35 var(--sans);color:var(--ink2)">${rows}</div></div>`).join("")}
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:0;display:grid;grid-template-columns:1fr 1fr;gap:22px;height:290px">
+          <div class="code" style="font-size:21px;line-height:1.6;display:flex;flex-direction:column;justify-content:center;padding:24px 32px">
+            <span><span class="c">$</span> python infra/warehouse/pipeline.py</span>
+            <span><span class="c">stage</span> ingest: <span class="n">success</span>    rows_out=3452</span>
+            <span><span class="c">stage</span> clean: <span class="n">success</span>     rows_out=3448</span>
+            <span><span class="c">stage</span> transform: <span class="n">success</span></span>
+            <span><span class="n">[PASS]</span> × 19 data checks</span>
+            <span><span class="c">run …</span> <span class="n">SUCCESS</span> in about 6 s</span>
+            <span><span class="c">$</span> python infra/warehouse/pipeline.py --report</span>
+          </div>
+          <div class="card" style="padding:26px 30px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;align-items:center;gap:12px">${I("gauge", 30)}<span style="font:700 28px var(--display)">Monitoring and management</span></div>
+            <div style="font:600 21px/1.4 var(--sans)"><span class="mono" style="color:var(--blue)">meta.pipeline_runs</span> · every stage, every run: duration, rows in and out, status, git commit</div>
+            <div style="font:600 21px/1.4 var(--sans)"><span class="mono" style="color:var(--blue)">meta.quality_checks</span> · expected vs actual for each gate</div>
+            <div class="muted" style="font:600 19px var(--sans);margin-top:auto">Stops at the first failure · reruns rebuild the same warehouse</div>
+          </div>
+        </div>`,
+      say: [
+        "Now the pipeline, live. One command ingests both datasets from pinned sources, cleans and validates them, builds a star schema in a local warehouse, and runs nineteen quality checks. A second command shows the run history. That history is our monitoring.",
+        "CUE: SWITCH TO THE TERMINAL. Run: python infra/warehouse/pipeline.py (about 6 seconds). Point at the four stages and the line SUCCESS, all 19 checks PASS.",
+        "CUE: Then run: python infra/warehouse/pipeline.py --report. Point at the run history: two runs (one done before the meeting), each stage with duration and rows in and out.",
+        "CUE: If it fails live, open infra/warehouse/SAMPLE_RUN.md and walk through the saved output. Do not debug in front of the room."
+      ],
+      qa: [
+        ["What if a stage fails?", "The run stops at that stage, the failure is written to the run history with the error, and the exit code is non-zero. Tables are replaced on each run, so a rerun after a fix gives the same warehouse as a clean run."],
+        ["What is in the warehouse?", "Raw: 1,642 traces and 1,810 examples. Staging: 1,638 clean traces, 22,932 label rows, 1,810 clean examples. Marts: fact_trace 1,638, fact_trace_failure 5,141, fact_m1_example 1,810, and four dimensions (failure mode 14, framework 7, LLM 5, benchmark 8)."],
+        ["Does your own session data flow into it?", "Not yet. No session has been recorded, so the export from the PostgreSQL event log is the one ingestion path that does not exist. It is in the carry-forward table."],
+        ["Why no Airflow or cloud warehouse? (talk only)", "Static pinned data, four stages in a line, about 220 MB, about 6 seconds on a laptop. A scheduler would be idle; a cloud warehouse adds cost, credentials and latency and no capability, and makes the pipeline unverifiable without our accounts. First step up when ingestion becomes recurring: a scheduled GitHub Actions job."],
+        ["Is this rubric 4.5 the same as report section 4.5?", "No. The live pipeline demo is the meeting's 4.5. In the report template, 4.5 First Model Implementation and 4.6 Baseline Reproduction are intentionally empty until the final report, because no model is trained and the judge has not been run."],
+        ["Are the 19 checks model metrics?", "No. They are data-quality gates (counts, keys, label domains, reconciliation between layers). No model is involved in the pipeline."],
+        ["Before the meeting", "On the demo laptop: git pull, pip install -r requirements.txt, python data/scripts/download_mast.py once (about 200 MB), run the pipeline once so the demo shows two runs, terminal font large."]
+      ]
+    },
+
     /* ================= 9 · 4.1 Model proposals ================= */
     {
-      arc: 3, num: "4.1", kicker: "Model proposals", rubric: "4.1 Model Proposals", flag: "No model trained yet · no results", speaker: "Ayush", secs: 40,
+      arc: 4, num: "4.1", kicker: "Model proposals", rubric: "4.1 Model Proposals", flag: "No model trained yet · no results", speaker: "Ayush", secs: 40,
       title: "Four models, sixteen candidates, one reproduced baseline",
       html: `
         <div class="card" style="position:absolute;left:0;top:0;width:800px;bottom:0;padding:32px 36px;display:flex;flex-direction:column;gap:16px;border:2px solid #c8d0ff">
@@ -636,7 +689,7 @@
 
     /* ================= 10 · 4.2 Model supports ================= */
     {
-      arc: 3, num: "4.2", kicker: "Model supports", rubric: "4.2 Model Supports", flag: "No model trained yet · no results", speaker: "Ayush", secs: 25,
+      arc: 4, num: "4.2", kicker: "Model supports", rubric: "4.2 Model Supports", flag: "No model trained yet · no results", speaker: "Ayush", secs: 25,
       title: "One local stack, one lab GPU, frozen interfaces",
       html: platformSVG(),
       say: [
@@ -656,7 +709,7 @@
 
     /* ================= 11 · 4.3 Comparison ================= */
     {
-      arc: 3, num: "4.3", kicker: "Model comparison and justification", rubric: "4.3 Comparison and Justification", flag: "No model trained yet · no results", speaker: "Ayush", secs: 35,
+      arc: 4, num: "4.3", kicker: "Model comparison and justification", rubric: "4.3 Comparison and Justification", flag: "No model trained yet · no results", speaker: "Ayush", secs: 35,
       title: "Each Model 1 candidate tests one idea",
       html: `
         <div style="position:absolute;left:0;top:0;width:1110px;bottom:0;display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-items:end">
@@ -709,7 +762,7 @@
 
     /* ================= 12 · 4.4 Evaluation ================= */
     {
-      arc: 3, num: "4.4", kicker: "Model evaluation methods", rubric: "4.4 Evaluation Methods", flag: "No model trained yet · no results", flag2: "Committed 22 Oct · ADR-005", speaker: "Pramod", secs: 30,
+      arc: 4, num: "4.4", kicker: "Model evaluation methods", rubric: "4.4 Evaluation Methods", flag: "No model trained yet · no results", flag2: "Committed 22 Oct · ADR-005", speaker: "Pramod", secs: 30,
       title: "Safety first, then quality, committed before any result",
       html: `
         <div style="display:grid;grid-template-columns:230px 40px 230px 40px 560px 40px 1fr;align-items:stretch;height:450px">
@@ -747,59 +800,6 @@
         ["How does the human review work?", "The top two candidates that pass the gates get a blinded review; the metric is human edit rate, the token edits a reviewer needs to make an output acceptable (committed in ADR-005)."],
         ["What does a candidate with zero claims score?", "It fails recall, and its attribution accuracy is recorded as zero by contract convention, so silence cannot win the safety gates."],
         ["What else is evaluated?", "An ablation over context budget (512, 1,024, 2,048 tokens) and memory on or off, and every failure gets one of seven frozen failure codes for the failure analysis."]
-      ]
-    },
-
-    /* ================= 13 · 4.5 Pipeline demo ================= */
-    {
-      arc: 4, num: "4.5", kicker: "Data pipeline · live demo", rubric: "4.5 Data Pipeline Demo", speaker: "Shriram", secs: 20,
-      title: "From source to warehouse, live, in about six seconds",
-      html: `
-        <div style="display:grid;grid-template-columns:230px 44px repeat(4, 1fr);gap:0 14px;align-items:stretch;height:330px">
-          <div class="col" style="gap:14px">
-            <div class="card" style="flex:1;padding:18px 20px;display:flex;flex-direction:column;justify-content:center"><div class="label">Source</div><div style="font:700 26px var(--display)">MAST</div><div class="mono muted" style="font-size:15px">pinned, SHA-256</div></div>
-            <div class="card" style="flex:1;padding:18px 20px;display:flex;flex-direction:column;justify-content:center"><div class="label">Source</div><div style="font:700 26px var(--display)">QMSum</div><div class="mono muted" style="font-size:15px">pinned, SHA-256</div></div>
-          </div>
-          <div style="display:grid;place-items:center">${arrow(40)}</div>
-          ${[["1", "download", "Ingest", "raw", "1,642 + 1,810 rows", "checksums verified, stored raw"], ["2", "filter", "Clean and validate", "staging", "1,638 traces · 22,932 labels", "a bad label stops the run"], ["3", "shuffle", "Transform", "marts", "3 fact + 4 dimension tables", "a star schema for analysis"], ["4", "shield", "Quality gates", "meta", "19 of 19 data checks pass", "expected vs actual, every run"]].map(([n, ic, h, layer, rows, what], i) =>
-            `<div class="card" style="padding:24px 24px;display:flex;flex-direction:column;gap:12px;${i === 3 ? "background:var(--green-soft);border-color:#bfe5d4" : ""}">
-              <div style="display:flex;align-items:center;gap:12px"><span class="callout" style="width:42px;height:42px;font-size:22px;${i === 3 ? "background:var(--green);box-shadow:none" : ""}">${n}</span><span style="color:${i === 3 ? "var(--green)" : "var(--blue)"}">${I(ic, 30)}</span></div>
-              <div style="font:700 29px/1.1 var(--display)">${h}</div>
-              <span class="chip ${i === 3 ? "green" : "blue"}" style="align-self:flex-start;font-family:var(--mono);font-size:17px">${layer}</span>
-              <div style="font:500 19px/1.35 var(--sans);color:var(--mute)">${what}</div>
-              <div style="margin-top:auto;font:600 20px/1.35 var(--sans);color:var(--ink2)">${rows}</div></div>`).join("")}
-        </div>
-        <div style="position:absolute;left:0;right:0;bottom:0;display:grid;grid-template-columns:1fr 1fr;gap:22px;height:290px">
-          <div class="code" style="font-size:21px;line-height:1.6;display:flex;flex-direction:column;justify-content:center;padding:24px 32px">
-            <span><span class="c">$</span> python infra/warehouse/pipeline.py</span>
-            <span><span class="c">stage</span> ingest: <span class="n">success</span>    rows_out=3452</span>
-            <span><span class="c">stage</span> clean: <span class="n">success</span>     rows_out=3448</span>
-            <span><span class="c">stage</span> transform: <span class="n">success</span></span>
-            <span><span class="n">[PASS]</span> × 19 data checks</span>
-            <span><span class="c">run …</span> <span class="n">SUCCESS</span> in about 6 s</span>
-            <span><span class="c">$</span> python infra/warehouse/pipeline.py --report</span>
-          </div>
-          <div class="card" style="padding:26px 30px;display:flex;flex-direction:column;gap:14px">
-            <div style="display:flex;align-items:center;gap:12px">${I("gauge", 30)}<span style="font:700 28px var(--display)">Monitoring and management</span></div>
-            <div style="font:600 21px/1.4 var(--sans)"><span class="mono" style="color:var(--blue)">meta.pipeline_runs</span> · every stage, every run: duration, rows in and out, status, git commit</div>
-            <div style="font:600 21px/1.4 var(--sans)"><span class="mono" style="color:var(--blue)">meta.quality_checks</span> · expected vs actual for each gate</div>
-            <div class="muted" style="font:600 19px var(--sans);margin-top:auto">Stops at the first failure · reruns rebuild the same warehouse</div>
-          </div>
-        </div>`,
-      say: [
-        "Now the pipeline, live. One command ingests both datasets from pinned sources, cleans and validates them, builds a star schema in a local warehouse, and runs nineteen quality checks. A second command shows the run history. That history is our monitoring.",
-        "CUE: SWITCH TO THE TERMINAL. Run: python infra/warehouse/pipeline.py (about 6 seconds). Point at the four stages and the line SUCCESS, all 19 checks PASS.",
-        "CUE: Then run: python infra/warehouse/pipeline.py --report. Point at the run history: two runs (one done before the meeting), each stage with duration and rows in and out.",
-        "CUE: If it fails live, open infra/warehouse/SAMPLE_RUN.md and walk through the saved output. Do not debug in front of the room."
-      ],
-      qa: [
-        ["What if a stage fails?", "The run stops at that stage, the failure is written to the run history with the error, and the exit code is non-zero. Tables are replaced on each run, so a rerun after a fix gives the same warehouse as a clean run."],
-        ["What is in the warehouse?", "Raw: 1,642 traces and 1,810 examples. Staging: 1,638 clean traces, 22,932 label rows, 1,810 clean examples. Marts: fact_trace 1,638, fact_trace_failure 5,141, fact_m1_example 1,810, and four dimensions (failure mode 14, framework 7, LLM 5, benchmark 8)."],
-        ["Does your own session data flow into it?", "Not yet. No session has been recorded, so the export from the PostgreSQL event log is the one ingestion path that does not exist. It is in the carry-forward table."],
-        ["Why no Airflow or cloud warehouse? (talk only)", "Static pinned data, four stages in a line, about 220 MB, about 6 seconds on a laptop. A scheduler would be idle; a cloud warehouse adds cost, credentials and latency and no capability, and makes the pipeline unverifiable without our accounts. First step up when ingestion becomes recurring: a scheduled GitHub Actions job."],
-        ["Is this rubric 4.5 the same as report section 4.5?", "No. The live pipeline demo is the meeting's 4.5. In the report template, 4.5 First Model Implementation and 4.6 Baseline Reproduction are intentionally empty until the final report, because no model is trained and the judge has not been run."],
-        ["Are the 19 checks model metrics?", "No. They are data-quality gates (counts, keys, label domains, reconciliation between layers). No model is involved in the pipeline."],
-        ["Before the meeting", "On the demo laptop: git pull, pip install -r requirements.txt, python data/scripts/download_mast.py once (about 200 MB), run the pipeline once so the demo shows two runs, terminal font large."]
       ]
     },
 
