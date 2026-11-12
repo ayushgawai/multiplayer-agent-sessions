@@ -135,6 +135,7 @@ When you finish a feature, add one bullet here under your name and bump **Last u
 - On `main`: DAT-28 download and checksums, DAT-29 dictionary and taxonomy, DAT-30 eval manifest.
 - Done on `main`: QMSum download (DAT-11, 232 meetings, 1,810 query pairs in `data/qmsum/STATS.md`, splits frozen in `data/splits/m1_v1/`).
 - DAT-54 (MAST-17, PR #21): `eda_mast.py` keeps null labels null, keys records by (`trace.key`, `trace_id`), excludes the 4 fully-null records (1,642 raw, 1,638 scorable), and writes the committed `data/mast/EDA_SUMMARY.json`. Tests in `data/tests/test_eda_mast.py`.
+- Design constraints for the real M1 session dataset (`m1_session_v1`), from Manav's M1-A fitting notes (PR #26): [data/m1_session/DESIGN_CONSTRAINTS.md](data/m1_session/DESIGN_CONSTRAINTS.md). No Linear issue exists for that dataset yet.
 - Still open: six scenario briefs (DAT-21), team sign-off (DAT-22).
 
 ### Manav
