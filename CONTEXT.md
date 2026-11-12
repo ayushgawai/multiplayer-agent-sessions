@@ -83,7 +83,7 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 | Frozen eval manifest | Naman (DAT-30, PR #4) | Done on `main`: `data/mast/eval_manifest.json` |
 | QMSum download + STATS.md | Ayush / Naman (DAT-11) | Done on `main`: `data/qmsum/STATS.md`, frozen splits in `data/splits/m1_v1/` |
 | MAST classification metrics | Pramod (DAT-37, PR #3) | Done on `main`: `eval/metrics/classification.py`. Convention `mast_binary_label_cells_v1` is provisional until checked against the paper. |
-| Harness runs one candidate end to end | Pramod | Open. `eval/harness.py` is not on `main`. |
+| Harness runs one candidate end to end | Pramod (DAT-61) | In review: PR #25, now targeting `main`. Gates apply per seed (ADR-005); CPU orchestration and smoke-fixture tests pass. Independent review is required before merge. |
 | M3 configs `m3-a`…`m3-d` | Manav (DAT-40, PR #10) | Done on `main` |
 | M2 / M4 configs | Naman, Shriram | Not started |
 | MAST judge prompt / parser / viewer | Manav (DAT-31/32/33, PRs #7 #8 #9) | Done on `main` under `models/baseline_mast/` |
@@ -106,7 +106,7 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 
 ## Current status (update on pull / after each feature)
 
-**Last updated:** 2026-11-11, evening (Ayush)
+**Last updated:** 2026-11-11, evening (Ayush; Pramod for DAT-61)
 
 - Session service on `main`: durable event log (SQLAlchemy; SQLite in CI, Postgres in Compose) and Redis or in-process fan-out (ADR-002). OpenAPI routes unchanged.
 - React 18 client, CRDT server, and presence on `main` (DAT-15, DAT-16, DAT-17 / PRs #12, #13, #14).
@@ -124,7 +124,7 @@ cd session-service && PYTHONPATH=. python scripts/export_openapi.py
 - **No model is trained and no model result exists.** M1 candidate code for m1-b, m1-c, m1-d is on branch `m1-candidate-train-infer` (no PR yet). On the lab GPU: m1-b (ModernBERT) passed a 40-step feasibility smoke; m1-c (Phi-4-mini) failed after 2 of 15 steps at about 5 min per step, not diagnosed; m1-d (Qwen3.5-4B) not run.
 - **Not on `main` yet:** `eval/harness.py` (PR #25), BM25 m1-a (draft PR #26), M2/M4 configs, any product session (`data/sessions/raw/` is empty).
 
-**Open PRs:** #25 DAT-61 harness (do not merge: `eval/compare.py` applies the gates to the three-seed mean, which ADR-005 forbids), #26 DAT-58 BM25 (draft), #15 DAT-56 (changes requested).
+**Open PRs:** #25 DAT-61 harness (retargeted to `main`; the per-seed gate fix for ADR-005 is pushed and awaits review), #26 DAT-58 BM25 (draft), #15 DAT-56 (changes requested).
 
 **Pick up here next time (in order):**
 1. Fix and merge #25, then mark #26 ready. The M1 bake-off cannot start without the harness.
@@ -170,6 +170,12 @@ When you finish a feature, add one bullet here under your name and bump **Last u
 
 ### Pramod
 - On `main`: MAST classification metrics (DAT-37, PR #3), including CI for `eval/tests`.
+- On `main`: DAT-55 frozen M1 experiment contract (PR #20).
+- In review: DAT-61 shared harness and comparison (PR #25, targets `main`). Every eligibility gate
+  applies to each seed, the unsupported-claim baseline uses the matched `m1-a` seed, and ranking
+  keeps candidates within each metric's margin of the stage best (ADR-005). It has a CPU-only test
+  runner, a smoke run on the committed `m1-smoke-v1` fixtures, and strict provenance. It does not
+  contain model results or declare a winner.
 - Still open: harness one-candidate end to end, published comparison (DAT-38, due 5 Nov), error analysis (DAT-39, due 11 Nov), dataset screenshot (DAT-12), locking the ROUGE call (DAT-13).
 
 ---
@@ -211,7 +217,7 @@ session-service (FastAPI)                 <-- on main
               M1 catch-up, M2 attribution, M3 arbitration, M4 routing
               |
               v
-         eval/   metrics only. Harness not written yet.
+         eval/   metrics on main; DAT-61 harness/comparison awaiting review.
 ```
 
 Session service routes (ADR-001, unchanged by ADR-002):
